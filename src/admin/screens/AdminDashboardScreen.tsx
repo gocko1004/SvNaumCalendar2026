@@ -30,6 +30,8 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
   const [eventContentDialogVisible, setEventContentDialogVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [sendingNotification, setSendingNotification] = useState(false);
+  const [notificationResult, setNotificationResult] = useState<{ success: boolean; sentCount: number; error?: string } | null>(null);
   const [automatedSettings, setAutomatedSettings] = useState({
     weekBefore: true,
     dayBefore: true,
@@ -63,19 +65,40 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
   };
 
   const handleSendNotification = async () => {
-    if (notificationMessage.trim()) {
-      try {
-        await NotificationService.sendCustomNotification({
-          title: 'Важно Известување',
-          message: notificationMessage,
-          date: new Date(),
-          urgent: true
-        });
+    if (!notificationMessage.trim()) {
+      return;
+    }
+
+    setSendingNotification(true);
+    setNotificationResult(null);
+
+    try {
+      // Send push notification to all users
+      const result = await NotificationService.sendPushNotificationToAllUsers({
+        title: 'Важно Известување',
+        message: notificationMessage,
+        urgent: true
+      });
+
+      setNotificationResult(result);
+
+      if (result.success) {
         setNotificationMessage('');
-        setNotificationDialogVisible(false);
-      } catch (error) {
-        console.error('Error sending notification:', error);
+        // Keep dialog open to show success message
+        setTimeout(() => {
+          setNotificationDialogVisible(false);
+          setNotificationResult(null);
+        }, 3000);
       }
+    } catch (error: any) {
+      console.error('Error sending notification:', error);
+      setNotificationResult({
+        success: false,
+        sentCount: 0,
+        error: error.message || 'Грешка при испраќање на известување'
+      });
+    } finally {
+      setSendingNotification(false);
     }
   };
 
@@ -232,7 +255,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
       <Card style={styles.card} onPress={() => setNotificationDialogVisible(true)}>
         <Card.Content>
           <Title>Известувања</Title>
-          <Paragraph>Испрати известувања до корисниците</Paragraph>
+          <Paragraph>Испрати известувања до сите корисници кои го имаат инсталирано апликацијата</Paragraph>
         </Card.Content>
       </Card>
 
@@ -271,10 +294,14 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
       <Portal>
         <Dialog
           visible={notificationDialogVisible}
-          onDismiss={() => setNotificationDialogVisible(false)}
+          onDismiss={() => {
+            setNotificationDialogVisible(false);
+            setNotificationResult(null);
+            setNotificationMessage('');
+          }}
           style={styles.dialog}
         >
-          <Dialog.Title>Испрати Известување</Dialog.Title>
+          <Dialog.Title>Испрати Известување до Сите Корисници</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label="Порака"
@@ -282,11 +309,41 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
               onChangeText={setNotificationMessage}
               multiline
               numberOfLines={3}
+              disabled={sendingNotification}
+              placeholder="Внесете ја пораката што сакате да ја испратите до сите корисници..."
             />
+            {notificationResult && (
+              <View style={styles.resultContainer}>
+                {notificationResult.success ? (
+                  <Paragraph style={styles.successText}>
+                    ✅ Известувањето е успешно испратено до {notificationResult.sentCount} корисник(и)!
+                  </Paragraph>
+                ) : (
+                  <Paragraph style={styles.errorText}>
+                    ❌ Грешка: {notificationResult.error || 'Неуспешно испраќање'}
+                  </Paragraph>
+                )}
+              </View>
+            )}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setNotificationDialogVisible(false)}>Откажи</Button>
-            <Button onPress={handleSendNotification}>Испрати</Button>
+            <Button 
+              onPress={() => {
+                setNotificationDialogVisible(false);
+                setNotificationResult(null);
+                setNotificationMessage('');
+              }}
+              disabled={sendingNotification}
+            >
+              Откажи
+            </Button>
+            <Button 
+              onPress={handleSendNotification}
+              loading={sendingNotification}
+              disabled={sendingNotification || !notificationMessage.trim()}
+            >
+              {sendingNotification ? 'Испраќање...' : 'Испрати до Сите'}
+            </Button>
           </Dialog.Actions>
         </Dialog>
 
@@ -429,5 +486,19 @@ const styles = StyleSheet.create({
   socialButton: {
     flex: 1,
     marginHorizontal: 4,
+  },
+  resultContainer: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: COLORS.LIGHT,
+  },
+  successText: {
+    color: COLORS.SUCCESS,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: COLORS.DANGER,
+    fontWeight: 'bold',
   },
 }); 

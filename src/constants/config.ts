@@ -1,8 +1,7 @@
-import {
-  FACEBOOK_APP_ID,
-  FACEBOOK_APP_SECRET,
-  FACEBOOK_ACCESS_TOKEN
-} from '@env';
+// Environment variables - using fallbacks for missing .env
+const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID || '';
+const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
+const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN || '';
 
 export const CONFIG = {
   APP_NAME: 'Sv Naum Calendar',

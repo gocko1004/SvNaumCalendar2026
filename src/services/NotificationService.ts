@@ -1,10 +1,13 @@
 import { ChurchEvent, CHURCH_EVENTS_2025 } from './ChurchCalendarService';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { format, addMinutes, addDays, isBefore, addYears, isAfter } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
+import { db } from '../firebase';
+import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const LAST_SCHEDULE_CHECK = '@last_schedule_check';
@@ -19,24 +22,37 @@ Notifications.setNotificationHandler({
 
 class NotificationService {
   constructor() {
-    this.configure();
-    this.setupYearlyScheduling();
+    // Don't call async methods in constructor
+    this.initializeService();
   }
 
-  setupYearlyScheduling = async () => {
-    // Check if we need to schedule for the next year
-    const lastCheck = await AsyncStorage.getItem(LAST_SCHEDULE_CHECK);
-    const now = new Date();
-    const lastCheckDate = lastCheck ? new Date(lastCheck) : null;
-
-    // If we haven't checked this year or it's the first time
-    if (!lastCheckDate || isAfter(now, addYears(lastCheckDate, 1))) {
-      await this.scheduleYearEvents();
-      await AsyncStorage.setItem(LAST_SCHEDULE_CHECK, now.toISOString());
+  initializeService = async () => {
+    try {
+      await this.configure();
+      await this.setupYearlyScheduling();
+    } catch (error) {
+      console.error('Error initializing notification service:', error);
     }
+  };
 
-    // Set up daily check for next year's events
-    this.setupDailyCheck();
+  setupYearlyScheduling = async () => {
+    try {
+      // Check if we need to schedule for the next year
+      const lastCheck = await AsyncStorage.getItem(LAST_SCHEDULE_CHECK);
+      const now = new Date();
+      const lastCheckDate = lastCheck ? new Date(lastCheck) : null;
+
+      // If we haven't checked this year or it's the first time
+      if (!lastCheckDate || isAfter(now, addYears(lastCheckDate, 1))) {
+        await this.scheduleYearEvents();
+        await AsyncStorage.setItem(LAST_SCHEDULE_CHECK, now.toISOString());
+      }
+
+      // Set up daily check for next year's events
+      this.setupDailyCheck();
+    } catch (error) {
+      console.error('Error setting up yearly scheduling:', error);
+    }
   };
 
   setupDailyCheck = () => {
@@ -202,6 +218,51 @@ class NotificationService {
         console.log('Failed to get push token for push notification!');
         return;
       }
+
+      // Register device for push notifications
+      await this.registerDeviceForPushNotifications();
+    }
+  };
+
+  registerDeviceForPushNotifications = async () => {
+    try {
+      // Get Expo push token
+      // Use the project ID from app.json
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId || 'ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb';
+      const token = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      });
+
+      // Store token in Firestore
+      const tokensRef = collection(db, 'pushTokens');
+      const deviceId = await this.getDeviceId();
+      
+      await setDoc(doc(tokensRef, deviceId), {
+        token: token.data,
+        platform: Platform.OS,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }, { merge: true });
+
+      console.log('Push token registered:', token.data);
+      return token.data;
+    } catch (error) {
+      console.error('Error registering push token:', error);
+      return null;
+    }
+  };
+
+  getDeviceId = async (): Promise<string> => {
+    try {
+      let deviceId = await AsyncStorage.getItem('@device_id');
+      if (!deviceId) {
+        deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await AsyncStorage.setItem('@device_id', deviceId);
+      }
+      return deviceId;
+    } catch (error) {
+      console.error('Error getting device ID:', error);
+      return `device_${Date.now()}`;
     }
   };
 
@@ -275,6 +336,7 @@ class NotificationService {
   }) => {
     const { title, message, date = new Date(), urgent = true } = notification;
 
+    // Send local notification immediately
     await this.scheduleNotification({
       title,
       message,
@@ -282,6 +344,66 @@ class NotificationService {
       urgent,
       identifier: `custom-${Date.now()}`,
     });
+  };
+
+  sendPushNotificationToAllUsers = async (notification: {
+    title: string;
+    message: string;
+    urgent?: boolean;
+  }): Promise<{ success: boolean; sentCount: number; error?: string }> => {
+    try {
+      const { title, message, urgent = true } = notification;
+
+      // Get all push tokens from Firestore
+      const tokensRef = collection(db, 'pushTokens');
+      const tokensSnapshot = await getDocs(tokensRef);
+      
+      if (tokensSnapshot.empty) {
+        return { success: false, sentCount: 0, error: 'No devices registered for push notifications' };
+      }
+
+      const tokens = tokensSnapshot.docs.map(doc => doc.data().token).filter(Boolean);
+      
+      if (tokens.length === 0) {
+        return { success: false, sentCount: 0, error: 'No valid push tokens found' };
+      }
+
+      // Send push notifications via Expo Push Notification API
+      const messages = tokens.map(token => ({
+        to: token,
+        sound: 'default',
+        title,
+        body: message,
+        priority: urgent ? 'high' : 'normal',
+        channelId: urgent ? 'urgent-updates' : 'church-events',
+      }));
+
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messages),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error sending push notifications:', errorText);
+        return { success: false, sentCount: 0, error: `Failed to send: ${errorText}` };
+      }
+
+      const result = await response.json();
+      const successCount = result.data?.filter((r: any) => r.status === 'ok').length || 0;
+
+      console.log(`Push notifications sent: ${successCount}/${tokens.length}`);
+
+      return { success: true, sentCount: successCount };
+    } catch (error: any) {
+      console.error('Error sending push notifications to all users:', error);
+      return { success: false, sentCount: 0, error: error.message || 'Unknown error' };
+    }
   };
 
   cancelAllNotifications = async () => {

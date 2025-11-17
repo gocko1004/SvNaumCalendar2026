@@ -31,610 +31,125 @@ const getEventImage = (event: ChurchEvent) => {
     try {
       return require('../../assets/images/saints/05-Jan.jpg');
     } catch (error) {
-      console.error('Error loading January 5th image:', error);
+      console.warn('Image not found for January 5th, using default');
       return null;
     }
   }
 
   // Handle all dates with a switch statement
   const dateKey = `${date.getDate()}-${date.getMonth() + 1}`; // +1 to convert from 0-based month
-  switch (dateKey) {
+  
+  // Create a mapping object for better maintainability
+  const imageMap: { [key: string]: any } = {
     // January
-    case '5-1': // January 5
-      try {
-        return require('../../assets/images/saints/05-Jan.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '12-1': // January 12
-      try {
-        return require('../../assets/images/saints/12-Jan.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '19-1': // January 19
-      try {
-        return require('../../assets/images/saints/19-Jan.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '26-1': // January 26
-      try {
-        return require('../../assets/images/saints/26-Jan.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '5-1': () => require('../../assets/images/saints/05-Jan.jpg'),
+    '12-1': () => require('../../assets/images/saints/12-Jan.jpg'),
+    '19-1': () => require('../../assets/images/saints/19-Jan.jpg'),
+    '26-1': () => require('../../assets/images/saints/26-Jan.jpg'),
     
     // February
-    case '2-2': // February 2
-      try {
-        return require('../../assets/images/saints/02-Feb.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '9-2': // February 9
-      try {
-        return require('../../assets/images/saints/09-Feb.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '15-2': // February 15
-      try {
-        return require('../../assets/images/saints/15-Feb.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '16-2': // February 16
-      try {
-        return require('../../assets/images/saints/16-Feb.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '22-2': // February 22
-      try {
-        return require('../../assets/images/saints/22-Feb.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '23-2': // February 23
-      try {
-        return require('../../assets/images/saints/23-Feb.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '2-2': () => require('../../assets/images/saints/02-Feb.jpg'),
+    '9-2': () => require('../../assets/images/saints/09-Feb.jpg'),
+    '15-2': () => require('../../assets/images/saints/15-Feb.jpg'),
+    '16-2': () => require('../../assets/images/saints/16-Feb.jpg'),
+    '22-2': () => require('../../assets/images/saints/22-Feb.jpg'),
+    '23-2': () => require('../../assets/images/saints/23-Feb.jpg'),
 
     // March
-    case '2-3': // March 2
-      try {
-        return require('../../assets/images/saints/02-March.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '9-3': // March 9
-      try {
-        return require('../../assets/images/saints/09-March.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '16-3': // March 16
-      try {
-        return require('../../assets/images/saints/16-March.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '23-3': // March 23
-      try {
-        return require('../../assets/images/saints/23-March.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '2-3': () => require('../../assets/images/saints/02-March.jpg'),
+    '9-3': () => require('../../assets/images/saints/09-March.jpg'),
+    '16-3': () => require('../../assets/images/saints/16-March.jpg'),
+    '23-3': () => require('../../assets/images/saints/23-March.jpg'),
 
     // April
-    case '6-4': // April 6
-      try {
-        return require('../../assets/images/saints/06-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '12-4': // April 12
-      try {
-        return require('../../assets/images/saints/12-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '13-4': // April 13
-      try {
-        return require('../../assets/images/saints/13-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '17-4': // April 17
-      try {
-        return require('../../assets/images/saints/17-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '18-4': // April 18
-      try {
-        return require('../../assets/images/saints/18-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '19-4': // April 19
-      try {
-        return require('../../assets/images/saints/19-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '20-4': // April 20
-      try {
-        return require('../../assets/images/saints/20-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '27-4': // April 27
-      try {
-        return require('../../assets/images/saints/27-April.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '6-4': () => require('../../assets/images/saints/06-April.jpg'),
+    '12-4': () => require('../../assets/images/saints/12-April.jpg'),
+    '13-4': () => require('../../assets/images/saints/13-April.jpg'),
+    '17-4': () => require('../../assets/images/saints/17-April.jpg'),
+    '18-4': () => require('../../assets/images/saints/18-April.jpg'),
+    '19-4': () => require('../../assets/images/saints/19-April.jpg'),
+    '20-4': () => require('../../assets/images/saints/20-April.jpg'),
+    '27-4': () => require('../../assets/images/saints/27-April.jpg'),
 
     // May
-    case '4-5': // May 4
-      try {
-        return require('../../assets/images/saints/04-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '6-5': // May 6
-      try {
-        return require('../../assets/images/saints/06-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '11-5': // May 11
-      try {
-        return require('../../assets/images/saints/11-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '18-5': // May 18
-      try {
-        return require('../../assets/images/saints/18-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '24-5': // May 24
-      try {
-        return require('../../assets/images/saints/24-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '25-5': // May 25
-      try {
-        return require('../../assets/images/saints/25-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '28-5': // May 28
-      try {
-        return require('../../assets/images/saints/28-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '29-5': // May 29 (using same image as May 28)
-      try {
-        return require('../../assets/images/saints/28-May.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '4-5': () => require('../../assets/images/saints/04-May.jpg'),
+    '6-5': () => require('../../assets/images/saints/06-May.jpg'),
+    '11-5': () => require('../../assets/images/saints/11-may.jpg'),
+    '18-5': () => require('../../assets/images/saints/18-May.jpg'),
+    '24-5': () => require('../../assets/images/saints/24-May.jpg'),
+    '25-5': () => require('../../assets/images/saints/25-May.jpg'),
 
     // June
-    case '1-6': // June 1
-      try {
-        return require('../../assets/images/saints/01-June.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '2-6': // June 2
-      try {
-        return require('../../assets/images/saints/01-June.jpg'); // Using June 1st image as fallback
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '8-6': // June 8
-      try {
-        return require('../../assets/images/saints/08-June.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '15-6': // June 15
-      try {
-        return require('../../assets/images/saints/15-June.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '22-6': // June 22
-      try {
-        return require('../../assets/images/saints/22-June.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '29-6': // June 29
-      try {
-        return require('../../assets/images/saints/29-June.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '1-6': () => require('../../assets/images/saints/01-June.jpg'),
+    '8-6': () => require('../../assets/images/saints/08-June.jpg'),
+    '15-6': () => require('../../assets/images/saints/15-June.jpg'),
+    '22-6': () => require('../../assets/images/saints/22-June.jpg'),
+    '29-6': () => require('../../assets/images/saints/29-June.jpg'),
 
     // July
-    case '2-7': // July 2
-      try {
-        return require('../../assets/images/saints/07-July.jpg'); // Using July 7th image as fallback
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '3-7': // July 3
-      try {
-        return require('../../assets/images/saints/03-July.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '6-7': // July 6
-      try {
-        return require('../../assets/images/saints/03-July.jpg'); // Using July 3rd image as fallback
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '12-7': // July 12
-      try {
-        return require('../../assets/images/saints/12-July.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '13-7': // July 13
-      try {
-        return require('../../assets/images/saints/13-July.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '20-7': // July 20
-      try {
-        return require('../../assets/images/saints/20-July.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '27-7': // July 27
-      try {
-        return require('../../assets/images/saints/27-July.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    // '6-7': () => require('../../assets/images/saints/06-July.jpg'), // File doesn't exist
+    '12-7': () => require('../../assets/images/saints/12-July.jpg'),
+    '13-7': () => require('../../assets/images/saints/13-July.jpg'),
+    '20-7': () => require('../../assets/images/saints/20-July.jpg'),
+    '27-7': () => require('../../assets/images/saints/27-July.jpg'),
 
     // August
-    case '3-8': // August 3
-      try {
-        return require('../../assets/images/saints/03-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '10-8': // August 10
-      try {
-        return require('../../assets/images/saints/10-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '17-8': // August 17
-      try {
-        return require('../../assets/images/saints/17-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '18-8': // August 18
-      try {
-        return require('../../assets/images/saints/18-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '24-8': // August 24
-      try {
-        return require('../../assets/images/saints/24-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '27-8': // August 27
-      try {
-        return require('../../assets/images/saints/27-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '28-8': // August 28
-      try {
-        return require('../../assets/images/saints/28-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '31-8': // August 31
-      try {
-        return require('../../assets/images/saints/31-Aug.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '3-8': () => require('../../assets/images/saints/03-Aug.jpg'),
+    '10-8': () => require('../../assets/images/saints/10-Aug.jpg'),
+    '17-8': () => require('../../assets/images/saints/17-Aug.jpg'),
+    '18-8': () => require('../../assets/images/saints/18-Aug.jpg'),
+    '24-8': () => require('../../assets/images/saints/24-Aug.jpg'),
+    '27-8': () => require('../../assets/images/saints/27-Aug.jpg'),
+    '28-8': () => require('../../assets/images/saints/28-Aug.jpg'),
+    '31-8': () => require('../../assets/images/saints/31-Aug.jpg'),
 
     // September
-    case '7-9': // September 7
-      try {
-        return require('../../assets/images/saints/07-Sep.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '10-9': // September 10
-      try {
-        return require('../../assets/images/saints/11-Sep.jpg'); // Using Sept 11 image as it's related to St. John
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '11-9': // September 11
-      try {
-        return require('../../assets/images/saints/11-Sep.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '14-9': // September 14
-      try {
-        return require('../../assets/images/saints/14-Sep.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '21-9': // September 21
-      try {
-        return require('../../assets/images/saints/21-Sep.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '27-9': // September 27
-      try {
-        return require('../../assets/images/saints/27-Sep.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '28-9': // September 28
-      try {
-        return require('../../assets/images/saints/28-Sep.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '7-9': () => require('../../assets/images/saints/07-Sep.jpg'),
+    '11-9': () => require('../../assets/images/saints/11-Sep.jpg'),
+    '14-9': () => require('../../assets/images/saints/14-Sep.jpg'),
+    // '18-9': () => require('../../assets/images/saints/18-Sep.jpg'), // File doesn't exist
+    '21-9': () => require('../../assets/images/saints/21-Sep.jpg'),
+    '27-9': () => require('../../assets/images/saints/27-Sep.jpg'),
+    '28-9': () => require('../../assets/images/saints/28-Sep.jpg'),
 
     // October
-    case '5-10': // October 5
-      try {
-        return require('../../assets/images/saints/05- Oct.jpg'); // Note the space after hyphen
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '12-10': // October 12
-      try {
-        return require('../../assets/images/saints/12-Oct.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '19-10': // October 19
-      try {
-        return require('../../assets/images/saints/19-Oct.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '26-10': // October 26
-      try {
-        return require('../../assets/images/saints/26-Oct.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '27-10': // October 27 - St. Petka (Petkovden)
-      try {
-        return require('../../assets/images/saints/27-Oct.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '5-10': () => require('../../assets/images/saints/05- Oct.jpg'), // Note: filename has a space
+    '12-10': () => require('../../assets/images/saints/12-Oct.jpg'),
+    '19-10': () => require('../../assets/images/saints/19-Oct.jpg'),
+    '26-10': () => require('../../assets/images/saints/26-Oct.jpg'),
+    '27-10': () => require('../../assets/images/saints/27-Oct.jpg'),
 
     // November
-    case '1-11': // November 1 - ZADUSHNICA
-      try {
-        return require('../../assets/images/saints/01-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '2-11': // November 2
-      try {
-        return require('../../assets/images/saints/02-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '8-11': // November 8 - St. Dimitrij (Mitrovden)
-      try {
-        return require('../../assets/images/saints/08-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '9-11': // November 9
-      try {
-        return require('../../assets/images/saints/09-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '16-11': // November 16
-      try {
-        return require('../../assets/images/saints/16-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '20-11': // November 20 - St. Archangel Michael (Evening)
-      try {
-        return require('../../assets/images/saints/20-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '21-11': // November 21 - St. Archangel Michael
-      try {
-        return require('../../assets/images/saints/21-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '23-11': // November 23
-      try {
-        return require('../../assets/images/saints/23-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '30-11': // November 30
-      try {
-        return require('../../assets/images/saints/30-Nov.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '1-11': () => require('../../assets/images/saints/01-Nov.jpg'),
+    '2-11': () => require('../../assets/images/saints/02-Nov.jpg'),
+    '8-11': () => require('../../assets/images/saints/08-Nov.jpg'),
+    '9-11': () => require('../../assets/images/saints/09-Nov.jpg'),
+    '16-11': () => require('../../assets/images/saints/16-Nov.jpg'),
+    '20-11': () => require('../../assets/images/saints/20-Nov.jpg'),
+    '21-11': () => require('../../assets/images/saints/21-Nov.jpg'),
+    '23-11': () => require('../../assets/images/saints/23-Nov.jpg'),
+    '30-11': () => require('../../assets/images/saints/30-Nov.jpg'),
 
     // December
-    case '3-12': // December 3 - Prechista (Evening)
-      try {
-        return require('../../assets/images/saints/03-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '4-12': // December 4 - Prechista
-      try {
-        return require('../../assets/images/saints/04-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '7-12': // December 7
-      try {
-        return require('../../assets/images/saints/07-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '14-12': // December 14
-      try {
-        return require('../../assets/images/saints/14-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '18-12': // December 18 - St. Nikolaj (Evening)
-      try {
-        return require('../../assets/images/saints/18-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '19-12': // December 19 - St. Nikolaj
-      try {
-        return require('../../assets/images/saints/19-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '21-12': // December 21
-      try {
-        return require('../../assets/images/saints/21-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
-    case '28-12': // December 28
-      try {
-        return require('../../assets/images/saints/28-Dec.jpg');
-      } catch (error) {
-        console.error('Error loading image:', error);
-        return null;
-      }
+    '7-12': () => require('../../assets/images/saints/07-Dec.jpg'),
+    '4-12': () => require('../../assets/images/saints/04-Dec.jpg'),
+    '14-12': () => require('../../assets/images/saints/14-Dec.jpg'),
+    '18-12': () => require('../../assets/images/saints/18-Dec.jpg'),
+    '21-12': () => require('../../assets/images/saints/21-Dec.jpg'),
+    '28-12': () => require('../../assets/images/saints/28-Dec.jpg'),
+  };
 
-    default:
-      // Special case for Christmas
-      if (event.name.includes('БОЖИК') || event.name.includes('Рождество Христово')) {
-        try {
-          return require('../../assets/images/Bozik.jpg');
-        } catch (error) {
-          console.error('Error loading Bozik image:', error);
-          return null;
-        }
-      }
+  const imageLoader = imageMap[dateKey];
+  if (imageLoader) {
+    try {
+      return imageLoader();
+    } catch (error) {
+      console.warn(`Image not found for date ${dateKey}, using default`);
       return null;
+    }
   }
+
+  return null;
 };
 
 const LoadingScreen = () => {
@@ -644,7 +159,10 @@ const LoadingScreen = () => {
         source={require('../../assets/images/Loading screen.jpg')}
         style={styles.loadingBackground}
         resizeMode="cover"
-        onError={(error) => console.error('Error loading image:', error)}
+        onError={(error) => {
+          // Silently handle loading screen image error
+          console.warn('Loading screen image failed to load');
+        }}
       />
       <View style={[styles.dimOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]} />
       <View style={styles.loadingContent}>
@@ -717,39 +235,76 @@ export const CalendarScreen = () => {
     'Јули', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
   ];
 
-  const renderServiceTypeFilters = () => (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false}
-      style={styles.filterContainer}
-      contentContainerStyle={styles.filterContentContainer}
-    >
-      {Object.entries(SERVICE_TYPE_COLORS).map(([type, color]) => (
-        <Chip
-          key={type}
-          selected={selectedServiceTypes.has(type as ServiceType)}
-          onPress={() => toggleServiceTypeFilter(type as ServiceType)}
-          style={[
-            styles.filterChip,
-            { backgroundColor: selectedServiceTypes.has(type as ServiceType) ? color : COLORS.SURFACE }
-          ]}
-          textStyle={[
-            styles.filterChipText,
-            { color: selectedServiceTypes.has(type as ServiceType) ? COLORS.TEXT_LIGHT : COLORS.TEXT }
-          ]}
-          icon={() => (
-            <MaterialCommunityIcons
-              name={SERVICE_TYPE_ICONS[type as ServiceType]}
-              size={16}
-              color={selectedServiceTypes.has(type as ServiceType) ? COLORS.TEXT_LIGHT : COLORS.TEXT}
-            />
-          )}
-        >
-          {getServiceTypeLabel(type as ServiceType)}
-        </Chip>
-      ))}
-    </ScrollView>
-  );
+  const renderServiceTypeFilters = () => {
+    const screenWidth = Dimensions.get('window').width;
+    const isVerySmall = screenWidth < 340;
+    const isSmall = screenWidth < 380;
+    
+    return (
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterContainer}
+        contentContainerStyle={styles.filterContentContainer}
+      >
+        {Object.entries(SERVICE_TYPE_COLORS).map(([type, color]) => {
+          const label = getServiceTypeLabel(type as ServiceType);
+          const isSelected = selectedServiceTypes.has(type as ServiceType);
+          
+          // Calculate chip width based on label length and screen size
+          const baseWidth = isVerySmall ? 6 : isSmall ? 7 : 8;
+          const iconSpace = isVerySmall ? 30 : 40;
+          const padding = isVerySmall ? 20 : 24;
+          const labelLength = label.length;
+          const chipWidth = Math.min(
+            Math.max(labelLength * baseWidth + iconSpace + padding, isVerySmall ? 90 : 110),
+            screenWidth * 0.48
+          );
+          
+          const iconSize = isVerySmall ? 14 : isSmall ? 15 : 16;
+          const fontSize = isVerySmall ? 9 : isSmall ? 10 : 11;
+          
+          return (
+            <TouchableOpacity
+              key={type}
+              onPress={() => toggleServiceTypeFilter(type as ServiceType)}
+              style={[
+                styles.filterChipTouchable,
+                { 
+                  backgroundColor: isSelected ? color : COLORS.SURFACE,
+                  width: chipWidth,
+                  minHeight: isVerySmall ? 36 : 40,
+                  borderColor: isSelected ? color : COLORS.BORDER,
+                }
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={SERVICE_TYPE_ICONS[type as ServiceType]}
+                size={iconSize}
+                color={isSelected ? COLORS.TEXT_LIGHT : COLORS.TEXT}
+                style={{ marginRight: 6 }}
+              />
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { 
+                    color: isSelected ? COLORS.TEXT_LIGHT : COLORS.TEXT,
+                    fontSize: fontSize,
+                    flex: 1,
+                  }
+                ]}
+                numberOfLines={2}
+                adjustsFontSizeToFit={true}
+                minimumFontScale={0.75}
+              >
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    );
+  };
 
   const showContactInfo = () => {
     setContactDialogVisible(true);
@@ -776,31 +331,67 @@ export const CalendarScreen = () => {
             style={styles.searchBar}
           />
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: '#4267B2' }]}
-              onPress={() => SocialMediaService.openFacebookGroup()}
-            >
-              <MaterialCommunityIcons name="facebook" size={24} color={COLORS.TEXT_LIGHT} />
-              <Text style={styles.buttonText}>Facebook</Text>
-            </TouchableOpacity>
+          {(() => {
+            const screenWidth = Dimensions.get('window').width;
+            const containerPadding = 32; // 16px on each side
+            const buttonSpacing = 24; // 12px between each button
+            const availableWidth = screenWidth - containerPadding - (buttonSpacing * 2); // space for 3 buttons with 2 gaps
+            const buttonWidth = availableWidth / 3;
+            const isVerySmall = screenWidth < 340;
+            const iconSize = isVerySmall ? 18 : screenWidth < 380 ? 20 : 22;
+            const fontSize = isVerySmall ? 10 : screenWidth < 380 ? 11 : 12;
+            
+            return (
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.socialButton,
+                    {
+                      backgroundColor: '#4267B2',
+                      width: buttonWidth,
+                      marginRight: 12,
+                    }
+                  ]}
+                  onPress={() => SocialMediaService.openFacebookGroup()}
+                >
+                  <MaterialCommunityIcons name="facebook" size={iconSize} color={COLORS.TEXT_LIGHT} />
+                  <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Facebook</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: COLORS.PRIMARY }]}
-              onPress={showContactInfo}
-            >
-              <MaterialCommunityIcons name="phone" size={24} color={COLORS.TEXT_LIGHT} />
-              <Text style={styles.buttonText}>Контакт</Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.socialButton,
+                    {
+                      backgroundColor: COLORS.PRIMARY,
+                      width: buttonWidth,
+                      marginHorizontal: 6,
+                    }
+                  ]}
+                  onPress={showContactInfo}
+                >
+                  <MaterialCommunityIcons name="phone" size={iconSize} color={COLORS.TEXT_LIGHT} />
+                  <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Контакт</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: COLORS.TERTIARY }]}
-              onPress={() => SocialMediaService.openWebsite()}
-            >
-              <MaterialCommunityIcons name="web" size={24} color={COLORS.TEXT_LIGHT} />
-              <Text style={styles.buttonText}>Веб-страна</Text>
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity
+                  style={[
+                    styles.socialButton,
+                    {
+                      backgroundColor: COLORS.TERTIARY,
+                      width: buttonWidth,
+                      marginLeft: 12,
+                    }
+                  ]}
+                  onPress={() => SocialMediaService.openWebsite()}
+                >
+                  <MaterialCommunityIcons name="web" size={iconSize} color={COLORS.TEXT_LIGHT} />
+                  <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">
+                    {isVerySmall ? 'Веб' : 'Веб-страна'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })()}
           
           {renderServiceTypeFilters()}
           
@@ -854,18 +445,27 @@ export const CalendarScreen = () => {
                               <View style={styles.imageContainer}>
                                 {(() => {
                                   const eventImage = getEventImage(event);
-                                  return eventImage ? (
+                                  
+                                  if (!eventImage) {
+                                    return (
+                                      <MaterialCommunityIcons 
+                                        name={SERVICE_TYPE_ICONS[event.serviceType]}
+                                        size={40}
+                                        color={SERVICE_TYPE_COLORS[event.serviceType]}
+                                        style={styles.fallbackIcon}
+                                      />
+                                    );
+                                  }
+                                  
+                                  return (
                                     <Image 
                                       source={eventImage}
                                       style={styles.eventImage}
                                       resizeMode="cover"
-                                    />
-                                  ) : (
-                                    <MaterialCommunityIcons 
-                                      name={SERVICE_TYPE_ICONS[event.serviceType]}
-                                      size={40}
-                                      color={SERVICE_TYPE_COLORS[event.serviceType]}
-                                      style={styles.fallbackIcon}
+                                      onError={() => {
+                                        // Silently handle image loading errors - fallback handled by parent
+                                        // The error is caught and won't show a notification
+                                      }}
                                     />
                                   );
                                 })()}
@@ -943,6 +543,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingVertical: 16,
+    paddingBottom: 24,
   },
   searchBar: {
     marginHorizontal: 16,
@@ -976,7 +577,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   eventCard: {
-    marginBottom: 12,
+    marginBottom: 16,
     padding: 0,
     borderStyle: 'solid',
     borderWidth: 1,
@@ -990,29 +591,36 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 2,
+    elevation: 3,
     borderLeftWidth: 4, // Thicker left border for service type
+    overflow: 'hidden',
   },
   cardContent: {
     flex: 1,
+    paddingBottom: 8,
   },
   cardDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 12,
+    flexWrap: 'wrap',
+    width: '100%',
   },
   eventTitle: {
-    fontSize: 16,
+    fontSize: Dimensions.get('window').width < 360 ? 15 : 16,
     color: COLORS.PRIMARY,
     fontWeight: '700',
     letterSpacing: 0.5,
     marginBottom: 8,
+    flexShrink: 1,
+    lineHeight: 22,
   },
   dateContainer: {
     alignItems: 'center',
-    marginRight: 16,
-    minWidth: 60,
+    marginRight: 12,
+    minWidth: Dimensions.get('window').width < 360 ? 50 : 60,
+    width: Dimensions.get('window').width < 360 ? 50 : 60,
     backgroundColor: COLORS.PRIMARY,
     padding: 10,
     borderRadius: 15,
@@ -1023,6 +631,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 3,
+    flexShrink: 0,
   },
   dateDay: {
     fontSize: 24,
@@ -1039,6 +648,9 @@ const styles = StyleSheet.create({
   eventInfo: {
     flex: 1,
     paddingRight: 12,
+    minWidth: Dimensions.get('window').width < 360 ? 100 : 120,
+    flexShrink: 1,
+    maxWidth: Dimensions.get('window').width < 360 ? '60%' : '70%',
   },
   serviceTypeContainer: {
     flexDirection: 'row',
@@ -1050,31 +662,42 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: COLORS.BORDER,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
+    width: '100%',
   },
   serviceType: {
-    fontSize: 13,
+    fontSize: Dimensions.get('window').width < 360 ? 11 : 13,
     marginLeft: 6,
     fontWeight: '600',
     color: COLORS.TEXT,
+    flexShrink: 1,
+    flex: 1,
+    lineHeight: 16,
   },
   time: {
     fontSize: 13,
     color: COLORS.TERTIARY,
     fontWeight: '600',
+    marginTop: 4,
+    flexShrink: 1,
+    lineHeight: 18,
   },
   rightContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%',
-    paddingLeft: 4,
-    marginVertical: -8,
-    marginRight: -4,
+    paddingLeft: 8,
+    paddingRight: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
+    marginRight: 4,
+    flexShrink: 0,
+    width: Dimensions.get('window').width < 360 ? 100 : 120,
   },
   imageContainer: {
-    width: 120,
-    height: 120,
+    width: '100%',
+    aspectRatio: 1,
     borderRadius: 15,
-    marginBottom: 0,
     backgroundColor: COLORS.BACKGROUND,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1122,25 +745,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   filterContentContainer: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
+    alignItems: 'center',
+    paddingVertical: 8,
   },
-  filterChip: {
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-    elevation: 2,
-    backgroundColor: COLORS.SURFACE,
-    marginHorizontal: 4,
+  filterChipTouchable: {
+    borderWidth: 1.5,
+    elevation: 3,
+    marginHorizontal: 8,
     marginVertical: 4,
-    minWidth: Platform.OS === 'web' ? 120 : 100,
-    maxWidth: Platform.OS === 'web' ? 200 : 150,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterChipText: {
-    fontSize: Platform.OS === 'web' ? 14 : 12,
     textAlign: 'center',
+    fontWeight: '600',
+    lineHeight: 16,
+    flexShrink: 1,
   },
   dialog: {
     backgroundColor: COLORS.SURFACE,
@@ -1149,29 +779,32 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 16,
+    width: '100%',
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: 12,
-    flex: 1,
-    marginHorizontal: 4,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    overflow: 'hidden',
   },
   buttonText: {
     color: COLORS.TEXT_LIGHT,
-    marginLeft: 8,
+    marginLeft: 6,
     fontWeight: 'bold',
-    fontSize: 14,
+    flexShrink: 1,
+    textAlign: 'center',
   },
   churchInfoContainer: {
     alignItems: 'center',

@@ -20,23 +20,7 @@ import { COLORS } from '../../constants/theme';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAuzPZNsu6Hjvh2pOdW-1SWZhRco9963TQ",
-  authDomain: "svnaumkalendar.firebaseapp.com",
-  projectId: "svnaumkalendar",
-  storageBucket: "svnaumkalendar.firebasestorage.app",
-  messagingSenderId: "7954848422",
-  appId: "1:7954848422:web:f5e27ccc9e55f7ec5e3267",
-  measurementId: "G-24V411LPQX"
-};
-
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+import { auth, db } from '../../firebase';
 
 type SpecialEventsScreenProps = {
   navigation: NativeStackNavigationProp<AdminStackParamList, 'SpecialEvents'>;

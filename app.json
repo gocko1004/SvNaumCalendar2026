@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Св. Наум Календар",
+    "name": "Св. Наум Охридски, Триенген",
     "slug": "sv-naum-calendar",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,17 +15,22 @@
       "bundleIdentifier": "com.svnaum.calendar"
     },
     "android": {
-      "package": "com.svnaum.calendar"
+      "package": "com.svnaum.calendar",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "714de3bf-5437-44c3-86ea-458c9c1558c3"
+        "projectId": "ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb"
       }
     },
-    "owner": "triengen_app",
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "webpack"
-    }
+    "owner": "mpc_triengen_sv_naum"
   }
 }

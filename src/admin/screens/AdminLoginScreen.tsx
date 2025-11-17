@@ -17,21 +17,23 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
   const { login } = useAuth();
 
   const handleLogin = async () => {
+    setError(''); // Clear previous errors
+    
     if (!username || !password) {
       setError('Внесете корисничко име и лозинка');
       return;
     }
 
     try {
-      const success = await login(username.trim(), password.trim());
-      if (success) {
+      const result = await login(username.trim(), password.trim());
+      if (result.success) {
         navigation.replace('AdminDashboard');
       } else {
-        setError('Невалидно корисничко име или лозинка');
+        setError(result.error || 'Невалидно корисничко име или лозинка');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      setError('Грешка при најавување');
+      setError(err.message || 'Грешка при најавување');
     }
   };
 
@@ -40,12 +42,14 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
       <Title style={styles.title}>Најава за Администратор</Title>
       
       <TextInput
-        label="Корисничко име"
+        label="Email или корисничко име"
         value={username}
         onChangeText={setUsername}
         style={styles.input}
         autoCapitalize="none"
         autoCorrect={false}
+        keyboardType="email-address"
+        placeholder="your-email@example.com или admin"
       />
       
       <TextInput

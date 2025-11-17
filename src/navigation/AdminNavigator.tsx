@@ -9,10 +9,26 @@ import {
 } from '../admin/screens';
 import { EventFormScreen } from '../screens/EventFormScreen';
 import { COLORS } from '../constants/theme';
+import { useAuth } from '../hooks/useAuth';
 
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 
 export const AdminNavigator = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Show login screen if not authenticated
+  if (!isLoading && !isAuthenticated) {
+    return (
+      <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+        <AdminStack.Screen
+          name="AdminLogin"
+          component={AdminLoginScreen}
+          options={{ headerShown: false }}
+        />
+      </AdminStack.Navigator>
+    );
+  }
+
   return (
     <AdminStack.Navigator
       screenOptions={{
@@ -24,6 +40,7 @@ export const AdminNavigator = () => {
           fontWeight: 'bold',
         },
       }}
+      initialRouteName={isAuthenticated ? "AdminDashboard" : "AdminLogin"}
     >
       <AdminStack.Screen
         name="AdminLogin"
