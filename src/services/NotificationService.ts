@@ -1,4 +1,4 @@
-import { ChurchEvent, CHURCH_EVENTS_2025 } from './ChurchCalendarService';
+import { ChurchEvent, CHURCH_EVENTS } from './ChurchCalendarService';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -85,7 +85,7 @@ class NotificationService {
 
   generateNextYearEvents = (year: number): ChurchEvent[] => {
     // Create next year's events based on this year's dates
-    return CHURCH_EVENTS_2025.map(event => {
+    return CHURCH_EVENTS.map((event: ChurchEvent) => {
       const newDate = new Date(event.date);
       newDate.setFullYear(year);
       return {
@@ -107,7 +107,7 @@ class NotificationService {
       const nextYear = addYears(now, 1);
 
       // Schedule current year's remaining events
-      const currentYearEvents = CHURCH_EVENTS_2025.filter(event => {
+      const currentYearEvents = CHURCH_EVENTS.filter((event: ChurchEvent) => {
         const eventDate = new Date(event.date);
         return isAfter(eventDate, now) && isBefore(eventDate, nextYear);
       });
@@ -228,7 +228,12 @@ class NotificationService {
     try {
       // Get Expo push token
       // Use the project ID from app.json
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId || 'ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb';
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+
+      if (!projectId) {
+        throw new Error('EAS project ID not found in app.json configuration');
+      }
+
       const token = await Notifications.getExpoPushTokenAsync({
         projectId,
       });

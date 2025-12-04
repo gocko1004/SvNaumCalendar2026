@@ -2,6 +2,7 @@
 const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID || '';
 const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET || '';
 const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN || '';
+const API_AUTH_TOKEN = process.env.API_AUTH_TOKEN || '';
 
 export const CONFIG = {
   APP_NAME: 'Sv Naum Calendar',
@@ -15,7 +16,7 @@ export const CONFIG = {
       EVENTS: '/events',
       NOTIFICATIONS: '/notifications',
     },
-    AUTH_TOKEN: 'your-api-token',
+    AUTH_TOKEN: API_AUTH_TOKEN, // Set via API_AUTH_TOKEN environment variable
     TIMEOUT: 10000, // 10 seconds
   },
   

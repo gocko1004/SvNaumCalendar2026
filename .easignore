@@ -1,0 +1,95 @@
+# EAS Build ignore file - reduces upload size
+
+# Build outputs
+android/app/build/
+android/build/
+android/.gradle/
+android/buildOutputCleanup/
+android/8.8/
+android/kotlin/
+android/vcs-1/
+android/file-system.probe
+android/config.properties
+android/noVersion/
+android/.cxx/
+android/local.properties
+
+# iOS build outputs
+ios/build/
+ios/DerivedData/
+ios/Pods/
+ios/Podfile.lock
+*.xcworkspace/xcuserdata/
+ios/.xcode.env.local
+
+# Node modules (will be installed on EAS)
+node_modules/
+
+# Web build (not needed for mobile)
+web-build/
+dist/
+build/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Documentation files
+*.md
+!README.md
+ANDROID_*.md
+IOS_*.md
+GOOGLE_*.md
+LOCAL_*.md
+QUICK_*.md
+SHARE_*.md
+UPLOAD_*.md
+APP_*.md
+
+# Scripts
+scripts/
+fix-metro-resolver.js
+
+# Temporary files
+*.log
+.DS_Store
+Thumbs.db
+
+# Expo
+.expo/
+.expo-shared/
+
+# Metro
+.metro-health-check*
+
+# Test files
+**/__tests__/
+**/*.test.*
+**/*.spec.*
+
+# Coverage
+coverage/
+
+# Environment files
+.env.local
+.env.*.local
+
+# Calendar admin (separate project)
+calendar-admin/
+
+# Library (not needed)
+Library/
+
+# Backup files
+*.backup
+*.bak
+*~
+

@@ -17,7 +17,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
 import { COLORS } from '../../constants/theme';
-import { ChurchEvent, CHURCH_EVENTS_2025, ServiceType } from '../../services/ChurchCalendarService';
+import { ChurchEvent, CHURCH_EVENTS, ServiceType } from '../../services/ChurchCalendarService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -30,7 +30,7 @@ type ManageCalendarScreenProps = {
 };
 
 export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navigation }) => {
-  const [events, setEvents] = useState<ChurchEvent[]>(CHURCH_EVENTS_2025);
+  const [events, setEvents] = useState<ChurchEvent[]>(CHURCH_EVENTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [editDialogVisible, setEditDialogVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);

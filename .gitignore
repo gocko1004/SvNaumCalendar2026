@@ -35,8 +35,8 @@ local.properties
 !debug.keystore
 *.apk
 *.aab
-android/app/debug/
-android/app/release/
+assets/android/app/debug/
+assets/android/app/release/
 
 # node.js
 #
@@ -57,6 +57,7 @@ yarn-error.log
 
 # Ruby / CocoaPods
 /ios/Pods/
+/ios/Podfile.lock
 /vendor/bundle/
 
 # Environment variables
@@ -68,6 +69,9 @@ coverage/
 
 # Visual Studio Code
 .vscode/
+
+# Expo
+.expo/
 
 # Temporary files
 *.swp

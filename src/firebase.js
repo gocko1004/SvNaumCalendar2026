@@ -2,6 +2,10 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+// Firebase client configuration
+// Note: These keys are safe to expose in client-side code as they identify your Firebase project.
+// Security is enforced through Firebase Security Rules, not by hiding these values.
+// For production, consider moving to environment variables for easier management across environments.
 const firebaseConfig = {
   apiKey: "AIzaSyAGRl1kOe1ypzGhEfLTY-BIOGvYR_1iD70",
   authDomain: "svnaumcalendar.firebaseapp.com",
@@ -12,19 +16,23 @@ const firebaseConfig = {
   measurementId: "G-W87V472GVX"
 };
 
-console.log('Firebase initialized');
-console.log('Firebase config:', {
-  projectId: firebaseConfig.projectId,
-  authDomain: firebaseConfig.authDomain
-});
+// Conditional logging for development only
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+if (isDevelopment) {
+  console.log('Firebase initializing...');
+}
 
 let app;
 try {
   app = initializeApp(firebaseConfig);
-  console.log('Firebase connected successfully');
-  console.log('Firebase app name:', app.name);
+  if (isDevelopment) {
+    console.log('Firebase connected successfully');
+  }
 } catch (error) {
-  console.error('Firebase connection error:', error);
+  if (isDevelopment) {
+    console.error('Firebase connection error:', error);
+  }
   // Don't re-initialize if already initialized
   try {
     app = initializeApp(firebaseConfig);
@@ -37,16 +45,8 @@ try {
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-console.log('Firebase Auth initialized:', auth ? 'OK' : 'FAILED');
-console.log('Firebase Auth app:', auth?.app?.name);
-console.log('Firebase Auth settings:', {
-  currentUser: auth?.currentUser?.email || 'No user',
-  app: auth?.app?.name,
-  config: {
-    apiKey: auth?.app?.options?.apiKey?.substring(0, 20) + '...',
-    projectId: auth?.app?.options?.projectId,
-    authDomain: auth?.app?.options?.authDomain,
-  }
-});
+if (isDevelopment && !auth) {
+  console.error('Firebase Auth failed to initialize');
+}
 
 // Firebase configuration is complete

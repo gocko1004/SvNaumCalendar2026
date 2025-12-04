@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { TextInput, Button, Title, Snackbar } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
 import { COLORS } from '../constants/theme';
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export const EventFormScreen = () => {
   const { t } = useLanguage();
@@ -18,14 +20,14 @@ export const EventFormScreen = () => {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
+  const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setDate(selectedDate);
     }
   };
 
-  const onTimeChange = (event: any, selectedTime?: Date) => {
+  const onTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     setShowTimePicker(false);
     if (selectedTime) {
       setTime(selectedTime);
@@ -33,17 +35,60 @@ export const EventFormScreen = () => {
   };
 
   const handleSubmit = async () => {
-    if (!title || !description) {
-      setSnackbarMessage('Пополнете ги сите полиња');
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+    const trimmedLocation = location.trim();
+
+    // Comprehensive input validation
+    if (!trimmedTitle || !trimmedDescription) {
+      setSnackbarMessage('Пополнете ги задолжителните полиња (наслов и опис)');
+      setSnackbarVisible(true);
+      return;
+    }
+
+    if (trimmedTitle.length < 3) {
+      setSnackbarMessage('Насловот мора да има барем 3 знаци');
+      setSnackbarVisible(true);
+      return;
+    }
+
+    if (trimmedTitle.length > 100) {
+      setSnackbarMessage('Насловот не може да биде подолг од 100 знаци');
+      setSnackbarVisible(true);
+      return;
+    }
+
+    if (trimmedDescription.length < 10) {
+      setSnackbarMessage('Описот мора да има барем 10 знаци');
+      setSnackbarVisible(true);
+      return;
+    }
+
+    if (trimmedDescription.length > 500) {
+      setSnackbarMessage('Описот не може да биде подолг од 500 знаци');
       setSnackbarVisible(true);
       return;
     }
 
     try {
-      // TODO: Implement event saving logic
-      setSnackbarMessage(t.eventSaved);
+      // Combine date and time
+      const eventDateTime = new Date(date);
+      eventDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
+
+      // Save event to Firestore
+      const eventsRef = collection(db, 'customEvents');
+      await addDoc(eventsRef, {
+        title: trimmedTitle,
+        description: trimmedDescription,
+        location: trimmedLocation,
+        date: eventDateTime.toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      setSnackbarMessage(t.eventSaved || 'Настанот е зачуван успешно');
       setSnackbarVisible(true);
-      
+
       // Reset form
       setTitle('');
       setDescription('');
@@ -51,6 +96,7 @@ export const EventFormScreen = () => {
       setDate(new Date());
       setTime(new Date());
     } catch (error) {
+      console.error('Error saving event:', error);
       setSnackbarMessage('Грешка при зачувување на настанот');
       setSnackbarVisible(true);
     }

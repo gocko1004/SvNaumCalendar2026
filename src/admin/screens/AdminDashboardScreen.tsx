@@ -7,7 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
 import { COLORS } from '../../constants/theme';
 import NotificationService from '../../services/NotificationService';
-import { ChurchEvent, CHURCH_EVENTS_2025 } from '../../services/ChurchCalendarService';
+import { ChurchEvent, CHURCH_EVENTS } from '../../services/ChurchCalendarService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import SocialMediaService from '../../services/SocialMediaService';
@@ -399,7 +399,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
 
               <View style={styles.settingsSection}>
                 <Title style={styles.sectionTitle}>Настани и Содржина</Title>
-                {CHURCH_EVENTS_2025.map((event, index) => (
+                {CHURCH_EVENTS.map((event: ChurchEvent, index: number) => (
                   <List.Item
                     key={index}
                     title={event.name}
@@ -491,14 +491,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: COLORS.LIGHT,
+    backgroundColor: COLORS.SURFACE,
   },
   successText: {
     color: COLORS.SUCCESS,
     fontWeight: 'bold',
   },
   errorText: {
-    color: COLORS.DANGER,
+    color: COLORS.ERROR,
     fontWeight: 'bold',
   },
 }); 

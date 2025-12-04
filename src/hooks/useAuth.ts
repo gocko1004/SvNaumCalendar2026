@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { auth } from '../firebase';
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,18 +38,10 @@ export const useAuth = () => {
         ? trimmedUsername.toLowerCase().trim() 
         : `${trimmedUsername}@svnaumkalendar.firebaseapp.com`;
 
-      console.log('=== LOGIN ATTEMPT ===');
-      console.log('Original username:', username);
-      console.log('Trimmed username:', trimmedUsername);
-      console.log('Final email:', email);
-      console.log('Password length:', trimmedPassword.length);
-      console.log('Auth instance:', auth ? 'OK' : 'NULL');
-      console.log('Auth app name:', auth?.app?.name);
-      console.log('Auth config:', {
-        projectId: auth?.app?.options?.projectId,
-        authDomain: auth?.app?.options?.authDomain
-      });
-      console.log('Firebase API Key (first 10 chars):', auth?.app?.options?.apiKey?.substring(0, 10));
+      if (isDevelopment) {
+        console.log('=== LOGIN ATTEMPT ===');
+        console.log('Attempting login with email:', email);
+      }
 
       // Authenticate with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, trimmedPassword);
@@ -57,36 +52,40 @@ export const useAuth = () => {
         return { success: true };
       }
       return { success: false, error: 'Невалидно корисничко име или лозинка' };
-    } catch (error: any) {
-      console.error('Login error:', error);
-      
+    } catch (error) {
       // Provide more specific error messages
       let errorMessage = 'Невалидно корисничко име или лозинка';
-      
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = 'Корисникот не постои. Проверете го email адресот.';
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Погрешна лозинка. Обидете се повторно.';
-      } else if (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/invalid-credential') {
-        errorMessage = 'Невалиден email или лозинка. Проверете ги податоците или дали Email/Password е овозможено во Firebase.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Невалиден email формат.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Премногу обиди. Обидете се подоцна.';
-      } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = 'Грешка во мрежата. Проверете ја интернет врската.';
-      } else if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Email/Password не е овозможено. Овозможете го во Firebase Console.';
-      } else if (error.message) {
-        errorMessage = error.message;
+
+      if (error instanceof FirebaseError) {
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = 'Корисникот не постои. Проверете го email адресот.';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Погрешна лозинка. Обидете се повторно.';
+        } else if (error.code === 'auth/invalid-login-credentials' || error.code === 'auth/invalid-credential') {
+          errorMessage = 'Невалиден email или лозинка. Проверете ги податоците или дали Email/Password е овозможено во Firebase.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Невалиден email формат.';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = 'Премногу обиди. Обидете се подоцна.';
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Грешка во мрежата. Проверете ја интернет врската.';
+        } else if (error.code === 'auth/operation-not-allowed') {
+          errorMessage = 'Email/Password не е овозможено. Овозможете го во Firebase Console.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        if (isDevelopment) {
+          console.error('=== LOGIN ERROR DETAILS ===');
+          console.error('Firebase error code:', error.code);
+          console.error('Firebase error message:', error.message);
+        }
+      } else {
+        if (isDevelopment) {
+          console.error('Login error:', error);
+        }
       }
-      
-      console.error('=== LOGIN ERROR DETAILS ===');
-      console.error('Firebase error code:', error.code);
-      console.error('Firebase error message:', error.message);
-      console.error('Full error object:', JSON.stringify(error, null, 2));
-      console.error('Error stack:', error.stack);
-      
+
       return { success: false, error: errorMessage };
     }
   };

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text } from 'react-native';
 import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal } from 'react-native-paper';
-import { CHURCH_EVENTS_2025, ChurchEvent, getServiceTypeLabel, ServiceType, getEventsForDate } from '../services/ChurchCalendarService';
+import { CHURCH_EVENTS, ChurchEvent, getServiceTypeLabel, ServiceType, getEventsForDate, enrichEventWithImage } from '../services/ChurchCalendarService';
 import { COLORS, CARD_STYLES } from '../constants/theme';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
@@ -23,133 +23,14 @@ const SERVICE_TYPE_ICONS = {
   PICNIC: 'food' as const
 } as const;
 
-const getEventImage = (event: ChurchEvent) => {
-  const date = event.date;
-
-  // January images
-  if (event.name === 'Св. Наум Охридски') {
-    try {
-      return require('../../assets/images/saints/05-Jan.jpg');
-    } catch (error) {
-      console.warn('Image not found for January 5th, using default');
-      return null;
-    }
-  }
-
-  // Handle all dates with a switch statement
-  const dateKey = `${date.getDate()}-${date.getMonth() + 1}`; // +1 to convert from 0-based month
-  
-  // Create a mapping object for better maintainability
-  const imageMap: { [key: string]: any } = {
-    // January
-    '5-1': () => require('../../assets/images/saints/05-Jan.jpg'),
-    '12-1': () => require('../../assets/images/saints/12-Jan.jpg'),
-    '19-1': () => require('../../assets/images/saints/19-Jan.jpg'),
-    '26-1': () => require('../../assets/images/saints/26-Jan.jpg'),
-    
-    // February
-    '2-2': () => require('../../assets/images/saints/02-Feb.jpg'),
-    '9-2': () => require('../../assets/images/saints/09-Feb.jpg'),
-    '15-2': () => require('../../assets/images/saints/15-Feb.jpg'),
-    '16-2': () => require('../../assets/images/saints/16-Feb.jpg'),
-    '22-2': () => require('../../assets/images/saints/22-Feb.jpg'),
-    '23-2': () => require('../../assets/images/saints/23-Feb.jpg'),
-
-    // March
-    '2-3': () => require('../../assets/images/saints/02-March.jpg'),
-    '9-3': () => require('../../assets/images/saints/09-March.jpg'),
-    '16-3': () => require('../../assets/images/saints/16-March.jpg'),
-    '23-3': () => require('../../assets/images/saints/23-March.jpg'),
-
-    // April
-    '6-4': () => require('../../assets/images/saints/06-April.jpg'),
-    '12-4': () => require('../../assets/images/saints/12-April.jpg'),
-    '13-4': () => require('../../assets/images/saints/13-April.jpg'),
-    '17-4': () => require('../../assets/images/saints/17-April.jpg'),
-    '18-4': () => require('../../assets/images/saints/18-April.jpg'),
-    '19-4': () => require('../../assets/images/saints/19-April.jpg'),
-    '20-4': () => require('../../assets/images/saints/20-April.jpg'),
-    '27-4': () => require('../../assets/images/saints/27-April.jpg'),
-
-    // May
-    '4-5': () => require('../../assets/images/saints/04-May.jpg'),
-    '6-5': () => require('../../assets/images/saints/06-May.jpg'),
-    '11-5': () => require('../../assets/images/saints/11-may.jpg'),
-    '18-5': () => require('../../assets/images/saints/18-May.jpg'),
-    '24-5': () => require('../../assets/images/saints/24-May.jpg'),
-    '25-5': () => require('../../assets/images/saints/25-May.jpg'),
-
-    // June
-    '1-6': () => require('../../assets/images/saints/01-June.jpg'),
-    '8-6': () => require('../../assets/images/saints/08-June.jpg'),
-    '15-6': () => require('../../assets/images/saints/15-June.jpg'),
-    '22-6': () => require('../../assets/images/saints/22-June.jpg'),
-    '29-6': () => require('../../assets/images/saints/29-June.jpg'),
-
-    // July
-    // '6-7': () => require('../../assets/images/saints/06-July.jpg'), // File doesn't exist
-    '12-7': () => require('../../assets/images/saints/12-July.jpg'),
-    '13-7': () => require('../../assets/images/saints/13-July.jpg'),
-    '20-7': () => require('../../assets/images/saints/20-July.jpg'),
-    '27-7': () => require('../../assets/images/saints/27-July.jpg'),
-
-    // August
-    '3-8': () => require('../../assets/images/saints/03-Aug.jpg'),
-    '10-8': () => require('../../assets/images/saints/10-Aug.jpg'),
-    '17-8': () => require('../../assets/images/saints/17-Aug.jpg'),
-    '18-8': () => require('../../assets/images/saints/18-Aug.jpg'),
-    '24-8': () => require('../../assets/images/saints/24-Aug.jpg'),
-    '27-8': () => require('../../assets/images/saints/27-Aug.jpg'),
-    '28-8': () => require('../../assets/images/saints/28-Aug.jpg'),
-    '31-8': () => require('../../assets/images/saints/31-Aug.jpg'),
-
-    // September
-    '7-9': () => require('../../assets/images/saints/07-Sep.jpg'),
-    '11-9': () => require('../../assets/images/saints/11-Sep.jpg'),
-    '14-9': () => require('../../assets/images/saints/14-Sep.jpg'),
-    // '18-9': () => require('../../assets/images/saints/18-Sep.jpg'), // File doesn't exist
-    '21-9': () => require('../../assets/images/saints/21-Sep.jpg'),
-    '27-9': () => require('../../assets/images/saints/27-Sep.jpg'),
-    '28-9': () => require('../../assets/images/saints/28-Sep.jpg'),
-
-    // October
-    '5-10': () => require('../../assets/images/saints/05- Oct.jpg'), // Note: filename has a space
-    '12-10': () => require('../../assets/images/saints/12-Oct.jpg'),
-    '19-10': () => require('../../assets/images/saints/19-Oct.jpg'),
-    '26-10': () => require('../../assets/images/saints/26-Oct.jpg'),
-    '27-10': () => require('../../assets/images/saints/27-Oct.jpg'),
-
-    // November
-    '1-11': () => require('../../assets/images/saints/01-Nov.jpg'),
-    '2-11': () => require('../../assets/images/saints/02-Nov.jpg'),
-    '8-11': () => require('../../assets/images/saints/08-Nov.jpg'),
-    '9-11': () => require('../../assets/images/saints/09-Nov.jpg'),
-    '16-11': () => require('../../assets/images/saints/16-Nov.jpg'),
-    '20-11': () => require('../../assets/images/saints/20-Nov.jpg'),
-    '21-11': () => require('../../assets/images/saints/21-Nov.jpg'),
-    '23-11': () => require('../../assets/images/saints/23-Nov.jpg'),
-    '30-11': () => require('../../assets/images/saints/30-Nov.jpg'),
-
-    // December
-    '7-12': () => require('../../assets/images/saints/07-Dec.jpg'),
-    '4-12': () => require('../../assets/images/saints/04-Dec.jpg'),
-    '14-12': () => require('../../assets/images/saints/14-Dec.jpg'),
-    '18-12': () => require('../../assets/images/saints/18-Dec.jpg'),
-    '21-12': () => require('../../assets/images/saints/21-Dec.jpg'),
-    '28-12': () => require('../../assets/images/saints/28-Dec.jpg'),
-  };
-
-  const imageLoader = imageMap[dateKey];
-  if (imageLoader) {
-    try {
-      return imageLoader();
-    } catch (error) {
-      console.warn(`Image not found for date ${dateKey}, using default`);
-      return null;
-    }
-  }
-
-  return null;
+/**
+ * Gets the image URL for a church event from denovi.mk
+ * Falls back to local assets if available, otherwise returns null
+ */
+const getEventImageUrl = (event: ChurchEvent): string | null => {
+  // Enrich the event with denovi.mk image URL if not already present
+  const enrichedEvent = event.imageUrl ? event : enrichEventWithImage(event);
+  return enrichedEvent.imageUrl || null;
 };
 
 const LoadingScreen = () => {
@@ -180,13 +61,13 @@ const LoadingScreen = () => {
 
 export const CalendarScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [events, setEvents] = useState<ChurchEvent[]>(CHURCH_EVENTS_2025);
+  const [events, setEvents] = useState<ChurchEvent[]>(CHURCH_EVENTS);
   const [serviceTypeFilters, setServiceTypeFilters] = useState<ServiceType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceTypes, setSelectedServiceTypes] = useState<Set<ServiceType>>(new Set());
   const [contactDialogVisible, setContactDialogVisible] = useState(false);
-  
+
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -199,7 +80,7 @@ export const CalendarScreen = () => {
 
   // Group and filter events
   const filteredAndGroupedEvents = React.useMemo(() => {
-    return CHURCH_EVENTS_2025
+    return CHURCH_EVENTS
       .filter(event => {
         const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
@@ -241,12 +122,12 @@ export const CalendarScreen = () => {
     const isSmall = screenWidth < 380;
     
     return (
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-        contentContainerStyle={styles.filterContentContainer}
-      >
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false}
+      style={styles.filterContainer}
+      contentContainerStyle={styles.filterContentContainer}
+    >
         {Object.entries(SERVICE_TYPE_COLORS).map(([type, color]) => {
           const label = getServiceTypeLabel(type as ServiceType);
           const isSelected = selectedServiceTypes.has(type as ServiceType);
@@ -266,9 +147,9 @@ export const CalendarScreen = () => {
           
           return (
             <TouchableOpacity
-              key={type}
-              onPress={() => toggleServiceTypeFilter(type as ServiceType)}
-              style={[
+          key={type}
+          onPress={() => toggleServiceTypeFilter(type as ServiceType)}
+          style={[
                 styles.filterChipTouchable,
                 { 
                   backgroundColor: isSelected ? color : COLORS.SURFACE,
@@ -276,10 +157,10 @@ export const CalendarScreen = () => {
                   minHeight: isVerySmall ? 36 : 40,
                   borderColor: isSelected ? color : COLORS.BORDER,
                 }
-              ]}
+          ]}
             >
-              <MaterialCommunityIcons
-                name={SERVICE_TYPE_ICONS[type as ServiceType]}
+            <MaterialCommunityIcons
+              name={SERVICE_TYPE_ICONS[type as ServiceType]}
                 size={iconSize}
                 color={isSelected ? COLORS.TEXT_LIGHT : COLORS.TEXT}
                 style={{ marginRight: 6 }}
@@ -302,8 +183,8 @@ export const CalendarScreen = () => {
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
-    );
+    </ScrollView>
+  );
   };
 
   const showContactInfo = () => {
@@ -342,8 +223,8 @@ export const CalendarScreen = () => {
             const fontSize = isVerySmall ? 10 : screenWidth < 380 ? 11 : 12;
             
             return (
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
                   style={[
                     styles.socialButton,
                     {
@@ -352,13 +233,13 @@ export const CalendarScreen = () => {
                       marginRight: 12,
                     }
                   ]}
-                  onPress={() => SocialMediaService.openFacebookGroup()}
-                >
+              onPress={() => SocialMediaService.openFacebookGroup()}
+            >
                   <MaterialCommunityIcons name="facebook" size={iconSize} color={COLORS.TEXT_LIGHT} />
                   <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Facebook</Text>
-                </TouchableOpacity>
+            </TouchableOpacity>
 
-                <TouchableOpacity
+            <TouchableOpacity
                   style={[
                     styles.socialButton,
                     {
@@ -367,13 +248,13 @@ export const CalendarScreen = () => {
                       marginHorizontal: 6,
                     }
                   ]}
-                  onPress={showContactInfo}
-                >
+              onPress={showContactInfo}
+            >
                   <MaterialCommunityIcons name="phone" size={iconSize} color={COLORS.TEXT_LIGHT} />
                   <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Контакт</Text>
-                </TouchableOpacity>
+            </TouchableOpacity>
 
-                <TouchableOpacity
+            <TouchableOpacity
                   style={[
                     styles.socialButton,
                     {
@@ -382,14 +263,14 @@ export const CalendarScreen = () => {
                       marginLeft: 12,
                     }
                   ]}
-                  onPress={() => SocialMediaService.openWebsite()}
-                >
+              onPress={() => SocialMediaService.openWebsite()}
+            >
                   <MaterialCommunityIcons name="web" size={iconSize} color={COLORS.TEXT_LIGHT} />
                   <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">
                     {isVerySmall ? 'Веб' : 'Веб-страна'}
                   </Text>
-                </TouchableOpacity>
-              </View>
+            </TouchableOpacity>
+          </View>
             );
           })()}
           
@@ -444,11 +325,12 @@ export const CalendarScreen = () => {
                             <View style={styles.rightContainer}>
                               <View style={styles.imageContainer}>
                                 {(() => {
-                                  const eventImage = getEventImage(event);
-                                  
-                                  if (!eventImage) {
+                                  const imageUrl = getEventImageUrl(event);
+                                  const [imageError, setImageError] = useState(false);
+
+                                  if (!imageUrl || imageError) {
                                     return (
-                                      <MaterialCommunityIcons 
+                                      <MaterialCommunityIcons
                                         name={SERVICE_TYPE_ICONS[event.serviceType]}
                                         size={40}
                                         color={SERVICE_TYPE_COLORS[event.serviceType]}
@@ -456,15 +338,14 @@ export const CalendarScreen = () => {
                                       />
                                     );
                                   }
-                                  
+
                                   return (
-                                    <Image 
-                                      source={eventImage}
+                                    <Image
+                                      source={{ uri: imageUrl }}
                                       style={styles.eventImage}
                                       resizeMode="cover"
                                       onError={() => {
-                                        // Silently handle image loading errors - fallback handled by parent
-                                        // The error is caught and won't show a notification
+                                        setImageError(true);
                                       }}
                                     />
                                   );

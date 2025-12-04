@@ -7,11 +7,31 @@
       "android": {
         "buildType": "apk",
         "distribution": "internal"
+      },
+      "ios": {
+        "simulator": false,
+        "distribution": "internal",
+        "image": "sdk-51"
       }
     },
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle",
+        "env": {
+          "NODE_ENV": "production"
+        }
+      },
+      "ios": {
+        "env": {
+          "COCOAPODS_DISABLE_STATS": "true",
+          "COCOAPODS_PARALLEL_CODE_SIGN": "false",
+          "COCOAPODS_SKIP_UPDATE_MESSAGE": "true",
+          "COCOAPODS_DISABLE_DETERMINISTIC_UUIDS": "true"
+        },
+        "image": "sdk-51",
+        "cache": {
+          "disabled": false
+        }
       }
     }
   }

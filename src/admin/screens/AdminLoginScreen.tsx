@@ -18,22 +18,46 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
 
   const handleLogin = async () => {
     setError(''); // Clear previous errors
-    
-    if (!username || !password) {
+
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    // Comprehensive input validation
+    if (!trimmedUsername || !trimmedPassword) {
       setError('Внесете корисничко име и лозинка');
       return;
     }
 
+    if (trimmedUsername.length < 3) {
+      setError('Корисничкото име мора да има барем 3 знаци');
+      return;
+    }
+
+    if (trimmedPassword.length < 6) {
+      setError('Лозинката мора да има барем 6 знаци');
+      return;
+    }
+
+    // Validate email format if it contains @
+    if (trimmedUsername.includes('@')) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedUsername)) {
+        setError('Невалиден email формат');
+        return;
+      }
+    }
+
     try {
-      const result = await login(username.trim(), password.trim());
+      const result = await login(trimmedUsername, trimmedPassword);
       if (result.success) {
         navigation.replace('AdminDashboard');
       } else {
         setError(result.error || 'Невалидно корисничко име или лозинка');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Грешка при најавување');
+      const errorMessage = err instanceof Error ? err.message : 'Грешка при најавување';
+      setError(errorMessage);
     }
   };
 

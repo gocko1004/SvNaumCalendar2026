@@ -12,11 +12,24 @@
       "backgroundColor": "#831B26"
     },
     "ios": {
-      "bundleIdentifier": "com.svnaum.calendar"
+      "bundleIdentifier": "com.svnaum.calendar",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSUserNotificationsUsageDescription": "We send notifications about church services and important events.",
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.svnaum.calendar",
       "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#831B26"
+      },
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.POST_NOTIFICATIONS",
@@ -31,6 +44,9 @@
         "projectId": "ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb"
       }
     },
-    "owner": "mpc_triengen_sv_naum"
+    "owner": "mpc_triengen_sv_naum",
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
