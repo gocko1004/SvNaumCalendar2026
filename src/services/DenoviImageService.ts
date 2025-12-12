@@ -49,6 +49,37 @@ export const getPossibleDenoviImageUrls = (date: Date): string[] => {
 };
 
 /**
+ * Fetches the saint name from denovi.mk for a given date
+ * Parses the HTML <title> or <h1> tag to find the daily saint.
+ */
+export const fetchSaintName = async (date: Date): Promise<string | null> => {
+  try {
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const monthName = MONTH_NAMES_MK[month];
+    const dayFormatted = day.toString().padStart(2, '0');
+    
+    // Construct the page URL (e.g., https://denovi.mk/synaxarion/januari/05)
+    const url = `${DENOVI_BASE_URL}${SYNAXARION_PATH}/${monthName}/${dayFormatted}`;
+    
+    const response = await fetch(url);
+    const html = await response.text();
+    
+    // Extract text inside <h1> tags which usually contains the Saint's name
+    const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/s);
+    if (h1Match && h1Match[1]) {
+       // Remove any HTML tags from the captured text
+       return h1Match[1].replace(/<[^>]*>/g, '').trim();
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn(`Error fetching saint name for ${date.toISOString()}:`, error);
+    return null;
+  }
+};
+
+/**
  * Checks if an image URL is accessible
  * @param url The image URL to check
  * @returns Promise that resolves to true if image is accessible

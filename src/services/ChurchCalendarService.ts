@@ -1,6 +1,6 @@
 import { format, parse, isEqual } from 'date-fns';
 import { mk } from 'date-fns/locale';
-import { getDenoviImageUrl } from './DenoviImageService';
+import { getDenoviImageUrl, getAccessibleDenoviImage, fetchSaintName } from './DenoviImageService';
 
 export type ServiceType =
   | 'LITURGY'
@@ -15,6 +15,7 @@ export interface ChurchEvent {
   time: string;
   description?: string;
   imageUrl?: string; // Optional image URL from denovi.mk
+  saintName?: string; // Saint name from denovi.mk
 }
 
 // Church events for 2026
@@ -22,7 +23,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // January
   {
     date: new Date(2026, 1-1, 4),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -47,13 +48,13 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 1-1, 11),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 1-1, 18),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -65,14 +66,14 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 1-1, 25),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   // February
   {
     date: new Date(2026, 2-1, 1),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -104,25 +105,25 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // March
   {
     date: new Date(2026, 3-1, 1),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 3-1, 8),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 3-1, 15),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 3-1, 22),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -180,14 +181,14 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 4-1, 26),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   // May
   {
     date: new Date(2026, 5-1, 3),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -213,7 +214,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 5-1, 17),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00',
     description: '09:00 - 13:00'
@@ -264,19 +265,19 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 6-1, 14),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 6-1, 21),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 6-1, 28),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -337,7 +338,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 8-1, 16),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -349,7 +350,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 8-1, 23),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -375,7 +376,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // September
   {
     date: new Date(2026, 9-1, 6),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -394,7 +395,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 9-1, 20),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -421,19 +422,19 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 10-1, 11),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 10-1, 18),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 10-1, 25),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -453,7 +454,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // November
   {
     date: new Date(2026, 11-1, 1),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -484,13 +485,13 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 11-1, 22),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 11-1, 29),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -510,13 +511,13 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 12-1, 6),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 12-1, 13),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -528,7 +529,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 12-1, 20),
-    name: 'Неделна Литургија',
+    name: 'Неделна',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -577,7 +578,7 @@ export const getServiceTypeLabel = (type: ServiceType): string => {
     case 'EVENING_SERVICE':
       return 'Вечерна Богослужба';
     case 'CHURCH_OPEN':
-      return 'Црквата е отворена';
+      return 'Црквата е отворена / Без свештеник';
     case 'PICNIC':
       return 'Пикник';
     default:
@@ -604,4 +605,29 @@ export const enrichEventWithImage = (event: ChurchEvent): ChurchEvent => {
  */
 export const enrichEventsWithImages = (events: ChurchEvent[]): ChurchEvent[] => {
   return events.map(enrichEventWithImage);
+};
+
+/**
+ * Enriches a church event with both image and saint name from denovi.mk
+ * @param event The church event to enrich
+ * @returns Promise resolving to the event with imageUrl and saintName properties added
+ */
+export const enrichEventWithData = async (event: ChurchEvent): Promise<ChurchEvent> => {
+  // 1. Fetch Image URL if we don't have one
+  let imageUrl = event.imageUrl;
+  if (!imageUrl) {
+    imageUrl = await getAccessibleDenoviImage(event.date) || undefined;
+  }
+
+  // 2. Fetch Saint Name if missing
+  let saintName = event.saintName;
+  if (!saintName) {
+    saintName = await fetchSaintName(event.date) || undefined;
+  }
+
+  return {
+    ...event,
+    imageUrl,
+    saintName
+  };
 };

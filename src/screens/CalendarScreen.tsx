@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text } from 'react-native';
 import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal } from 'react-native-paper';
-import { CHURCH_EVENTS, ChurchEvent, getServiceTypeLabel, ServiceType, getEventsForDate, enrichEventWithImage } from '../services/ChurchCalendarService';
+import { CHURCH_EVENTS, ChurchEvent, getServiceTypeLabel, ServiceType, getEventsForDate, enrichEventWithData } from '../services/ChurchCalendarService';
+import { getImageForEvent } from '../services/LocalImageService';
 import { COLORS, CARD_STYLES } from '../constants/theme';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
@@ -23,14 +24,64 @@ const SERVICE_TYPE_ICONS = {
   PICNIC: 'food' as const
 } as const;
 
-/**
- * Gets the image URL for a church event from denovi.mk
- * Falls back to local assets if available, otherwise returns null
- */
-const getEventImageUrl = (event: ChurchEvent): string | null => {
-  // Enrich the event with denovi.mk image URL if not already present
-  const enrichedEvent = event.imageUrl ? event : enrichEventWithImage(event);
-  return enrichedEvent.imageUrl || null;
+// Helper function to get image positioning based on date
+const getImagePositionForDate = (date: Date) => {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  
+  // For images where heads are cut off, show more of the image (taller)
+  // March 15 - head cut off
+  if (month === 3 && day === 15) return { height: '150%', top: 0 };
+  // April 19 - head cut off
+  if (month === 4 && day === 19) return { height: '150%', top: 0 };
+  // May 31 - head cut off
+  if (month === 5 && day === 31) return { height: '150%', top: 0 };
+  // July 12 - head cut off
+  if (month === 7 && day === 12) return { height: '150%', top: 0 };
+  
+  return {};
+};
+
+// Separate component for event images to properly use hooks
+const EventImage = ({ event }: { event: ChurchEvent }) => {
+  const [imageError, setImageError] = useState(false);
+  const [remoteImageError, setRemoteImageError] = useState(false);
+  const localImage = getImageForEvent(event.name, event.date);
+  const imagePosition = getImagePositionForDate(event.date);
+
+  // 1. Try Local Image first
+  if (localImage && !imageError) {
+    return (
+      <Image
+        source={localImage}
+        style={[styles.eventImage, imagePosition]}
+        resizeMode="cover"
+        onError={() => setImageError(true)}
+      />
+    );
+  }
+
+  // 2. Try Remote Image (from denovi.mk) if local failed or doesn't exist
+  if (event.imageUrl && !remoteImageError) {
+    return (
+      <Image
+        source={{ uri: event.imageUrl }}
+        style={[styles.eventImage, imagePosition]}
+        resizeMode="cover"
+        onError={() => setRemoteImageError(true)}
+      />
+    );
+  }
+
+  // 3. Fallback to Icon
+  return (
+    <MaterialCommunityIcons
+      name={SERVICE_TYPE_ICONS[event.serviceType]}
+      size={40}
+      color={SERVICE_TYPE_COLORS[event.serviceType]}
+      style={styles.fallbackIcon}
+    />
+  );
 };
 
 const LoadingScreen = () => {
@@ -71,16 +122,56 @@ export const CalendarScreen = () => {
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Brief splash screen - just 800ms for branding
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 3000);
+    }, 800);
+
+    // Background fetch to enrich events with data from denovi.mk
+    const enrichEvents = async () => {
+      console.log('Starting to enrich events...');
+      const updatedEvents = [...events];
+      let hasChanges = false;
+
+      // Process events to fetch missing images or saint names
+      for (let i = 0; i < updatedEvents.length; i++) {
+        const evt = updatedEvents[i];
+        // Only fetch if we don't have a local image OR we are missing the saint name
+        const hasLocalImage = getImageForEvent(evt.name, evt.date);
+        
+        if (!hasLocalImage || !evt.saintName) {
+          // This fetches from denovi.mk
+          console.log(`Enriching event ${i}: ${evt.name}`);
+          const enriched = await enrichEventWithData(evt);
+          console.log(`Enriched ${evt.name}, saintName:`, enriched.saintName);
+          
+          // If we found new data, update the event in our list
+          if (enriched.imageUrl !== evt.imageUrl || enriched.saintName !== evt.saintName) {
+            updatedEvents[i] = enriched;
+            hasChanges = true;
+            // Update state incrementally every 3 events to show progress
+            if (i % 3 === 0) {
+              setEvents([...updatedEvents]);
+            }
+          }
+        }
+      }
+      
+      if (hasChanges) {
+        console.log('Updating events with enriched data');
+        setEvents(updatedEvents);
+      }
+    };
+
+    // Start fetching after initial load to keep UI responsive
+    setTimeout(enrichEvents, 1000);
 
     return () => clearTimeout(timer);
   }, []);
 
   // Group and filter events
   const filteredAndGroupedEvents = React.useMemo(() => {
-    return CHURCH_EVENTS
+    return events
       .filter(event => {
         const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
@@ -94,7 +185,7 @@ export const CalendarScreen = () => {
         acc[month].push(event);
         return acc;
       }, {} as Record<number, ChurchEvent[]>);
-  }, [searchQuery, selectedServiceTypes]);
+  }, [searchQuery, selectedServiceTypes, events]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -174,9 +265,9 @@ export const CalendarScreen = () => {
                     flex: 1,
                   }
                 ]}
-                numberOfLines={2}
+                numberOfLines={1}
                 adjustsFontSizeToFit={true}
-                minimumFontScale={0.75}
+                minimumFontScale={0.65}
               >
                 {label}
               </Text>
@@ -295,6 +386,14 @@ export const CalendarScreen = () => {
                       <Card.Content>
                         <View style={styles.cardContent}>
                           <Title style={styles.eventTitle}>{event.name}</Title>
+                          
+                          {/* Display Saint Name if available */}
+                          {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
+                            <Text style={styles.saintNameText}>
+                              {event.saintName}
+                            </Text>
+                          )}
+
                           <View style={styles.cardDetails}>
                             <View style={styles.dateContainer}>
                               <Text style={styles.dateDay}>
@@ -324,32 +423,7 @@ export const CalendarScreen = () => {
                             </View>
                             <View style={styles.rightContainer}>
                               <View style={styles.imageContainer}>
-                                {(() => {
-                                  const imageUrl = getEventImageUrl(event);
-                                  const [imageError, setImageError] = useState(false);
-
-                                  if (!imageUrl || imageError) {
-                                    return (
-                                      <MaterialCommunityIcons
-                                        name={SERVICE_TYPE_ICONS[event.serviceType]}
-                                        size={40}
-                                        color={SERVICE_TYPE_COLORS[event.serviceType]}
-                                        style={styles.fallbackIcon}
-                                      />
-                                    );
-                                  }
-
-                                  return (
-                                    <Image
-                                      source={{ uri: imageUrl }}
-                                      style={styles.eventImage}
-                                      resizeMode="cover"
-                                      onError={() => {
-                                        setImageError(true);
-                                      }}
-                                    />
-                                  );
-                                })()}
+                                <EventImage event={event} />
                               </View>
                             </View>
                           </View>
@@ -542,19 +616,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: COLORS.BORDER,
+    maxWidth: '90%',
     flexWrap: 'wrap',
+    borderColor: COLORS.BORDER,
     maxWidth: '100%',
-    width: '100%',
   },
   serviceType: {
-    fontSize: Dimensions.get('window').width < 360 ? 11 : 13,
+    fontSize: Dimensions.get('window').width < 360 ? 10 : 11,
     marginLeft: 6,
     fontWeight: '600',
     color: COLORS.TEXT,
     flexShrink: 1,
+    lineHeight: 14,
     flex: 1,
-    lineHeight: 16,
   },
   time: {
     fontSize: 13,
@@ -580,7 +654,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 15,
     backgroundColor: COLORS.BACKGROUND,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     overflow: 'hidden',
     borderWidth: 2,
@@ -588,7 +662,8 @@ const styles = StyleSheet.create({
   },
   eventImage: {
     width: '100%',
-    height: '100%',
+    height: '130%',
+    top: 0,
   },
   fallbackIcon: {
     opacity: 0.7,
@@ -702,5 +777,12 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_LIGHT,
     fontSize: 16,
     marginTop: 4,
+  },
+  saintNameText: {
+    fontSize: 14,
+    color: COLORS.TEXT,
+    fontStyle: 'italic',
+    marginBottom: 8,
+    marginTop: -4,
   },
 });

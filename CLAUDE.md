@@ -4,238 +4,121 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SV Naum Calendar is a React Native mobile application built with Expo SDK 51 for St. Naum Church in Triengen. The app provides a church calendar with push notifications for services and events, targeting both iOS and Android platforms.
+SV Naum Calendar is a React Native mobile application built with Expo SDK 51 for St. Naum Ohridski Church in Triengen, Switzerland. The app provides a 2026 church calendar with push notifications.
 
 **Package**: `com.svnaum.calendar`
-**Expo Owner**: `mpc_triengen_sv_naum`
 **EAS Project ID**: `ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb`
 
 ## Development Commands
 
-### Basic Development
 ```bash
 # Install dependencies
 npm install
 
-# Start development server (Metro bundler)
+# Start development server
 npm start
 
-# Run on Android emulator/device
+# Run on platforms
 npm run android
-
-# Run on iOS simulator/device
 npm run ios
-
-# Run web version
 npm run web
+
+# Build for web (Vercel deployment)
+npm run vercel-build
 ```
 
-### Building
+### EAS Cloud Builds
 
-#### Local Android Debug Build
 ```bash
-# Generate native Android code
-npx expo prebuild --platform android
-
-# Build debug APK (Windows batch script)
-cd android
-call build-android.bat
-```
-
-The debug APK will be at: `android/app/build/outputs/apk/debug/app-debug.apk`
-
-#### EAS Cloud Builds
-```bash
-# Preview build (APK for internal testing)
+# Preview build (APK/internal iOS)
 npx eas-cli build --platform android --profile preview
+npx eas-cli build --platform ios --profile preview
 
 # Production build (AAB for Play Store)
 npx eas-cli build --platform android --profile production
 
-# iOS production build (requires Apple Developer account)
-npx eas-cli build --platform ios --profile production
-
-# Check build status
-npx eas-cli build:view <build-id>
-
-# List all builds
-npx eas-cli build:list
+# TypeScript check
+npx tsc --noEmit
 ```
 
-### Testing & Web Deployment
-```bash
-# Build for web deployment (Vercel)
-npm run vercel-build
-# Output: web-build/
+### Local Native Builds
 
-# Standard web export
-npm run build
+```bash
+# Generate native projects
+npx expo prebuild
+
+# Run locally
+npx expo run:ios
+npx expo run:android
 ```
 
 ## Architecture
 
-### Navigation Structure
-The app uses React Navigation with a bottom tab navigator as the main interface:
-- **Calendar Tab** (`CalendarScreen`): Main church calendar view showing events
-- **Settings Tab** (`NotificationSettingsScreen`): User notification preferences
-- **Admin Tab** (`AdminNavigator`): Nested stack navigator for admin functions (requires authentication)
+### Entry Points
+- `App.tsx` - React Native entry point (uses `react-native-paper`, `LanguageProvider`, `AppNavigator`)
+- `src/App.js` - Web version entry point (uses `react-router-dom`, Material UI)
+
+### Navigation (React Navigation)
+The app uses bottom tab navigation with three main sections:
+- **Calendar Tab** - Main church calendar with events
+- **Settings Tab** - Notification preferences
+- **Admin Tab** - Protected admin features (nested stack navigator)
 
 ### Core Services
 
-#### NotificationService (Singleton)
-Handles all push notification logic with yearly event scheduling:
-- Configures Android notification channels (`church-events`, `urgent-updates`)
-- Registers devices with Expo Push Notification service
+**NotificationService** (`src/services/NotificationService.ts`)
+- Singleton managing Expo push notifications
+- Yearly scheduling: schedules current year + next year (when in December)
+- Reminder types: 1 week, 1 day, 1 hour before events
+- Android channels: `church-events`, `urgent-updates`
 - Stores push tokens in Firebase Firestore (`pushTokens` collection)
-- **Yearly scheduling system**: Automatically schedules notifications for current year's remaining events and next year's events when in December
-- Schedules three types of reminders: 1 week before, 1 day before, 1 hour before (configurable)
-- Manages notification settings in AsyncStorage
-- Can send custom push notifications to all registered devices via admin interface
 
-#### ChurchCalendarService
-Contains hardcoded calendar data (`CHURCH_EVENTS_2026` - 87 events) with service types:
-- `LITURGY`: Regular church services
-- `EVENING_SERVICE`: Evening prayers/services
-- `CHURCH_OPEN`: Church open hours
-- `PICNIC`: Special community events
+**ChurchCalendarService** (`src/services/ChurchCalendarService.ts`)
+- Contains `CHURCH_EVENTS_2026` array (87 events)
+- Service types: `LITURGY`, `EVENING_SERVICE`, `CHURCH_OPEN`, `PICNIC`
 
-**Latest Update (Dec 2, 2025)**: Calendar updated to 2026 data from PDF "Годишен план на Богослужби за 2026 Година.pdf"
+**DenoviImageService** (`src/services/DenoviImageService.ts`)
+- Fetches saint images from `https://denovi.mk/synaxarion/[month]/[day]-020.jpg`
+- Falls back to service-type icons on failure
 
-#### DenoviImageService (NEW)
-Fetches saint images dynamically from denovi.mk:
-- URL pattern: `https://denovi.mk/synaxarion/[month]/[day]-020.jpg`
-- Automatic image URL generation for each event date
-- Fallback to service-type icons if images fail to load
-- Images display in CalendarScreen for each church event
+**Firebase** (`src/firebase.js`)
+- Firestore collections: `pushTokens`, `customEvents`
+- Email/password authentication for admin access
 
-#### Firebase Integration
-Uses Firebase Firestore for:
-- Push token storage (`pushTokens` collection)
-- Admin authentication
-- Event management (admin features)
+### Key Directories
+- `src/screens/` - Main app screens (CalendarScreen, NotificationSettingsScreen)
+- `src/admin/screens/` - Admin dashboard and management screens
+- `src/services/` - Business logic services
+- `src/navigation/` - React Navigation configuration
+- `src/constants/` - Theme (`#831B26` primary), config, languages
 
-Configuration is in `src/firebase.js` (not TypeScript).
+## Configuration Files
 
-### Language Support
-The app has a `LanguageContext` for internationalization, primarily supporting Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian (e.g., "Годишен План 2026 година").
+- `app.json` - Expo configuration, iOS encryption exemption (`ITSAppUsesNonExemptEncryption: false`)
+- `eas.json` - Build profiles (preview: APK/internal, production: AAB)
+- `metro.config.js` - Simplified default Expo config (5 lines)
 
-### Theme & Styling
-- Primary color: `#831B26` (dark red - church branding)
-- Uses `react-native-paper` for Material Design components
-- Theme defined in `src/constants/theme.ts`
-- Brand colors also in `src/constants/config.ts`
+## Build Profiles
 
-## Android Build Configuration
+| Profile | Android | iOS | Use Case |
+|---------|---------|-----|----------|
+| preview | APK | Internal distribution | Testing |
+| production | AAB | App Store | Store release |
 
-### Critical Files for Android
-1. **`android/local.properties`** - SDK location (REQUIRED, not in git)
-   ```
-   sdk.dir=C\\:\\\\Users\\\\Admin\\\\AppData\\\\Local\\\\Android\\\\Sdk
-   ```
+## Known Issues
 
-2. **`android/build-android.bat`** - Custom build script for Windows/WSL
-   ```batch
-   set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
-   cd C:\dev\SvNaumKalendarClaude\SVNaumCalendarUpdate\android
-   call gradlew.bat assembleDebug
-   ```
+### EAS Build Metro Errors
+If builds fail with Metro bundler errors, building locally on Mac with Xcode is more reliable than EAS cloud builds.
 
-3. **`android/app/build.gradle`**
-   - Package: `com.svnaum.calendar`
-   - Uses debug keystore for both debug and release builds (production uses EAS credentials)
-   - Expo SDK 51 compatible configuration with React Native 0.74.5
-
-### Build Profile Differences (eas.json)
-- **preview**: Builds APK for internal distribution/testing
-- **production**: Builds AAB (Android App Bundle) for Play Store, sets `NODE_ENV=production`
-
-## Common Issues & Solutions
-
-### Metro Bundler Patches
-**CRITICAL**: Metro bundler requires patching to fix `_logLines` undefined errors.
-
-**Before running the app for the first time:**
-```bash
-node scripts/fix-build-all.js
+### Android SDK Setup
+Create `android/local.properties` with SDK path:
+```
+sdk.dir=/path/to/Android/Sdk
 ```
 
-This script patches `@expo/cli` to fix logging issues in Metro. The fix scripts are located in `scripts/` directory:
-- `fix-build-all.js` - Main fix script (run this first)
-- `fix-expo-cli-logging.js` - Fixes Metro logging errors
-- `fix-metro-terminal-reporter.js` - Additional Metro fixes
-
-If you encounter "Cannot read properties of undefined (reading 'push')" errors when starting Metro, run the fix script again.
-
-### Android SDK Not Found
-Create `android/local.properties` with the correct SDK path for your system. Common locations:
-- Windows: `C:\Users\<username>\AppData\Local\Android\Sdk`
-- macOS: `~/Library/Android/sdk`
-- Linux: `~/Android/Sdk`
-
-### Java Not Found
-The `build-android.bat` script sets JAVA_HOME to Android Studio's bundled JBR. For other environments:
-- Ensure Java 17+ is installed
-- Set JAVA_HOME environment variable
-- Or modify build scripts to use Android Studio's JBR path
-
 ### Image Assets
-All image assets (icon.png, splash.png, adaptive-icon.png) must exist and be valid image files before running `expo prebuild`. Empty or corrupted image files will cause prebuild to fail.
+All image files (icon.png, splash.png, adaptive-icon.png) must be valid before running `expo prebuild`.
 
-## Admin Features
+## Language
 
-The admin section requires authentication and provides:
-- Custom notification sending to all users
-- Calendar event management
-- Location management
-- Special events management
-
-Admin screens are in `src/admin/screens/`.
-
-## Firebase Configuration
-
-The app uses Firebase for backend services. The Firebase config is in `src/firebase.js`. Ensure this file has valid credentials before running the app, or comment out Firebase imports if not using backend features during development.
-
-## Social Media Integration
-
-The app has a `SocialMediaService` that can post events to social media (currently disabled via feature flags in `src/constants/config.ts`). Facebook integration requires:
-- Facebook App ID and Secret in `.env`
-- Facebook Access Token
-- Feature flag `ENABLE_SOCIAL_SHARING` set to true
-
----
-
-## Recent Updates (December 2, 2025)
-
-### 2026 Calendar Integration
-- ✅ Updated calendar from 2025 to 2026 (87 events total)
-- ✅ Data extracted from PDF: "Годишен план на Богослужби за 2026 Година.pdf"
-- ✅ All events verified and mapped to correct service types
-
-### Image Integration (denovi.mk)
-- ✅ Created `DenoviImageService.ts` for dynamic image fetching
-- ✅ Images load from: `https://denovi.mk/synaxarion/[month]/[day]-020.jpg`
-- ✅ Added `imageUrl` field to `ChurchEvent` interface
-- ✅ Updated `CalendarScreen.tsx` to display saint images
-- ✅ Fallback to service-type icons if images fail to load
-
-### Files Modified
-1. `src/services/ChurchCalendarService.ts` - Updated to 2026 events
-2. `src/services/DenoviImageService.ts` - NEW: Image fetching service
-3. `src/screens/CalendarScreen.tsx` - Updated image display logic
-4. `src/admin/screens/AdminDashboardScreen.tsx` - Updated to use 2026 data
-5. `src/admin/screens/ManageCalendarScreen.tsx` - Updated to use 2026 data
-6. `src/services/NotificationService.ts` - Updated to use 2026 data
-7. `scripts/fix-build-all.js` - Added Metro bundler fix script
-
-### TypeScript Compilation
-✅ All files pass TypeScript compilation (`npx tsc --noEmit`)
-
-### Known Issues
-- **Metro Bundler**: Requires running `node scripts/fix-build-all.js` before first start
-- **Web Version**: May show blank screen on first load - investigating (possibly loading screen timeout or rendering issue)
-- **QR Code Connection**: Tunnel mode (`npx expo start --tunnel`) may be required for cross-network connections
-
-### Testing Status
-- ✅ TypeScript compilation: PASSED
-- ⏳ Mobile app testing: PENDING (QR code connection issues)
-- ⏳ Web version: PENDING (blank screen investigation needed)
+The app uses Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian (e.g., "Годишен План 2026 година"). The `LanguageContext` provides internationalization infrastructure.

@@ -46,7 +46,8 @@
     },
     "owner": "mpc_triengen_sv_naum",
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-build-properties"
     ]
   }
 }

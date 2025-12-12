@@ -55,7 +55,7 @@ export const AdminNavigator = () => {
       <AdminStack.Screen
         name="ManageCalendar"
         component={ManageCalendarScreen}
-        options={{ title: 'Годишен Календар' }}
+        options={{ title: 'Годишен Календар 2026' }}
       />
       <AdminStack.Screen
         name="AddEvent"

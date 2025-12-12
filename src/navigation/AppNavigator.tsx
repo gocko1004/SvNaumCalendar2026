@@ -26,7 +26,7 @@ const MainTabs = () => {
         name="Calendar"
         component={CalendarScreen}
         options={{
-          title: 'Годишен План 2025 година',
+          title: 'Годишен План 2026 година',
           tabBarIcon: ({ color, size }) => (
             <Icon name="calendar" size={size} color={color} />
           ),

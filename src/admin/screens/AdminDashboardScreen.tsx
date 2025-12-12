@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Linking } from 'react-native';
+import { View, ScrollView, StyleSheet, Linking, KeyboardAvoidingView, Platform, Modal, TouchableWithoutFeedback, Keyboard, SafeAreaView, Text } from 'react-native';
 import { Card, Title, Paragraph, Button, Portal, Dialog, TextInput, List, Switch, Divider, IconButton } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../hooks/useAuth';
@@ -291,61 +291,86 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
         Одјави се
       </Button>
 
-      <Portal>
-        <Dialog
-          visible={notificationDialogVisible}
-          onDismiss={() => {
-            setNotificationDialogVisible(false);
-            setNotificationResult(null);
-            setNotificationMessage('');
-          }}
-          style={styles.dialog}
+      {/* Custom Modal for Notification - prevents keyboard flickering */}
+      <Modal
+        visible={notificationDialogVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setNotificationDialogVisible(false);
+          setNotificationResult(null);
+          setNotificationMessage('');
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
         >
-          <Dialog.Title>Испрати Известување до Сите Корисници</Dialog.Title>
-          <Dialog.Content>
-            <TextInput
-              label="Порака"
-              value={notificationMessage}
-              onChangeText={setNotificationMessage}
-              multiline
-              numberOfLines={3}
-              disabled={sendingNotification}
-              placeholder="Внесете ја пораката што сакате да ја испратите до сите корисници..."
-            />
-            {notificationResult && (
-              <View style={styles.resultContainer}>
-                {notificationResult.success ? (
-                  <Paragraph style={styles.successText}>
-                    ✅ Известувањето е успешно испратено до {notificationResult.sentCount} корисник(и)!
-                  </Paragraph>
-                ) : (
-                  <Paragraph style={styles.errorText}>
-                    ❌ Грешка: {notificationResult.error || 'Неуспешно испраќање'}
-                  </Paragraph>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Title style={styles.modalTitle}>Испрати Известување до Сите Корисници</Title>
+
+                <TextInput
+                  label="Порака"
+                  value={notificationMessage}
+                  onChangeText={setNotificationMessage}
+                  multiline
+                  numberOfLines={6}
+                  disabled={sendingNotification}
+                  placeholder="Внесете ја пораката што сакате да ја испратите до сите корисници..."
+                  style={styles.notificationInput}
+                  mode="outlined"
+                />
+
+                {notificationResult && (
+                  <View style={styles.resultContainer}>
+                    {notificationResult.success ? (
+                      <Text style={styles.successText}>
+                        Известувањето е успешно испратено до {notificationResult.sentCount} корисник(и)!
+                      </Text>
+                    ) : (
+                      <Text style={styles.errorText}>
+                        Грешка: {notificationResult.error || 'Неуспешно испраќање'}
+                      </Text>
+                    )}
+                  </View>
                 )}
+
+                <View style={styles.modalButtons}>
+                  <Button
+                    mode="outlined"
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setNotificationDialogVisible(false);
+                      setNotificationResult(null);
+                      setNotificationMessage('');
+                    }}
+                    disabled={sendingNotification}
+                    style={styles.modalButton}
+                  >
+                    Откажи
+                  </Button>
+                  <Button
+                    mode="contained"
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      handleSendNotification();
+                    }}
+                    loading={sendingNotification}
+                    disabled={sendingNotification || !notificationMessage.trim()}
+                    style={styles.modalButton}
+                  >
+                    {sendingNotification ? 'Испраќање...' : 'Испрати'}
+                  </Button>
+                </View>
               </View>
-            )}
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button 
-              onPress={() => {
-                setNotificationDialogVisible(false);
-                setNotificationResult(null);
-                setNotificationMessage('');
-              }}
-              disabled={sendingNotification}
-            >
-              Откажи
-            </Button>
-            <Button 
-              onPress={handleSendNotification}
-              loading={sendingNotification}
-              disabled={sendingNotification || !notificationMessage.trim()}
-            >
-              {sendingNotification ? 'Испраќање...' : 'Испрати до Сите'}
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Portal>
 
         <Dialog
           visible={automatedSettingsVisible}
@@ -491,14 +516,55 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: COLORS.SURFACE,
+    backgroundColor: '#f0f0f0',
   },
   successText: {
-    color: COLORS.SUCCESS,
+    color: '#4CAF50',
     fontWeight: 'bold',
+    fontSize: 14,
   },
   errorText: {
-    color: COLORS.ERROR,
+    color: '#D32F2F',
     fontWeight: 'bold',
+    fontSize: 14,
+  },
+  // Modal styles for notification
+  modalContainer: {
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: COLORS.SURFACE,
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '90%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  notificationInput: {
+    minHeight: 150,
+    backgroundColor: '#fff',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 20,
+    gap: 12,
+  },
+  modalButton: {
+    minWidth: 100,
   },
 }); 
