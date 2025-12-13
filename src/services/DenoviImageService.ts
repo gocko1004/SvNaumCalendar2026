@@ -54,22 +54,41 @@ export const getPossibleDenoviImageUrls = (date: Date): string[] => {
  */
 export const fetchSaintName = async (date: Date): Promise<string | null> => {
   try {
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const monthName = MONTH_NAMES_MK[month];
-    const dayFormatted = day.toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
     
-    // Construct the page URL (e.g., https://denovi.mk/synaxarion/januari/05)
-    const url = `${DENOVI_BASE_URL}${SYNAXARION_PATH}/${monthName}/${dayFormatted}`;
+    // Construct the page URL in YYYYMMDD.html format (e.g., https://denovi.mk/20260412.html)
+    const url = `${DENOVI_BASE_URL}/${year}${month}${day}.html`;
     
     const response = await fetch(url);
     const html = await response.text();
     
-    // Extract text inside <h1> tags which usually contains the Saint's name
-    const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/s);
-    if (h1Match && h1Match[1]) {
-       // Remove any HTML tags from the captured text
-       return h1Match[1].replace(/<[^>]*>/g, '').trim();
+    // Look for the first saint name in the list - trying multiple patterns
+    // Pattern 1: Lines with bullet • followed by saint name
+    let saintMatch = html.match(/[*•]\s*[•]\s*([^(<]+)/);
+    
+    // Pattern 2: If not found, try simpler pattern
+    if (!saintMatch) {
+      saintMatch = html.match(/[•]\s*([^(<\n]+)/);
+    }
+    
+    // Pattern 3: Try looking for saint names after specific markers
+    if (!saintMatch) {
+      // Look for lines starting with * followed by bullet point
+      const lines = html.split('\n');
+      for (const line of lines) {
+        if (line.includes('•') && !line.includes('Недела') && !line.includes('Саб')) {
+          const match = line.match(/[•]\s*(.+?)(?:\(|$)/);
+          if (match && match[1]) {
+            return match[1].trim();
+          }
+        }
+      }
+    }
+    
+    if (saintMatch && saintMatch[1]) {
+       return saintMatch[1].trim();
     }
     
     return null;

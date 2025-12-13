@@ -152,12 +152,20 @@ export const CalendarScreen = () => {
       // Process events to fetch missing images or saint names
       for (let i = 0; i < updatedEvents.length; i++) {
         const evt = updatedEvents[i];
-        // Only fetch if we don't have a local image OR we are missing the saint name
         const hasLocalImage = getImageForEvent(evt.name, evt.date);
         
-        if (!hasLocalImage || !evt.saintName) {
+        // Only fetch saint name for "Неделна Литургија" events
+        const needsSaintName = evt.name === 'Неделна Литургија' && !evt.saintName;
+        
+        if (!hasLocalImage || needsSaintName) {
           // This fetches from denovi.mk
+          if (needsSaintName) {
+            console.log(`Fetching saint name for ${evt.name} on ${evt.date.toDateString()}`);
+          }
           const enriched = await enrichEventWithData(evt);
+          if (needsSaintName) {
+            console.log(`Got saint name: "${enriched.saintName}"`);
+          }
           
           // If we found new data, update the event in our list
           if (enriched.imageUrl !== evt.imageUrl || enriched.saintName !== evt.saintName) {
@@ -400,8 +408,8 @@ export const CalendarScreen = () => {
                         <View style={styles.cardContent}>
                           <Title style={styles.eventTitle}>{event.name}</Title>
                           
-                          {/* Display Saint Name if available */}
-                          {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
+                          {/* Display Saint Name ONLY for "Неделна Литургија" events */}
+                          {event.name === 'Неделна Литургија' && event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
                             <Text style={styles.saintNameText}>
                               {event.saintName}
                             </Text>
