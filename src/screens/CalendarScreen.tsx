@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpaci
 import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal } from 'react-native-paper';
 import { CHURCH_EVENTS, ChurchEvent, getServiceTypeLabel, ServiceType, getEventsForDate, enrichEventWithData } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
+import { getAllEvents, mergeEvents } from '../services/FirestoreEventService';
 import { COLORS, CARD_STYLES } from '../constants/theme';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
@@ -127,9 +128,24 @@ export const CalendarScreen = () => {
       setIsLoading(false);
     }, 800);
 
+    // Load events from Firestore and merge with hardcoded events
+    const loadFirestoreEvents = async () => {
+      try {
+        const firestoreEvents = await getAllEvents();
+        const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+        setEvents(merged);
+      } catch (error) {
+        console.error('Error loading Firestore events:', error);
+        // If Firestore fails, continue with hardcoded events
+        setEvents(CHURCH_EVENTS);
+      }
+    };
+
+    // Load Firestore events first
+    loadFirestoreEvents();
+
     // Background fetch to enrich events with data from denovi.mk
     const enrichEvents = async () => {
-      console.log('Starting to enrich events...');
       const updatedEvents = [...events];
       let hasChanges = false;
 
@@ -141,9 +157,7 @@ export const CalendarScreen = () => {
         
         if (!hasLocalImage || !evt.saintName) {
           // This fetches from denovi.mk
-          console.log(`Enriching event ${i}: ${evt.name}`);
           const enriched = await enrichEventWithData(evt);
-          console.log(`Enriched ${evt.name}, saintName:`, enriched.saintName);
           
           // If we found new data, update the event in our list
           if (enriched.imageUrl !== evt.imageUrl || enriched.saintName !== evt.saintName) {
@@ -158,7 +172,6 @@ export const CalendarScreen = () => {
       }
       
       if (hasChanges) {
-        console.log('Updating events with enriched data');
         setEvents(updatedEvents);
       }
     };

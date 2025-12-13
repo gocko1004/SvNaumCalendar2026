@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, Image, Dimensions, Alert } from 'react-native';
 import { 
   Title, 
   Card, 
@@ -12,12 +12,14 @@ import {
   Divider,
   Searchbar,
   Menu,
-  Text
+  Text,
+  ActivityIndicator
 } from 'react-native-paper';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
 import { COLORS } from '../../constants/theme';
 import { ChurchEvent, CHURCH_EVENTS, ServiceType } from '../../services/ChurchCalendarService';
+import { getAllEvents, addEvent, updateEvent, deleteEvent, mergeEvents } from '../../services/FirestoreEventService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -60,26 +62,31 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
     loadCalendar();
   }, []);
 
+  const [loading, setLoading] = useState(false);
+
   const loadCalendar = async () => {
+    setLoading(true);
     try {
-      const savedCalendar = await AsyncStorage.getItem(CALENDAR_STORAGE_KEY);
-      if (savedCalendar) {
-        const parsedCalendar = JSON.parse(savedCalendar);
-        // Convert string dates back to Date objects
-        const eventsWithDates = parsedCalendar.map((event: any) => ({
-          ...event,
-          date: new Date(event.date)
-        }));
-        setEvents(eventsWithDates);
-      }
+      const firestoreEvents = await getAllEvents();
+      const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+      setEvents(merged);
     } catch (error) {
-      console.error('Error loading calendar:', error);
+      console.error('Error loading calendar from Firestore:', error);
+      // Fallback to hardcoded events
+      setEvents(CHURCH_EVENTS);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const refreshEvents = async () => {
+    await loadCalendar();
+  };
+
+  // Remove old AsyncStorage-based save (no longer needed)
   const saveCalendar = async (updatedEvents: ChurchEvent[]) => {
     try {
-      await AsyncStorage.setItem(CALENDAR_STORAGE_KEY, JSON.stringify(updatedEvents));
+      // Deprecated - now using Firestore
       setEvents(updatedEvents);
     } catch (error) {
       console.error('Error saving calendar:', error);
@@ -103,37 +110,83 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
   const handleSaveEvent = async () => {
     // Validate required fields
     if (!editedEvent.name || !editedEvent.date || !editedEvent.time) {
-      alert('Ве молиме пополнете ги сите задолжителни полиња');
+      Alert.alert('Грешка', 'Ве молиме пополнете ги сите задолжителни полиња');
       return;
     }
 
     // Rate limiting - max 10 saves per minute
     if (!rateLimiter.isAllowed('save_event', 10, 60000)) {
-      alert('Премногу брзо додавате настани. Ве молиме почекајте малку.');
+      Alert.alert('Грешка', 'Премногу брзо додавате настани. Ве молиме почекајте малку.');
       return;
     }
 
     // Sanitize and validate the event data
     const sanitizedEvent = sanitizeChurchEvent(editedEvent);
 
-    let updatedEvents;
-    if (selectedEvent) {
-      // Editing existing event
-      updatedEvents = events.map(event => 
-        event === selectedEvent ? { ...event, ...sanitizedEvent } as ChurchEvent : event
-      );
-    } else {
-      // Adding new event
-      updatedEvents = [...events, sanitizedEvent as ChurchEvent];
+    setLoading(true);
+    try {
+      if (selectedEvent && selectedEvent.id) {
+        // Editing existing Firestore event
+        const success = await updateEvent(selectedEvent.id, sanitizedEvent);
+        if (success) {
+          Alert.alert('Успех', 'Настанот е успешно ажуриран');
+          await refreshEvents();
+        } else {
+          Alert.alert('Грешка', 'Настанот не може да се ажурира');
+        }
+      } else {
+        // Adding new event to Firestore
+        const eventId = await addEvent(sanitizedEvent);
+        if (eventId) {
+          Alert.alert('Успех', 'Настанот е успешно додаден');
+          await refreshEvents();
+        } else {
+          Alert.alert('Грешка', 'Настанот не може да се додаде');
+        }
+      }
+      setEditDialogVisible(false);
+    } catch (error) {
+      console.error('Error saving event:', error);
+      Alert.alert('Грешка', 'Грешка при зачувување на настанот');
+    } finally {
+      setLoading(false);
     }
-
-    await saveCalendar(updatedEvents);
-    setEditDialogVisible(false);
   };
 
   const handleDeleteEvent = async (eventToDelete: ChurchEvent) => {
-    const updatedEvents = events.filter(event => event !== eventToDelete);
-    await saveCalendar(updatedEvents);
+    if (!eventToDelete.id) {
+      Alert.alert('Грешка', 'Не може да се избрише хардкодиран настан');
+      return;
+    }
+
+    Alert.alert(
+      'Потврда',
+      'Дали сте сигурни дека сакате да го избришете овој настан?',
+      [
+        { text: 'Откажи', style: 'cancel' },
+        {
+          text: 'Избриши',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const success = await deleteEvent(eventToDelete.id!);
+              if (success) {
+                Alert.alert('Успех', 'Настанот е успешно избришан');
+                await refreshEvents();
+              } else {
+                Alert.alert('Грешка', 'Настанот не може да се избрише');
+              }
+            } catch (error) {
+              console.error('Error deleting event:', error);
+              Alert.alert('Грешка', 'Грешка при бришење на настанот');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleAddEvent = () => {

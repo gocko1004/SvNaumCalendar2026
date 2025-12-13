@@ -9,6 +9,7 @@ export type ServiceType =
   | 'PICNIC';
 
 export interface ChurchEvent {
+  id?: string; // Firestore document ID (optional for hardcoded events)
   date: Date;
   name: string;
   serviceType: ServiceType;
@@ -23,7 +24,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // January
   {
     date: new Date(2026, 1-1, 4),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -48,13 +49,13 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 1-1, 11),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 1-1, 18),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -66,14 +67,14 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 1-1, 25),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   // February
   {
     date: new Date(2026, 2-1, 1),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -105,25 +106,25 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // March
   {
     date: new Date(2026, 3-1, 1),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 3-1, 8),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 3-1, 15),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 3-1, 22),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -181,14 +182,14 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 4-1, 26),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   // May
   {
     date: new Date(2026, 5-1, 3),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -214,7 +215,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 5-1, 17),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     description: '09:00 - 13:00'
@@ -265,19 +266,19 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 6-1, 14),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 6-1, 21),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 6-1, 28),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -338,7 +339,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 8-1, 16),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -350,7 +351,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 8-1, 23),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -376,7 +377,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // September
   {
     date: new Date(2026, 9-1, 6),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -395,7 +396,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 9-1, 20),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -422,19 +423,19 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 10-1, 11),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 10-1, 18),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 10-1, 25),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -454,7 +455,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   // November
   {
     date: new Date(2026, 11-1, 1),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -485,13 +486,13 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 11-1, 22),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 11-1, 29),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -511,13 +512,13 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 12-1, 6),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
     date: new Date(2026, 12-1, 13),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
@@ -529,7 +530,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   {
     date: new Date(2026, 12-1, 20),
-    name: 'Неделна',
+    name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00'
   },
