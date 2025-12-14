@@ -539,13 +539,28 @@ export const CalendarScreen = () => {
     }
   }, []);
 
-  // Scroll to today (current month)
-  const scrollToToday = useCallback(() => {
-    const currentMonth = new Date().getMonth();
-    scrollToMonth(currentMonth);
-    setShowNewsOnly(false);
-    setSelectedServiceTypes(new Set());
-  }, [scrollToMonth]);
+  // Find and scroll to the next upcoming event
+  const scrollToNextEvent = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find the next event after today
+    const upcomingEvents = events
+      .filter(event => {
+        const eventDate = new Date(event.date);
+        eventDate.setHours(0, 0, 0, 0);
+        return eventDate >= today;
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    if (upcomingEvents.length > 0) {
+      const nextEvent = upcomingEvents[0];
+      const nextEventMonth = nextEvent.date.getMonth();
+      scrollToMonth(nextEventMonth);
+      setShowNewsOnly(false);
+      setSelectedServiceTypes(new Set());
+    }
+  }, [events, scrollToMonth]);
 
   // Handle scroll events to show/hide Today button
   const handleScroll = useCallback((event: any) => {
@@ -993,12 +1008,12 @@ export const CalendarScreen = () => {
           ))}
         </ScrollView>
 
-        {/* Today FAB Button */}
+        {/* Next Event FAB Button */}
         {showTodayButton && !showNewsOnly && (
           <FAB
-            icon="calendar-today"
-            label="Денес"
-            onPress={scrollToToday}
+            icon="calendar-arrow-right"
+            label="Следен"
+            onPress={scrollToNextEvent}
             style={styles.todayFab}
             color={COLORS.TEXT_LIGHT}
             small
