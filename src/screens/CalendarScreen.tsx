@@ -1236,14 +1236,14 @@ const styles = StyleSheet.create({
   },
   integratedCardRow: {
     flexDirection: 'row',
-    alignItems: 'stretch',
-    minHeight: 120,
+    alignItems: 'center',
+    height: 125,
   },
   integratedDateSection: {
     width: 70,
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
   },
   integratedDateDay: {
     fontSize: 30,
@@ -1264,8 +1264,9 @@ const styles = StyleSheet.create({
   },
   integratedContentSection: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    height: '100%',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     justifyContent: 'center',
   },
   integratedEventType: {
@@ -1294,6 +1295,7 @@ const styles = StyleSheet.create({
   },
   integratedImageSection: {
     width: 100,
+    height: '100%',
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
   },
