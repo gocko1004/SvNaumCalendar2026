@@ -1236,13 +1236,11 @@ const styles = StyleSheet.create({
   },
   integratedCardRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 130,
-    paddingVertical: 8,
+    height: 120,
   },
   integratedDateSection: {
     width: 70,
-    alignSelf: 'stretch',
+    height: 120,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1265,8 +1263,8 @@ const styles = StyleSheet.create({
   },
   integratedContentSection: {
     flex: 1,
-    height: '100%',
-    paddingVertical: 10,
+    height: 120,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
@@ -1296,7 +1294,7 @@ const styles = StyleSheet.create({
   },
   integratedImageSection: {
     width: 100,
-    alignSelf: 'stretch',
+    height: 120,
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
   },
