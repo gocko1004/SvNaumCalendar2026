@@ -1232,14 +1232,14 @@ const styles = StyleSheet.create({
   },
   integratedCardRow: {
     flexDirection: 'row',
-    alignItems: 'stretch',
-    minHeight: 100,
+    alignItems: 'center',
+    height: 110,
   },
   integratedDateSection: {
-    width: 60,
+    width: 65,
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 12,
   },
   integratedDateDay: {
     fontSize: 28,
@@ -1256,9 +1256,10 @@ const styles = StyleSheet.create({
   },
   integratedContentSection: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     justifyContent: 'center',
+    height: '100%',
   },
   integratedEventType: {
     fontSize: 14,
@@ -1272,19 +1273,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   integratedTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: COLORS.PRIMARY,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   integratedSaintName: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
     fontStyle: 'italic',
     marginTop: 2,
   },
   integratedImageSection: {
-    width: 90,
+    width: 95,
+    height: '100%',
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
   },
@@ -1503,7 +1505,7 @@ const styles = StyleSheet.create({
     height: '130%',
     top: 0,
   },
-  // Bulletproof image styles for new card layout
+  // Bulletproof image styles for card layouts
   imageWrapper: {
     width: '100%',
     height: '100%',
@@ -1511,10 +1513,8 @@ const styles = StyleSheet.create({
   },
   eventImageFixed: {
     width: '100%',
-    height: 200, // Taller for new card layout
-    position: 'absolute',
-    top: 0,
-    left: 0,
+    height: '100%',
+    minHeight: 110,
   },
   imageLoadingOverlay: {
     ...StyleSheet.absoluteFillObject,
