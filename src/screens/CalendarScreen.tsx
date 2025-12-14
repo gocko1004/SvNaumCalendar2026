@@ -995,25 +995,29 @@ export const CalendarScreen = () => {
                             {format(event.date, 'MMM', { locale: mk })}
                           </Text>
                         </View>
-                        {/* Service Type Badge */}
-                        <View style={[
-                          styles.serviceTypeBadge,
-                          { backgroundColor: SERVICE_TYPE_COLORS[event.serviceType] }
-                        ]}>
-                          <MaterialCommunityIcons
-                            name={SERVICE_TYPE_ICONS[event.serviceType]}
-                            size={14}
-                            color="#fff"
-                          />
-                          <Text style={styles.serviceTypeBadgeText}>
-                            {getServiceTypeLabel(event.serviceType)}
-                          </Text>
-                        </View>
                       </View>
 
                       {/* Content Section */}
                       <View style={styles.cardContentSection}>
                         <Title style={styles.eventTitle}>{event.name}</Title>
+
+                        {/* Service Type - under title */}
+                        <View style={[
+                          styles.serviceTypeRow,
+                          { borderLeftColor: SERVICE_TYPE_COLORS[event.serviceType] }
+                        ]}>
+                          <MaterialCommunityIcons
+                            name={SERVICE_TYPE_ICONS[event.serviceType]}
+                            size={16}
+                            color={SERVICE_TYPE_COLORS[event.serviceType]}
+                          />
+                          <Text style={[
+                            styles.serviceTypeText,
+                            { color: SERVICE_TYPE_COLORS[event.serviceType] }
+                          ]}>
+                            {getServiceTypeLabel(event.serviceType)}
+                          </Text>
+                        </View>
 
                         {/* Saint Name */}
                         {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
@@ -1302,6 +1306,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     marginBottom: 4,
     lineHeight: 22,
+  },
+  serviceTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 4,
+    paddingLeft: 8,
+    borderLeftWidth: 3,
+  },
+  serviceTypeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   timeRow: {
     flexDirection: 'row',
