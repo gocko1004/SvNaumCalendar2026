@@ -11,6 +11,7 @@ import { ChurchEvent, CHURCH_EVENTS } from '../../services/ChurchCalendarService
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import SocialMediaService from '../../services/SocialMediaService';
+import { logSentNotification } from '../../services/NotificationHistoryService';
 
 type AdminDashboardScreenProps = {
   navigation: NativeStackNavigationProp<AdminStackParamList, 'AdminDashboard'>;
@@ -81,6 +82,20 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
       });
 
       setNotificationResult(result);
+
+      // Log to notification history
+      await logSentNotification(
+        'Важно Известување',
+        notificationMessage,
+        'INFO',
+        result.sentCount,
+        result.success ? result.sentCount : 0,
+        result.success ? 0 : result.sentCount,
+        'admin',
+        undefined,
+        false,
+        result.error ? [result.error] : []
+      );
 
       if (result.success) {
         setNotificationMessage('');
@@ -238,6 +253,13 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
         </Card.Content>
       </Card>
 
+      <Card style={styles.card} onPress={() => navigation.navigate('AutoNotificationSettings')}>
+        <Card.Content>
+          <Title>Големи Настани - Автоматизација</Title>
+          <Paragraph>Конфигурирај известувања за пикници и празници (3 дена, 1 недела пред)</Paragraph>
+        </Card.Content>
+      </Card>
+
       <Card style={styles.card} onPress={() => navigation.navigate('SpecialEvents')}>
         <Card.Content>
           <Title>Специјални Настани</Title>
@@ -252,10 +274,31 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
         </Card.Content>
       </Card>
 
+      <Card style={styles.card} onPress={() => navigation.navigate('ManageAnnouncements')}>
+        <Card.Content>
+          <Title>Огласи / Известувања</Title>
+          <Paragraph>Додади огласи кои ќе се прикажуваат во календарот со временски период</Paragraph>
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.card} onPress={() => navigation.navigate('ManageNews')}>
+        <Card.Content>
+          <Title>Новости</Title>
+          <Paragraph>Додади новости кои ќе се прикажуваат во календарот</Paragraph>
+        </Card.Content>
+      </Card>
+
       <Card style={styles.card} onPress={() => setNotificationDialogVisible(true)}>
         <Card.Content>
-          <Title>Известувања</Title>
-          <Paragraph>Испрати известувања до сите корисници кои го имаат инсталирано апликацијата</Paragraph>
+          <Title>Испрати Нотификација</Title>
+          <Paragraph>Испрати push нотификација до сите корисници</Paragraph>
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.card} onPress={() => navigation.navigate('NotificationHistory')}>
+        <Card.Content>
+          <Title>Историја на Нотификации</Title>
+          <Paragraph>Преглед на испратени нотификации (последни 30 дена)</Paragraph>
         </Card.Content>
       </Card>
 

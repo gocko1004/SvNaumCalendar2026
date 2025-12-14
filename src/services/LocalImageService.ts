@@ -6,106 +6,44 @@
 // Image mapping: key is "DD-Month" format, value is require() for the image
 // This maps calendar dates to their corresponding saint images
 
+// Only keep verified correct images for 2026
 export const SAINT_IMAGES: Record<string, any> = {
   // January
-  '05-Jan': require('../../assets/images/saints/05-Jan.jpg'), // Свети Наум Охридски
-  '12-Jan': require('../../assets/images/saints/12-Jan.jpg'),
-  '19-Jan': require('../../assets/images/saints/19-Jan.jpg'), // Богојавление
-  '26-Jan': require('../../assets/images/saints/26-Jan.jpg'),
+  '19-Jan': require('../../assets/images/saints/19-Jan.jpg'), // Богојавление - Jan 19, 2026 ✓
 
   // February
-  '02-Feb': require('../../assets/images/saints/02-Feb.jpg'),
-  '09-Feb': require('../../assets/images/saints/09-Feb.jpg'),
-  '15-Feb': require('../../assets/images/saints/15-Feb.jpg'), // Сретение Господово
-  '16-Feb': require('../../assets/images/saints/16-Feb.jpg'),
-  '22-Feb': require('../../assets/images/saints/22-Feb.jpg'), // Прочка
-  '23-Feb': require('../../assets/images/saints/23-Feb.jpg'),
-
-  // March
-  '02-March': require('../../assets/images/saints/02-March.jpg'),
-  '09-March': require('../../assets/images/saints/09-March.jpg'),
-  '16-March': require('../../assets/images/saints/16-March.jpg'),
-  '23-March': require('../../assets/images/saints/23-March.jpg'),
+  '15-Feb': require('../../assets/images/saints/15-Feb.jpg'), // Сретение Господово - Feb 15, 2026 ✓
+  '22-Feb': require('../../assets/images/saints/22-Feb.jpg'), // Прочка - Feb 22, 2026 ✓
 
   // April
-  '06-April': require('../../assets/images/saints/06-April.jpg'),
-  '12-April': require('../../assets/images/saints/12-April.jpg'), // Велигден
-  '13-April': require('../../assets/images/saints/13-April.jpg'),
-  '17-April': require('../../assets/images/saints/17-April.jpg'),
-  '18-April': require('../../assets/images/saints/18-April.jpg'),
-  '19-April': require('../../assets/images/saints/19-April.jpg'),
-  '20-April': require('../../assets/images/saints/20-April.jpg'),
-  '27-April': require('../../assets/images/saints/27-April.jpg'),
+  '12-April': require('../../assets/images/saints/12-April.jpg'), // Велигден - Apr 12, 2026 ✓
+  '13-April': require('../../assets/images/saints/13-April.jpg'), // Day after Easter - Apr 13, 2026 ✓
 
   // May
-  '04-May': require('../../assets/images/saints/04-May.jpg'),
-  '06-May': require('../../assets/images/saints/06-May.jpg'), // Св. Георгиј
-  '11-May': require('../../assets/images/saints/11-may.jpg'),
-  '18-May': require('../../assets/images/saints/18-May.jpg'),
-  '24-May': require('../../assets/images/saints/24-May.jpg'), // Св. Кирил и Методиј
-  '25-May': require('../../assets/images/saints/25-May.jpg'),
-  '28-May': require('../../assets/images/saints/28-May.jpg'),
-
-  // June
-  '01-June': require('../../assets/images/saints/01-June.jpg'),
-  '07-June': require('../../assets/images/saints/07-June.jpg'),
-  '08-June': require('../../assets/images/saints/08-June.jpg'),
-  '15-June': require('../../assets/images/saints/15-June.jpg'),
-  '22-June': require('../../assets/images/saints/22-June.jpg'),
-  '29-June': require('../../assets/images/saints/29-June.jpg'),
+  '06-May': require('../../assets/images/saints/06-May.jpg'), // Св. Георгиј - May 6, 2026 ✓
+  '24-May': require('../../assets/images/saints/24-May.jpg'), // Св. Кирил и Методиј - May 24, 2026 ✓
 
   // July
-  '07-July': require('../../assets/images/saints/07-July.jpg'),
-  '12-July': require('../../assets/images/saints/12-July.jpg'), // Петровден
-  '13-July': require('../../assets/images/saints/13-July.jpg'),
-  '20-July': require('../../assets/images/saints/20-July.jpg'),
-  '27-July': require('../../assets/images/saints/27-July.jpg'),
+  '12-July': require('../../assets/images/saints/12-July.jpg'), // Петровден - Jul 12, 2026 ✓
 
   // August
-  '03-Aug': require('../../assets/images/saints/03-Aug.jpg'),
-  '10-Aug': require('../../assets/images/saints/10-Aug.jpg'),
-  '17-Aug': require('../../assets/images/saints/17-Aug.jpg'),
-  '18-Aug': require('../../assets/images/saints/18-Aug.jpg'), // Преображение
-  '24-Aug': require('../../assets/images/saints/24-Aug.jpg'),
-  '27-Aug': require('../../assets/images/saints/27-Aug.jpg'), // Богородица
-  '28-Aug': require('../../assets/images/saints/28-Aug.jpg'),
-  '31-Aug': require('../../assets/images/saints/31-Aug.jpg'),
+  '18-Aug': require('../../assets/images/saints/18-Aug.jpg'), // Преображение - Aug 18, 2026 ✓
+  '28-Aug': require('../../assets/images/saints/28-Aug.jpg'), // Богородица - Aug 28, 2026 ✓
 
   // September
-  '07-Sep': require('../../assets/images/saints/07-Sep.jpg'),
-  '11-Sep': require('../../assets/images/saints/11-Sep.jpg'), // Отсекување на главата
-  '14-Sep': require('../../assets/images/saints/14-Sep.jpg'),
-  '21-Sep': require('../../assets/images/saints/21-Sep.jpg'), // Мала Богородица
-  '27-Sep': require('../../assets/images/saints/27-Sep.jpg'), // Крстовден
-  '28-Sep': require('../../assets/images/saints/28-Sep.jpg'),
+  '21-Sep': require('../../assets/images/saints/21-Sep.jpg'), // Мала Богородица - Sep 21, 2026 ✓
+  '27-Sep': require('../../assets/images/saints/27-Sep.jpg'), // Крстовден - Sep 27, 2026 ✓
 
   // October
-  '05-Oct': require('../../assets/images/saints/05-Oct.jpg'),
-  '12-Oct': require('../../assets/images/saints/12-Oct.jpg'),
-  '19-Oct': require('../../assets/images/saints/19-Oct.jpg'),
-  '26-Oct': require('../../assets/images/saints/26-Oct.jpg'), // Петковден
-  '27-Oct': require('../../assets/images/saints/27-Oct.jpg'),
+  '27-Oct': require('../../assets/images/saints/27-Oct.jpg'), // Петковден - Oct 27, 2026 ✓
 
   // November
-  '01-Nov': require('../../assets/images/saints/01-Nov.jpg'),
-  '02-Nov': require('../../assets/images/saints/02-Nov.jpg'),
-  '08-Nov': require('../../assets/images/saints/08-Nov.jpg'), // Митровден
-  '09-Nov': require('../../assets/images/saints/09-Nov.jpg'),
-  '16-Nov': require('../../assets/images/saints/16-Nov.jpg'),
-  '20-Nov': require('../../assets/images/saints/20-Nov.jpg'),
-  '21-Nov': require('../../assets/images/saints/21-Nov.jpg'), // Арангеловден
-  '23-Nov': require('../../assets/images/saints/23-Nov.jpg'),
-  '30-Nov': require('../../assets/images/saints/30-Nov.jpg'),
+  '08-Nov': require('../../assets/images/saints/08-Nov.jpg'), // Митровден - Nov 8, 2026 ✓
+  '21-Nov': require('../../assets/images/saints/21-Nov.jpg'), // Арангеловден - Nov 21, 2026 ✓
 
   // December
-  '03-Dec': require('../../assets/images/saints/03-Dec.jpg'),
-  '04-Dec': require('../../assets/images/saints/04-Dec.jpg'), // Пречиста
-  '07-Dec': require('../../assets/images/saints/07-Dec.jpg'),
-  '14-Dec': require('../../assets/images/saints/14-Dec.jpg'),
-  '18-Dec': require('../../assets/images/saints/18-Dec.jpg'),
-  '19-Dec': require('../../assets/images/saints/19-Dec.jpg'), // Св. Николај
-  '21-Dec': require('../../assets/images/saints/21-Dec.jpg'),
-  '28-Dec': require('../../assets/images/saints/28-Dec.jpg'),
+  '04-Dec': require('../../assets/images/saints/04-Dec.jpg'), // Пречиста - Dec 4, 2026 ✓
+  '19-Dec': require('../../assets/images/saints/19-Dec.jpg'), // Св. Николај - Dec 19, 2026 ✓
 };
 
 // Special feast day images (from denovi.mk/img/)

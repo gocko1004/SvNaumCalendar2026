@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, Linking as RNLinking, RefreshControl } from 'react-native';
 import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal, FAB } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CHURCH_EVENTS, ChurchEvent, SPECIAL_FEAST_URLS, getServiceTypeLabel, ServiceType, getEventsForDate } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
 import { getDenoviImageUrl } from '../services/DenoviImageService';
@@ -807,6 +808,25 @@ export const CalendarScreen = () => {
             />
           }
         >
+          {/* Church Branding Header */}
+          <View style={styles.brandingHeader}>
+            <LinearGradient
+              colors={['#831B26', '#5C1219', '#831B26']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.brandingGradient}
+            >
+              <View style={styles.brandingContent}>
+                <MaterialCommunityIcons name="cross" size={28} color="#D4AF37" />
+                <View style={styles.brandingTextContainer}>
+                  <Text style={styles.brandingTitle}>Св. Наум Охридски</Text>
+                  <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
+                </View>
+                <MaterialCommunityIcons name="cross" size={28} color="#D4AF37" />
+              </View>
+            </LinearGradient>
+          </View>
+
           <Searchbar
             placeholder="Пребарувај настани"
             onChangeText={setSearchQuery}
@@ -930,15 +950,26 @@ export const CalendarScreen = () => {
                 monthPositions.current[parseInt(month)] = y;
               }}
             >
-              <Surface style={styles.monthHeader}>
-                <Title 
-                  style={styles.monthTitle}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
+              <View style={styles.monthHeaderContainer}>
+                <LinearGradient
+                  colors={['#831B26', '#6B161F', '#831B26']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.monthHeaderGradient}
                 >
-                  {monthNames[parseInt(month)]}
-                </Title>
-              </Surface>
+                  <View style={styles.monthHeaderContent}>
+                    <View style={styles.monthHeaderLine} />
+                    <Title
+                      style={styles.monthTitle}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                    >
+                      {monthNames[parseInt(month)]}
+                    </Title>
+                    <View style={styles.monthHeaderLine} />
+                  </View>
+                </LinearGradient>
+              </View>
               <View style={styles.eventList}>
                 {monthEvents
                   .sort((a, b) => a.date.getTime() - b.date.getTime())
@@ -1081,8 +1112,50 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingVertical: 16,
+    paddingVertical: 8,
     paddingBottom: 24,
+  },
+  // Church Branding Header styles
+  brandingHeader: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    marginTop: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#831B26',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+  },
+  brandingGradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  brandingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandingTextContainer: {
+    alignItems: 'center',
+    marginHorizontal: 16,
+  },
+  brandingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_LIGHT,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  brandingSubtitle: {
+    fontSize: 14,
+    color: '#D4AF37',
+    fontWeight: '600',
+    marginTop: 4,
+    letterSpacing: 1,
   },
   searchBar: {
     marginHorizontal: 16,
@@ -1092,8 +1165,47 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.SURFACE,
   },
   monthSection: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
+  // New gradient month header styles
+  monthHeaderContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 6,
+    shadowColor: '#831B26',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  monthHeaderGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  monthHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monthHeaderLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#D4AF37',
+    opacity: 0.6,
+  },
+  monthTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_LIGHT,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  // Legacy monthHeader (kept for compatibility)
   monthHeader: {
     backgroundColor: COLORS.PRIMARY,
     marginHorizontal: 16,
@@ -1105,36 +1217,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  monthTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.TEXT_LIGHT,
-    textAlign: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    flexShrink: 0,
-  },
   eventList: {
     paddingHorizontal: 16,
   },
   eventCard: {
-    marginBottom: 16,
+    marginBottom: 18,
     padding: 0,
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-    borderRadius: 12,
-    backgroundColor: '#F8F4E9', // Warm parchment color
+    borderRadius: 16,
+    backgroundColor: '#FFFDF8', // Slightly warmer, lighter parchment
+    // Softer, more modern shadow
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
-    borderLeftWidth: 4, // Thicker left border for service type
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+    borderLeftWidth: 5, // Slightly thicker left border
     overflow: 'hidden',
+    // Subtle gold accent border
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
   },
   cardContent: {
     flex: 1,
@@ -1159,32 +1263,39 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     alignItems: 'center',
-    marginRight: 12,
-    minWidth: Dimensions.get('window').width < 360 ? 50 : 60,
-    width: Dimensions.get('window').width < 360 ? 50 : 60,
+    justifyContent: 'center',
+    marginRight: 14,
+    minWidth: Dimensions.get('window').width < 360 ? 54 : 64,
+    width: Dimensions.get('window').width < 360 ? 54 : 64,
     backgroundColor: COLORS.PRIMARY,
     padding: 10,
-    borderRadius: 15,
-    borderWidth: 2,
+    borderRadius: 14,
+    // Enhanced gold border
+    borderWidth: 2.5,
     borderColor: '#D4AF37',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    // Better shadow
+    shadowColor: '#831B26',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 5,
     flexShrink: 0,
   },
   dateDay: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: COLORS.TEXT_LIGHT,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   dateMonth: {
-    fontSize: 12,
-    color: COLORS.TEXT_LIGHT,
+    fontSize: 11,
+    color: '#D4AF37', // Gold color for month
     textTransform: 'uppercase',
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 2,
+    letterSpacing: 0.5,
   },
   eventInfo: {
     flex: 1,
@@ -1237,13 +1348,20 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 15,
-    backgroundColor: COLORS.BACKGROUND,
+    borderRadius: 12,
+    backgroundColor: '#F5F5F0',
     justifyContent: 'flex-start',
     alignItems: 'center',
     overflow: 'hidden',
+    // Gold accent border
     borderWidth: 2,
-    borderColor: COLORS.BORDER,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    // Soft inner shadow effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   eventImage: {
     width: '100%',

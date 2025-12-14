@@ -19,6 +19,10 @@ export type AdminStackParamList = {
     eventId?: string;
   };
   SpecialEvents: undefined;
+  ManageAnnouncements: undefined;
+  ManageNews: undefined;
+  NotificationHistory: undefined;
+  AutoNotificationSettings: undefined;
   AddEvent: undefined;
   EditEvent: {
     eventId: string;

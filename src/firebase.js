@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Firebase client configuration
 // Note: These keys are safe to expose in client-side code as they identify your Firebase project.
@@ -44,6 +45,7 @@ try {
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 if (isDevelopment && !auth) {
   console.error('Firebase Auth failed to initialize');
