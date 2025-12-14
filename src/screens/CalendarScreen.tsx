@@ -17,10 +17,10 @@ import SocialMediaService from '../services/SocialMediaService';
 import { Linking } from 'react-native';
 
 const SERVICE_TYPE_COLORS = {
-  LITURGY: '#E57373',
-  EVENING_SERVICE: '#81C784',
-  CHURCH_OPEN: '#64B5F6',
-  PICNIC: '#FFB74D'
+  LITURGY: '#C62828',          // Deep red - more church-like
+  EVENING_SERVICE: '#5C3D7A',  // Twilight purple - moonlight/after sunset
+  CHURCH_OPEN: '#1976D2',      // Blue
+  PICNIC: '#FF8F00'            // Warm orange
 } as const;
 
 const SERVICE_TYPE_ICONS = {
@@ -1220,12 +1220,12 @@ const styles = StyleSheet.create({
   },
   // Integrated Horizontal Card Layout
   eventCardIntegrated: {
-    marginBottom: 20,
-    borderRadius: 16,
+    marginBottom: 18,
+    borderRadius: 14,
     backgroundColor: '#FFFDF8',
-    // Church-style border
-    borderWidth: 2,
-    borderColor: '#D4AF37', // Gold border
+    // Subtle gold border
+    borderWidth: 0.5,
+    borderColor: '#D4AF37',
     // Elegant shadow
     shadowColor: '#831B26',
     shadowOffset: { width: 0, height: 4 },
@@ -1236,72 +1236,66 @@ const styles = StyleSheet.create({
   },
   integratedCardRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 130, // Bigger for room to breathe
+    alignItems: 'stretch',
+    minHeight: 120,
   },
   integratedDateSection: {
-    width: 75,
-    height: '100%',
+    width: 70,
     justifyContent: 'center',
     alignItems: 'center',
-    // Inner gold accent
-    borderRightWidth: 2,
-    borderRightColor: 'rgba(212, 175, 55, 0.3)',
+    paddingVertical: 16,
   },
   integratedDateDay: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#fff',
-    lineHeight: 34,
+    lineHeight: 32,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   integratedDateMonth: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#D4AF37', // Gold month
+    color: '#fff',
     textTransform: 'uppercase',
     marginTop: 4,
+    opacity: 0.9,
   },
   integratedContentSection: {
     flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     justifyContent: 'center',
-    height: '100%',
   },
   integratedEventType: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   integratedTime: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.TERTIARY,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 5,
   },
   integratedTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: COLORS.PRIMARY,
-    lineHeight: 20,
+    lineHeight: 19,
+    flexWrap: 'wrap',
   },
   integratedSaintName: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
     fontStyle: 'italic',
-    marginTop: 4,
+    marginTop: 3,
   },
   integratedImageSection: {
-    width: 110,
-    height: '100%',
+    width: 100,
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
-    // Subtle inner border
-    borderLeftWidth: 2,
-    borderLeftColor: 'rgba(212, 175, 55, 0.3)',
   },
   // New Modern Card Layout Styles
   cardImageSection: {
