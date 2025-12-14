@@ -1220,75 +1220,88 @@ const styles = StyleSheet.create({
   },
   // Integrated Horizontal Card Layout
   eventCardIntegrated: {
-    marginBottom: 16,
-    borderRadius: 14,
+    marginBottom: 20,
+    borderRadius: 16,
     backgroundColor: '#FFFDF8',
-    shadowColor: '#000',
+    // Church-style border
+    borderWidth: 2,
+    borderColor: '#D4AF37', // Gold border
+    // Elegant shadow
+    shadowColor: '#831B26',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
     overflow: 'hidden',
   },
   integratedCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 110,
+    height: 130, // Bigger for room to breathe
   },
   integratedDateSection: {
-    width: 65,
+    width: 75,
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    // Inner gold accent
+    borderRightWidth: 2,
+    borderRightColor: 'rgba(212, 175, 55, 0.3)',
   },
   integratedDateDay: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
-    lineHeight: 30,
+    lineHeight: 34,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   integratedDateMonth: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.85)',
+    color: '#D4AF37', // Gold month
     textTransform: 'uppercase',
-    marginTop: 2,
+    marginTop: 4,
   },
   integratedContentSection: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     justifyContent: 'center',
     height: '100%',
   },
   integratedEventType: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 2,
-  },
-  integratedTime: {
-    fontSize: 13,
-    color: COLORS.TERTIARY,
-    fontWeight: '500',
     marginBottom: 4,
   },
-  integratedTitle: {
+  integratedTime: {
     fontSize: 14,
+    color: COLORS.TERTIARY,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  integratedTitle: {
+    fontSize: 15,
     fontWeight: '600',
     color: COLORS.PRIMARY,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   integratedSaintName: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
-    marginTop: 2,
+    marginTop: 4,
   },
   integratedImageSection: {
-    width: 95,
+    width: 110,
     height: '100%',
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
+    // Subtle inner border
+    borderLeftWidth: 2,
+    borderLeftColor: 'rgba(212, 175, 55, 0.3)',
   },
   // New Modern Card Layout Styles
   cardImageSection: {
