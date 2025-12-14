@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, Linking as RNLinking, RefreshControl } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal, FAB } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
@@ -419,6 +420,7 @@ const NewsCard = ({ news }: { news: NewsItem }) => {
 };
 
 export const CalendarScreen = () => {
+  const navigation = useNavigation<any>();
   const [fontsLoaded] = useFonts({
     Triodion_400Regular,
   });
@@ -436,6 +438,31 @@ export const CalendarScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showTodayButton, setShowTodayButton] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+
+  // Hidden admin access - tap header 5 times within 3 seconds
+  const [adminTapCount, setAdminTapCount] = useState(0);
+  const adminTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleHeaderTap = useCallback(() => {
+    // Clear previous timeout
+    if (adminTapTimeoutRef.current) {
+      clearTimeout(adminTapTimeoutRef.current);
+    }
+
+    const newCount = adminTapCount + 1;
+
+    if (newCount >= 5) {
+      // Navigate to admin panel
+      setAdminTapCount(0);
+      navigation.navigate('AdminPanel');
+    } else {
+      setAdminTapCount(newCount);
+      // Reset counter after 3 seconds of inactivity
+      adminTapTimeoutRef.current = setTimeout(() => {
+        setAdminTapCount(0);
+      }, 3000);
+    }
+  }, [adminTapCount, navigation]);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const monthPositions = useRef<Record<number, number>>({});
@@ -813,19 +840,24 @@ export const CalendarScreen = () => {
             />
           }
         >
-          {/* Church Branding Header */}
-          <View style={styles.brandingHeader}>
-            <View style={styles.brandingSolid}>
-              <View style={styles.brandingContent}>
-                <View style={styles.brandingTitleRow}>
-                  <Text style={styles.brandingTitle}>Св. Наум Охридски</Text>
-                  <Text style={styles.brandingSeparator}>•</Text>
-                  <Text style={styles.brandingLocation}>Триенген, CH</Text>
+          {/* Church Branding Header - Hidden admin access: tap 5 times */}
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={handleHeaderTap}
+          >
+            <View style={styles.brandingHeader}>
+              <View style={styles.brandingSolid}>
+                <View style={styles.brandingContent}>
+                  <View style={styles.brandingTitleRow}>
+                    <Text style={styles.brandingTitle}>Св. Наум Охридски</Text>
+                    <Text style={styles.brandingSeparator}>•</Text>
+                    <Text style={styles.brandingLocation}>Триенген, CH</Text>
+                  </View>
+                  <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
                 </View>
-                <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <Searchbar
             placeholder="Пребарувај настани"

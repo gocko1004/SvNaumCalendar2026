@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 // Screens
@@ -8,13 +9,11 @@ import { CalendarScreen } from '../screens/CalendarScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { AdminNavigator } from './AdminNavigator';
 import { COLORS } from '../constants/theme';
-import { useAuth } from '../hooks/useAuth';
 
 const Tab = createBottomTabNavigator();
+const RootStack = createNativeStackNavigator();
 
 const MainTabs = () => {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Tab.Navigator
       screenOptions={{
@@ -43,17 +42,6 @@ const MainTabs = () => {
           ),
         }}
       />
-      <Tab.Screen
-        name="Admin"
-        component={AdminNavigator}
-        options={{
-          headerShown: false,
-          title: 'Админ',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="shield-account" size={size} color={color} />
-          ),
-        }}
-      />
     </Tab.Navigator>
   );
 };
@@ -61,7 +49,16 @@ const MainTabs = () => {
 export const AppNavigator = () => {
   return (
     <NavigationContainer>
-      <MainTabs />
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="MainTabs" component={MainTabs} />
+        <RootStack.Screen
+          name="AdminPanel"
+          component={AdminNavigator}
+          options={{
+            presentation: 'modal',
+          }}
+        />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }; 
