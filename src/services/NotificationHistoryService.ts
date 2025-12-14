@@ -183,7 +183,6 @@ export const cleanupExpiredNotifications = async (): Promise<number> => {
       }
     }
 
-    console.log(`Cleaned up ${deletedCount} expired notification records`);
     return deletedCount;
   } catch (error) {
     console.error('Error cleaning up expired notifications:', error);

@@ -52,7 +52,7 @@ export const sanitizeUrl = (url: string): string | null => {
     }
     
     // Additional check: only allow denovi.mk or trusted domains
-    const allowedDomains = ['denovi.mk', 'localhost'];
+    const allowedDomains = ['denovi.mk'];
     const hostname = urlObj.hostname.toLowerCase();
     
     const isAllowed = allowedDomains.some(domain => 

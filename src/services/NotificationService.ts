@@ -215,7 +215,6 @@ class NotificationService {
         finalStatus = status;
       }
       if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
         return;
       }
 
@@ -249,7 +248,6 @@ class NotificationService {
         updatedAt: new Date(),
       }, { merge: true });
 
-      console.log('Push token registered:', token.data);
       return token.data;
     } catch (error) {
       console.error('Error registering push token:', error);
@@ -401,8 +399,6 @@ class NotificationService {
 
       const result = await response.json();
       const successCount = result.data?.filter((r: any) => r.status === 'ok').length || 0;
-
-      console.log(`Push notifications sent: ${successCount}/${tokens.length}`);
 
       return { success: true, sentCount: successCount };
     } catch (error: any) {

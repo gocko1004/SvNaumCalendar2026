@@ -86,7 +86,6 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
   };
 
   const onLoginPress = () => {
-    console.log('=== LOGIN BUTTON PRESSED ===');
     dismissKeyboard();
     handleLogin();
   };
