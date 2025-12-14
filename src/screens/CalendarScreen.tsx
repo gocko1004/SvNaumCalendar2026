@@ -963,7 +963,6 @@ export const CalendarScreen = () => {
                   style={styles.monthHeaderGradient}
                 >
                   <View style={styles.monthHeaderContent}>
-                    <MaterialCommunityIcons name="cross" size={18} color="#D4AF37" style={{ marginRight: 12 }} />
                     <Text
                       style={[
                         styles.monthTitle,
@@ -972,7 +971,6 @@ export const CalendarScreen = () => {
                     >
                       {monthNames[parseInt(month)]}
                     </Text>
-                    <MaterialCommunityIcons name="cross" size={18} color="#D4AF37" style={{ marginLeft: 12 }} />
                   </View>
                 </LinearGradient>
               </View>
@@ -1236,11 +1234,11 @@ const styles = StyleSheet.create({
   },
   integratedCardRow: {
     flexDirection: 'row',
-    height: 120,
+    height: 140,
   },
   integratedDateSection: {
     width: 70,
-    height: 120,
+    height: 140,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1263,8 +1261,8 @@ const styles = StyleSheet.create({
   },
   integratedContentSection: {
     flex: 1,
-    height: 120,
-    paddingVertical: 8,
+    height: 140,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
@@ -1294,7 +1292,7 @@ const styles = StyleSheet.create({
   },
   integratedImageSection: {
     width: 100,
-    height: 120,
+    height: 140,
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
   },
