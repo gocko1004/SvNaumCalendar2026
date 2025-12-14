@@ -19,8 +19,8 @@ import { Linking } from 'react-native';
 
 const SERVICE_TYPE_COLORS = {
   LITURGY: '#8B1A1A',          // Deep burgundy red - main church color
-  EVENING_SERVICE: '#5D3A1A',  // Dark bronze/brown - evening warmth
-  CHURCH_OPEN: '#8B6914',      // Dark gold/bronze - subtle, traditional
+  EVENING_SERVICE: '#4A3728',  // Dark warm brown - candlelight evening
+  CHURCH_OPEN: '#6B5344',      // Warm taupe/wood - traditional, welcoming
   PICNIC: '#A65D00'            // Warm amber - earthy, welcoming
 } as const;
 
