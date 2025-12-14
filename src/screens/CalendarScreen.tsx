@@ -976,62 +976,46 @@ export const CalendarScreen = () => {
                   .map((event, index) => (
                     <Card
                       key={`${month}-${index}`}
-                      style={[
-                        styles.eventCard,
-                        { borderTopColor: SERVICE_TYPE_COLORS[event.serviceType] }
-                      ]}
+                      style={styles.eventCardIntegrated}
                     >
-                      {/* Image Section with Date Overlay */}
-                      <View style={styles.cardImageSection}>
-                        <View style={styles.cardImageWrapper}>
-                          <EventImage event={event} />
-                        </View>
-                        {/* Date Badge Overlay */}
-                        <View style={styles.dateBadgeOverlay}>
-                          <Text style={styles.dateBadgeDay}>
+                      <View style={styles.integratedCardRow}>
+                        {/* Date Section */}
+                        <View style={[
+                          styles.integratedDateSection,
+                          { backgroundColor: SERVICE_TYPE_COLORS[event.serviceType] }
+                        ]}>
+                          <Text style={styles.integratedDateDay}>
                             {format(event.date, 'dd', { locale: mk })}
                           </Text>
-                          <Text style={styles.dateBadgeMonth}>
+                          <Text style={styles.integratedDateMonth}>
                             {format(event.date, 'MMM', { locale: mk })}
                           </Text>
                         </View>
-                      </View>
 
-                      {/* Content Section */}
-                      <View style={styles.cardContentSection}>
-                        <Title style={styles.eventTitle}>{event.name}</Title>
-
-                        {/* Service Type - under title */}
-                        <View style={[
-                          styles.serviceTypeRow,
-                          { borderLeftColor: SERVICE_TYPE_COLORS[event.serviceType] }
-                        ]}>
-                          <MaterialCommunityIcons
-                            name={SERVICE_TYPE_ICONS[event.serviceType]}
-                            size={16}
-                            color={SERVICE_TYPE_COLORS[event.serviceType]}
-                          />
+                        {/* Content Section */}
+                        <View style={styles.integratedContentSection}>
                           <Text style={[
-                            styles.serviceTypeText,
+                            styles.integratedEventType,
                             { color: SERVICE_TYPE_COLORS[event.serviceType] }
                           ]}>
                             {getServiceTypeLabel(event.serviceType)}
                           </Text>
-                        </View>
-
-                        {/* Saint Name */}
-                        {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
-                          <Text style={styles.saintNameText}>
-                            {event.saintName}
-                          </Text>
-                        )}
-
-                        {/* Time */}
-                        <View style={styles.timeRow}>
-                          <MaterialCommunityIcons name="clock-outline" size={16} color={COLORS.TERTIARY} />
-                          <Text style={styles.timeText}>
+                          <Text style={styles.integratedTime}>
                             {event.description || `${event.time}ч`}
                           </Text>
+                          <Text style={styles.integratedTitle} numberOfLines={2}>
+                            {event.name}
+                          </Text>
+                          {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
+                            <Text style={styles.integratedSaintName} numberOfLines={1}>
+                              {event.saintName}
+                            </Text>
+                          )}
+                        </View>
+
+                        {/* Image Section */}
+                        <View style={styles.integratedImageSection}>
+                          <EventImage event={event} />
                         </View>
                       </View>
                     </Card>
@@ -1233,6 +1217,76 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: 'hidden',
     borderTopWidth: 4,
+  },
+  // Integrated Horizontal Card Layout
+  eventCardIntegrated: {
+    marginBottom: 16,
+    borderRadius: 14,
+    backgroundColor: '#FFFDF8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  integratedCardRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    minHeight: 100,
+  },
+  integratedDateSection: {
+    width: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  integratedDateDay: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    lineHeight: 30,
+  },
+  integratedDateMonth: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.85)',
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  integratedContentSection: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  integratedEventType: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  integratedTime: {
+    fontSize: 13,
+    color: COLORS.TERTIARY,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  integratedTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.PRIMARY,
+    lineHeight: 20,
+  },
+  integratedSaintName: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  integratedImageSection: {
+    width: 90,
+    backgroundColor: '#F5F5F0',
+    overflow: 'hidden',
   },
   // New Modern Card Layout Styles
   cardImageSection: {
