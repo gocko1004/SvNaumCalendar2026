@@ -18,10 +18,10 @@ import SocialMediaService from '../services/SocialMediaService';
 import { Linking } from 'react-native';
 
 const SERVICE_TYPE_COLORS = {
-  LITURGY: '#8B1A1A',          // Deep burgundy red - kept from before
-  EVENING_SERVICE: '#2C4A6E',  // Softer icon blue - evening prayers
-  CHURCH_OPEN: '#3D5C3A',      // Deeper forest green - traditional
-  PICNIC: '#CD853F'            // Peru/tan gold - warmer, earthier
+  LITURGY: '#8B1A1A',          // Deep burgundy red
+  EVENING_SERVICE: '#2C4A6E',  // Softer icon blue
+  CHURCH_OPEN: '#5D4E6D',      // Muted purple/plum - dignified, traditional
+  PICNIC: '#CD853F'            // Peru/tan gold
 } as const;
 
 const SERVICE_TYPE_ICONS = {
