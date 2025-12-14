@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { Dimensions } from 'react-native';
 
 // Screens
 import { CalendarScreen } from '../screens/CalendarScreen';
@@ -15,11 +16,27 @@ const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
 
 const MainTabs = () => {
+  const screenWidth = Dimensions.get('window').width;
+  const isSmallScreen = screenWidth < 380;
+  const isVerySmallScreen = screenWidth < 340;
+
+  // Responsive font size for tab labels
+  const tabLabelFontSize = isVerySmallScreen ? 9 : isSmallScreen ? 10 : 11;
+
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: COLORS.PRIMARY,
         tabBarInactiveTintColor: 'gray',
+        tabBarLabelStyle: {
+          fontSize: tabLabelFontSize,
+          fontWeight: '600',
+        },
+        tabBarStyle: {
+          paddingBottom: 4,
+          paddingTop: 4,
+          height: isVerySmallScreen ? 52 : 56,
+        },
       }}
     >
       <Tab.Screen
@@ -27,7 +44,7 @@ const MainTabs = () => {
         component={CalendarScreen}
         options={{
           headerShown: false,
-          title: 'Годишен План 2026 година',
+          title: 'Календар',
           tabBarIcon: ({ color, size }) => (
             <Icon name="calendar" size={size} color={color} />
           ),
