@@ -1,9 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text } from 'react-native';
-import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal } from 'react-native-paper';
-import { CHURCH_EVENTS, ChurchEvent, getServiceTypeLabel, ServiceType, getEventsForDate, enrichEventWithData } from '../services/ChurchCalendarService';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, Linking as RNLinking, RefreshControl } from 'react-native';
+import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal, FAB } from 'react-native-paper';
+import { CHURCH_EVENTS, ChurchEvent, SPECIAL_FEAST_URLS, getServiceTypeLabel, ServiceType, getEventsForDate } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
+import { getDenoviImageUrl } from '../services/DenoviImageService';
 import { getAllEvents, mergeEvents } from '../services/FirestoreEventService';
+import { getActiveAnnouncements, Announcement, ANNOUNCEMENT_TYPE_COLORS, ANNOUNCEMENT_TYPE_ICONS } from '../services/AnnouncementsService';
+import { getActiveNews, NewsItem, NEWS_COLOR, NEWS_ICON } from '../services/NewsService';
+import { Video, ResizeMode } from 'expo-av';
 import { COLORS, CARD_STYLES } from '../constants/theme';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
@@ -25,63 +29,208 @@ const SERVICE_TYPE_ICONS = {
   PICNIC: 'food' as const
 } as const;
 
+// Special image URLs (not in standard synaxarion path)
+const SPECIAL_DATE_IMAGES: Record<string, string> = {
+  // January
+  '2026-01-05': 'https://denovi.mk/synaxarion/januari/05-010.jpg',   // Sv. Naum Ohridski
+  // February
+  '2026-02-08': 'https://denovi.mk/img/bludniot_sin.png',          // Prodigal Son
+  // Lent period
+  '2026-03-01': 'https://denovi.mk/pasha/torzestvo.jpg',           // Orthodoxy Sunday
+  '2026-03-08': 'https://denovi.mk/img/palama.png',                // St. Gregory Palamas
+  '2026-03-15': 'https://denovi.mk/pasha/krstopoklona_nedela.jpg', // Cross Veneration
+  '2026-03-22': 'https://denovi.mk/synaxarion/mart/22-030.jpg',    // John Climacus
+  '2026-03-29': 'https://denovi.mk/synaxarion/mart/29-030.jpg',    // Mary of Egypt
+  '2026-04-04': 'https://denovi.mk/img/lazar.png',                 // Lazarus Saturday
+  '2026-04-09': 'https://denovi.mk/synaxarion/april/09-041.jpg',   // Holy Thursday - Last Supper
+  '2026-04-10': 'https://denovi.mk/img/velik_petok.png',           // Good Friday
+  // Post-Easter (Pentecostarion)
+  '2026-04-19': 'https://denovi.mk/synaxarion/april/19-040.jpg',   // April 19
+  '2026-04-26': 'https://denovi.mk/synaxarion/april/26-040.jpg',   // April 26
+  '2026-04-29': 'https://denovi.mk/synaxarion/april/29-040.jpg',   // April 29
+  '2026-05-03': 'https://denovi.mk/img/raslabeniot.png',           // Paralytic Sunday
+  '2026-05-05': 'https://denovi.mk/pasha/prepolovenie.jpg',        // Mid-Pentecost (same as May 6)
+  '2026-05-06': 'https://denovi.mk/pasha/prepolovenie.jpg',        // Mid-Pentecost
+  '2026-05-10': 'https://denovi.mk/img/samarjankata.png',          // Samaritan Woman
+  '2026-05-17': 'https://denovi.mk/img/slepiot.png',               // Blind Man
+  '2026-05-21': 'https://denovi.mk/img/voznesenie.png',            // Ascension
+  '2026-05-20': 'https://denovi.mk/img/voznesenie.png',            // Eve of Ascension
+  // June
+  '2026-06-02': 'https://denovi.mk/synaxarion/juni/02-060.jpg',    // June 2
+  '2026-06-07': 'https://denovi.mk/pasha/site_sveti.jpg',          // All Saints
+  '2026-06-14': 'https://denovi.mk/synaxarion/juni/14-060.jpg',    // June 14
+  // July
+  '2026-07-02': 'https://denovi.mk/synaxarion/juli/02-070.jpg',    // Sv. Naum Ohridski (eve)
+  '2026-07-03': 'https://denovi.mk/synaxarion/juli/03-070.jpg',    // Sv. Naum Ohridski
+  '2026-07-12': 'https://denovi.mk/img/apostoli.png',              // Peter & Paul
+  '2026-07-26': 'https://denovi.mk/pasha/vi_vs_sobori.jpg',        // Ecumenical Councils
+  // August - missing images
+  '2026-08-02': 'https://denovi.mk/synaxarion/avgust/02-080.jpg',  // Prophet Elijah
+  '2026-08-09': 'https://denovi.mk/synaxarion/avgust/09-080.jpg',  // St. Clement Ohridski
+  '2026-08-16': 'https://denovi.mk/synaxarion/avgust/16-080.jpg',  // Isaac, Dalmat, Faust
+  '2026-08-23': 'https://denovi.mk/synaxarion/avgust/23-080.jpg',  // Archdeacon Lawrence
+  // September
+  '2026-09-06': 'https://denovi.mk/synaxarion/septemvri/06-090.jpg', // Martyr Eutychius
+  '2026-09-10': 'https://denovi.mk/synaxarion/septemvri/11-090.jpg', // John the Baptist beheading
+  // October - missing images
+  '2026-10-04': 'https://denovi.mk/synaxarion/oktomvri/04-100.jpg',  // Apostle Codrat
+  '2026-10-11': 'https://denovi.mk/synaxarion/oktomvri/11-100.jpg',  // Hariton Confessor
+  // November - missing images
+  '2026-11-01': 'https://denovi.mk/synaxarion/noemvri/01-110.jpg',   // Prophet Joel
+  '2026-11-15': 'https://denovi.mk/synaxarion/noemvri/15-110.jpg',   // Martyrs Akindyn etc.
+  '2026-11-29': 'https://denovi.mk/synaxarion/noemvri/29-110.jpg',   // Apostle Matthew
+  // December
+  '2026-12-06': 'https://denovi.mk/synaxarion/dekemvri/06-120.jpg',  // Sunday Liturgy
+  '2026-12-13': 'https://denovi.mk/synaxarion/dekemvri/13-120.jpg',  // Sunday Liturgy
+  '2026-12-19': 'https://denovi.mk/synaxarion/dekemvri/19-120.jpg',  // St. Nicholas
+  '2026-12-20': 'https://denovi.mk/synaxarion/dekemvri/20-122.jpg',  // Sunday Liturgy
+  '2026-12-27': 'https://denovi.mk/synaxarion/dekemvri/27-120.jpg',  // Church Open
+};
+
+// Helper function to get special image URL for a date
+const getSpecialImageUrl = (date: Date): string | null => {
+  const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return SPECIAL_DATE_IMAGES[dateKey] || null;
+};
+
 // Helper function to get image positioning based on date
+// NOTE: Use top: 0 to show head, negative top to shift image down (show more of top)
+// height controls how much of the image is visible
 const getImagePositionForDate = (date: Date) => {
   const month = date.getMonth() + 1;
   const day = date.getDate();
-  
-  // For images where heads are cut off, show more of the image (taller)
-  // March 15 - head cut off
-  if (month === 3 && day === 15) return { height: '150%', top: 0 };
-  // April 19 - head cut off
-  if (month === 4 && day === 19) return { height: '150%', top: 0 };
-  // May 31 - head cut off
-  if (month === 5 && day === 31) return { height: '150%', top: 0 };
-  // July 12 - head cut off
-  if (month === 7 && day === 12) return { height: '150%', top: 0 };
-  
+
+  // February 1 - show top of image (head)
+  if (month === 2 && day === 1) return { height: 160, top: 0 };
+  // March 22 - John Climacus - show top of image (head)
+  if (month === 3 && day === 22) return { height: 160, top: 0 };
+  // March 29 - Mary of Egypt - show top of image (head)
+  if (month === 3 && day === 29) return { height: 160, top: 0 };
+  // April 19 - centered
+  if (month === 4 && day === 19) return { height: 160, top: 0, left: 0 };
+  // August 16 - show top of image (head)
+  if (month === 8 && day === 16) return { height: 160, top: 0 };
+  // September 10 - John the Baptist - show top of image (head)
+  if (month === 9 && day === 10) return { height: 160, top: 0 };
+  // October 4 - show top of image (head)
+  if (month === 10 && day === 4) return { height: 160, top: 0 };
+  // October 18 - show top of image (head)
+  if (month === 10 && day === 18) return { height: 160, top: 0 };
+  // December 20 - show top of image (head)
+  if (month === 12 && day === 20) return { height: 160, top: 0 };
+
   return {};
 };
 
-// Separate component for event images to properly use hooks
+// Bulletproof EventImage - tries special URLs, then multiple sequences
 const EventImage = ({ event }: { event: ChurchEvent }) => {
-  const [imageError, setImageError] = useState(false);
-  const [remoteImageError, setRemoteImageError] = useState(false);
+  const [localFailed, setLocalFailed] = useState(false);
+  const [specialFailed, setSpecialFailed] = useState(false);
+  const [sequenceIndex, setSequenceIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
   const localImage = getImageForEvent(event.name, event.date);
   const imagePosition = getImagePositionForDate(event.date);
+  const specialUrl = getSpecialImageUrl(event.date);
 
-  // 1. Try Local Image first
-  if (localImage && !imageError) {
+  // Build month-specific sequences first, then fallback sequences
+  // Images on denovi.mk use month-based sequences (e.g., 010-019 for January, 120-129 for December)
+  const month = event.date.getMonth() + 1;
+  const monthPrefix = month.toString().padStart(2, '0');
+
+  // Month-specific sequences first (e.g., for December: 120, 121, 122...)
+  const monthSequences = Array.from({ length: 10 }, (_, i) => `${monthPrefix}${i}`);
+
+  // Fallback: try all other months' sequences
+  const allMonthSequences = Array.from({ length: 12 }, (_, m) => {
+    const mp = (m + 1).toString().padStart(2, '0');
+    return Array.from({ length: 6 }, (_, i) => `${mp}${i}`);
+  }).flat().filter(seq => !seq.startsWith(monthPrefix));
+
+  // Low number fallbacks
+  const lowNumberFallbacks = ['000', '001', '002', '003'];
+
+  const sequences = [...monthSequences, ...lowNumberFallbacks, ...allMonthSequences];
+  
+  // Current URL based on sequence index
+  const currentUrl = sequenceIndex < sequences.length 
+    ? getDenoviImageUrl(event.date, sequences[sequenceIndex])
+    : null;
+  
+  // STATE 1: Try Local Image (for major feasts)
+  if (localImage && !localFailed) {
     return (
-      <Image
-        source={localImage}
-        style={[styles.eventImage, imagePosition]}
-        resizeMode="cover"
-        onError={() => setImageError(true)}
-      />
+      <View style={styles.imageWrapper}>
+        <Image
+          source={localImage}
+          style={[styles.eventImageFixed, imagePosition]}
+          resizeMode="cover"
+          onError={() => setLocalFailed(true)}
+          onLoad={() => setIsLoading(false)}
+        />
+        {isLoading && (
+          <View style={styles.imageLoadingOverlay}>
+            <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+          </View>
+        )}
+      </View>
     );
   }
 
-  // 2. Try Remote Image (from denovi.mk) if local failed or doesn't exist
-  if (event.imageUrl && !remoteImageError) {
+  // STATE 2: Try Special URL (for Lent/Pasha period)
+  if (specialUrl && !specialFailed) {
     return (
-      <Image
-        source={{ uri: event.imageUrl }}
-        style={[styles.eventImage, imagePosition]}
-        resizeMode="cover"
-        onError={() => setRemoteImageError(true)}
-      />
+      <View style={styles.imageWrapper}>
+        <Image
+          source={{ uri: specialUrl }}
+          style={[styles.eventImageFixed, imagePosition]}
+          resizeMode="cover"
+          onError={() => setSpecialFailed(true)}
+          onLoad={() => setIsLoading(false)}
+          onLoadStart={() => setIsLoading(true)}
+        />
+        {isLoading && (
+          <View style={styles.imageLoadingOverlay}>
+            <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+          </View>
+        )}
+      </View>
     );
   }
 
-  // 3. Fallback to Icon
+  // STATE 3: Try Remote Images - cycle through sequences
+  if (currentUrl) {
+    return (
+      <View style={styles.imageWrapper}>
+        <Image
+          source={{ uri: currentUrl }}
+          style={[styles.eventImageFixed, imagePosition]}
+          resizeMode="cover"
+          onError={() => {
+            // Try next sequence
+            setSequenceIndex(prev => prev + 1);
+          }}
+          onLoad={() => setIsLoading(false)}
+          onLoadStart={() => setIsLoading(true)}
+        />
+        {isLoading && (
+          <View style={styles.imageLoadingOverlay}>
+            <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // STATE 4: All sources exhausted - show icon
   return (
-    <MaterialCommunityIcons
-      name={SERVICE_TYPE_ICONS[event.serviceType]}
-      size={40}
-      color={SERVICE_TYPE_COLORS[event.serviceType]}
-      style={styles.fallbackIcon}
-    />
+    <View style={styles.iconFallbackContainer}>
+      <MaterialCommunityIcons
+        name={SERVICE_TYPE_ICONS[event.serviceType]}
+        size={50}
+        color={SERVICE_TYPE_COLORS[event.serviceType]}
+      />
+    </View>
   );
 };
 
@@ -111,15 +260,179 @@ const LoadingScreen = () => {
   );
 };
 
+// Announcement Card Component
+const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
+  const typeColor = ANNOUNCEMENT_TYPE_COLORS[announcement.type];
+  const typeIcon = ANNOUNCEMENT_TYPE_ICONS[announcement.type];
+
+  const handleLinkPress = () => {
+    if (announcement.linkUrl) {
+      Linking.openURL(announcement.linkUrl);
+    }
+  };
+
+  return (
+    <Card style={[styles.announcementCard, { borderLeftColor: typeColor }]}>
+      <Card.Content>
+        <View style={styles.announcementHeader}>
+          <View style={styles.announcementIconContainer}>
+            <MaterialCommunityIcons name={typeIcon as any} size={24} color={typeColor} />
+          </View>
+          <View style={styles.announcementContent}>
+            <View style={styles.announcementTitleRow}>
+              <Text style={[styles.announcementTitle, { color: typeColor }]}>{announcement.title}</Text>
+              <Chip style={[styles.announcementChip, { backgroundColor: typeColor + '20' }]} textStyle={{ color: typeColor, fontSize: 10 }}>
+                {announcement.type === 'INFO' ? 'Информација' :
+                 announcement.type === 'URGENT' ? 'Итно' :
+                 announcement.type === 'EVENT' ? 'Настан' : 'Потсетник'}
+              </Chip>
+            </View>
+            <Text style={styles.announcementMessage}>{announcement.message}</Text>
+            {announcement.linkUrl && announcement.linkText && (
+              <TouchableOpacity onPress={handleLinkPress}>
+                <Text style={[styles.announcementLink, { color: typeColor }]}>{announcement.linkText} →</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.announcementDate}>
+              {format(announcement.startDate, 'dd.MM', { locale: mk })} - {format(announcement.endDate, 'dd.MM.yyyy', { locale: mk })}
+            </Text>
+          </View>
+        </View>
+      </Card.Content>
+    </Card>
+  );
+};
+
+// News Card Component with Gallery and Video Support
+const NewsCard = ({ news }: { news: NewsItem }) => {
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+
+  const handleLinkPress = () => {
+    if (news.linkUrl) {
+      Linking.openURL(news.linkUrl);
+    }
+  };
+
+  // Combine legacy imageUrl with imageUrls array
+  const allImages = [
+    ...(news.imageUrl ? [news.imageUrl] : []),
+    ...(news.imageUrls || []),
+  ].filter((url, index, self) => self.indexOf(url) === index); // Remove duplicates
+
+  const videos = news.videoUrls || [];
+
+  return (
+    <Card style={styles.newsCard}>
+      <Card.Content>
+        <View style={styles.newsHeader}>
+          <View style={styles.newsIconContainer}>
+            <MaterialCommunityIcons name={NEWS_ICON as any} size={24} color={NEWS_COLOR} />
+          </View>
+          <View style={styles.newsContent}>
+            <View style={styles.newsTitleRow}>
+              <Text style={styles.newsTitle}>{news.title}</Text>
+              <Chip style={styles.newsChip} textStyle={{ color: NEWS_COLOR, fontSize: 10 }}>
+                Новост
+              </Chip>
+            </View>
+            <Text style={styles.newsMessage} numberOfLines={6}>{news.content}</Text>
+            {news.linkUrl && news.linkText && (
+              <TouchableOpacity onPress={handleLinkPress}>
+                <Text style={styles.newsLink}>{news.linkText} →</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.newsDate}>
+              {format(news.date, 'dd MMMM yyyy', { locale: mk })}
+            </Text>
+          </View>
+        </View>
+
+        {/* Image Gallery */}
+        {allImages.length > 0 && (
+          <View style={styles.newsGallery}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {allImages.map((imageUrl, index) => (
+                <TouchableOpacity
+                  key={`img-${index}`}
+                  onPress={() => setExpandedImage(imageUrl)}
+                  activeOpacity={0.9}
+                >
+                  <Image
+                    source={{ uri: imageUrl }}
+                    style={[
+                      styles.newsGalleryImage,
+                      allImages.length === 1 && styles.newsGallerySingleImage,
+                    ]}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            {allImages.length > 1 && (
+              <Text style={styles.newsGalleryCount}>{allImages.length} слики</Text>
+            )}
+          </View>
+        )}
+
+        {/* Video Players */}
+        {videos.length > 0 && (
+          <View style={styles.newsVideos}>
+            {videos.map((videoUrl, index) => (
+              <View key={`vid-${index}`} style={styles.newsVideoContainer}>
+                <Video
+                  source={{ uri: videoUrl }}
+                  style={styles.newsVideo}
+                  useNativeControls
+                  resizeMode={ResizeMode.CONTAIN}
+                  isLooping={false}
+                />
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Expanded Image Modal */}
+        {expandedImage && (
+          <TouchableOpacity
+            style={styles.expandedImageOverlay}
+            onPress={() => setExpandedImage(null)}
+            activeOpacity={1}
+          >
+            <Image
+              source={{ uri: expandedImage }}
+              style={styles.expandedImage}
+              resizeMode="contain"
+            />
+            <TouchableOpacity
+              style={styles.closeExpandedButton}
+              onPress={() => setExpandedImage(null)}
+            >
+              <MaterialCommunityIcons name="close" size={30} color="#fff" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
+      </Card.Content>
+    </Card>
+  );
+};
+
 export const CalendarScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<ChurchEvent[]>(CHURCH_EVENTS);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [serviceTypeFilters, setServiceTypeFilters] = useState<ServiceType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceTypes, setSelectedServiceTypes] = useState<Set<ServiceType>>(new Set());
+  const [showNewsOnly, setShowNewsOnly] = useState(false);
   const [contactDialogVisible, setContactDialogVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showTodayButton, setShowTodayButton] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  const monthPositions = useRef<Record<number, number>>({});
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -128,66 +441,126 @@ export const CalendarScreen = () => {
       setIsLoading(false);
     }, 800);
 
+    // Function to enrich ALL events with image URLs - SIMPLE AND CONSISTENT
+    const enrichEventsWithImages = (evts: ChurchEvent[]) => {
+      return evts.map(evt => {
+        const dateKey = `${evt.date.getFullYear()}-${String(evt.date.getMonth() + 1).padStart(2, '0')}-${String(evt.date.getDate()).padStart(2, '0')}`;
+        const specialImage = SPECIAL_FEAST_URLS[dateKey];
+
+        // ALWAYS add imageUrl for ALL events (prefer special feast URLs)
+        // getDenoviImageUrl now uses month-based default sequence (e.g., 010 for January, 120 for December)
+        const imageUrl = specialImage || getDenoviImageUrl(evt.date);
+        return { ...evt, imageUrl };
+      });
+    };
+
     // Load events from Firestore and merge with hardcoded events
-    const loadFirestoreEvents = async () => {
+    const loadAndEnrichEvents = async () => {
       try {
         const firestoreEvents = await getAllEvents();
         const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
-        setEvents(merged);
+        const enriched = enrichEventsWithImages(merged);
+        setEvents(enriched);
       } catch (error) {
         console.error('Error loading Firestore events:', error);
-        // If Firestore fails, continue with hardcoded events
-        setEvents(CHURCH_EVENTS);
+        // If Firestore fails, enrich hardcoded events
+        const enriched = enrichEventsWithImages(CHURCH_EVENTS);
+        setEvents(enriched);
       }
     };
 
-    // Load Firestore events first
-    loadFirestoreEvents();
+    // Load and enrich events
+    loadAndEnrichEvents();
 
-    // Background fetch to enrich events with data from denovi.mk
-    const enrichEvents = async () => {
-      const updatedEvents = [...events];
-      let hasChanges = false;
-
-      // Process events to fetch missing images or saint names
-      for (let i = 0; i < updatedEvents.length; i++) {
-        const evt = updatedEvents[i];
-        const hasLocalImage = getImageForEvent(evt.name, evt.date);
-        
-        // Only fetch saint name for "Неделна Литургија" events
-        const needsSaintName = evt.name === 'Неделна Литургија' && !evt.saintName;
-        
-        if (!hasLocalImage || needsSaintName) {
-          // This fetches from denovi.mk
-          if (needsSaintName) {
-            console.log(`Fetching saint name for ${evt.name} on ${evt.date.toDateString()}`);
-          }
-          const enriched = await enrichEventWithData(evt);
-          if (needsSaintName) {
-            console.log(`Got saint name: "${enriched.saintName}"`);
-          }
-          
-          // If we found new data, update the event in our list
-          if (enriched.imageUrl !== evt.imageUrl || enriched.saintName !== evt.saintName) {
-            updatedEvents[i] = enriched;
-            hasChanges = true;
-            // Update state incrementally every 3 events to show progress
-            if (i % 3 === 0) {
-              setEvents([...updatedEvents]);
-            }
-          }
-        }
-      }
-      
-      if (hasChanges) {
-        setEvents(updatedEvents);
+    // Load active announcements
+    const loadAnnouncements = async () => {
+      try {
+        const activeAnnouncements = await getActiveAnnouncements();
+        setAnnouncements(activeAnnouncements);
+      } catch (error) {
+        console.error('Error loading announcements:', error);
       }
     };
+    loadAnnouncements();
 
-    // Start fetching after initial load to keep UI responsive
-    setTimeout(enrichEvents, 1000);
+    // Load news items
+    const loadNews = async () => {
+      try {
+        const activeNews = await getActiveNews();
+        setNewsItems(activeNews);
+      } catch (error) {
+        console.error('Error loading news:', error);
+      }
+    };
+    loadNews();
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    // Reload all data
+    const enrichEventsWithImages = (evts: ChurchEvent[]) => {
+      return evts.map(evt => {
+        const dateKey = `${evt.date.getFullYear()}-${String(evt.date.getMonth() + 1).padStart(2, '0')}-${String(evt.date.getDate()).padStart(2, '0')}`;
+        const specialImage = SPECIAL_FEAST_URLS[dateKey];
+        const imageUrl = specialImage || getDenoviImageUrl(evt.date);
+        return { ...evt, imageUrl };
+      });
+    };
+
+    try {
+      const [firestoreEvents, activeAnnouncements, activeNews] = await Promise.all([
+        getAllEvents(),
+        getActiveAnnouncements(),
+        getActiveNews(),
+      ]);
+
+      const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+      const enriched = enrichEventsWithImages(merged);
+      setEvents(enriched);
+      setAnnouncements(activeAnnouncements);
+      setNewsItems(activeNews);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+
+    setRefreshing(false);
+  }, []);
+
+  // Scroll to specific month
+  const scrollToMonth = useCallback((monthIndex: number) => {
+    setSelectedMonth(monthIndex);
+    const position = monthPositions.current[monthIndex];
+    if (position !== undefined && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: position - 100, animated: true });
+    }
+  }, []);
+
+  // Scroll to today (current month)
+  const scrollToToday = useCallback(() => {
+    const currentMonth = new Date().getMonth();
+    scrollToMonth(currentMonth);
+    setShowNewsOnly(false);
+    setSelectedServiceTypes(new Set());
+  }, [scrollToMonth]);
+
+  // Handle scroll events to show/hide Today button
+  const handleScroll = useCallback((event: any) => {
+    const scrollPosition = event.nativeEvent.contentOffset.y;
+    setShowTodayButton(scrollPosition > 300);
+
+    // Update selected month based on scroll position
+    const positions = Object.entries(monthPositions.current);
+    for (let i = positions.length - 1; i >= 0; i--) {
+      const [month, pos] = positions[i];
+      if (scrollPosition >= (pos as number) - 150) {
+        setSelectedMonth(parseInt(month));
+        break;
+      }
+    }
   }, []);
 
   // Group and filter events
@@ -295,8 +668,97 @@ export const CalendarScreen = () => {
             </TouchableOpacity>
           );
         })}
+
+        {/* News Filter Button */}
+        <TouchableOpacity
+          onPress={() => {
+            setShowNewsOnly(!showNewsOnly);
+            if (!showNewsOnly) {
+              setSelectedServiceTypes(new Set()); // Clear other filters when showing news
+            }
+          }}
+          style={[
+            styles.filterChipTouchable,
+            {
+              backgroundColor: showNewsOnly ? NEWS_COLOR : COLORS.SURFACE,
+              width: isVerySmall ? 90 : 110,
+              minHeight: isVerySmall ? 36 : 40,
+              borderColor: showNewsOnly ? NEWS_COLOR : COLORS.BORDER,
+            }
+          ]}
+        >
+          <MaterialCommunityIcons
+            name={NEWS_ICON as any}
+            size={isVerySmall ? 14 : isSmall ? 15 : 16}
+            color={showNewsOnly ? COLORS.TEXT_LIGHT : COLORS.TEXT}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            style={[
+              styles.filterChipText,
+              {
+                color: showNewsOnly ? COLORS.TEXT_LIGHT : COLORS.TEXT,
+                fontSize: isVerySmall ? 9 : isSmall ? 10 : 11,
+                flex: 1,
+              }
+            ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit={true}
+            minimumFontScale={0.65}
+          >
+            Новости
+          </Text>
+        </TouchableOpacity>
     </ScrollView>
   );
+  };
+
+  // Month Quick-Jump component
+  const renderMonthQuickJump = () => {
+    const shortMonthNames = ['Јан', 'Фев', 'Мар', 'Апр', 'Мај', 'Јун', 'Јул', 'Авг', 'Сеп', 'Окт', 'Ное', 'Дек'];
+    const currentMonth = new Date().getMonth();
+    const availableMonths = Object.keys(filteredAndGroupedEvents).map(m => parseInt(m));
+
+    return (
+      <View style={styles.monthQuickJumpContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.monthQuickJumpContent}
+        >
+          {shortMonthNames.map((name, index) => {
+            const isCurrentMonth = index === currentMonth;
+            const isSelected = index === selectedMonth;
+            const hasEvents = availableMonths.includes(index);
+
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => hasEvents && scrollToMonth(index)}
+                disabled={!hasEvents}
+                style={[
+                  styles.monthQuickJumpItem,
+                  isSelected && styles.monthQuickJumpItemSelected,
+                  isCurrentMonth && styles.monthQuickJumpItemCurrent,
+                  !hasEvents && styles.monthQuickJumpItemDisabled,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.monthQuickJumpText,
+                    isSelected && styles.monthQuickJumpTextSelected,
+                    !hasEvents && styles.monthQuickJumpTextDisabled,
+                  ]}
+                >
+                  {name}
+                </Text>
+                {isCurrentMonth && <View style={styles.currentMonthDot} />}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
   };
 
   const showContactInfo = () => {
@@ -313,9 +775,22 @@ export const CalendarScreen = () => {
         />
         <View style={styles.overlay} />
         
-        <ScrollView 
+        <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.PRIMARY]}
+              tintColor={COLORS.PRIMARY}
+              title="Се освежува..."
+              titleColor={COLORS.PRIMARY}
+            />
+          }
         >
           <Searchbar
             placeholder="Пребарувај настани"
@@ -387,11 +862,67 @@ export const CalendarScreen = () => {
           })()}
           
           {renderServiceTypeFilters()}
-          
-          {Object.entries(filteredAndGroupedEvents).map(([month, monthEvents]) => (
-            <View key={month} style={styles.monthSection}>
+
+          {/* Month Quick-Jump Bar */}
+          {!showNewsOnly && renderMonthQuickJump()}
+
+          {/* Active Announcements Section */}
+          {announcements.length > 0 && !showNewsOnly && (
+            <View style={styles.announcementsSection}>
+              <Surface style={styles.announcementsSectionHeader}>
+                <MaterialCommunityIcons name="bullhorn" size={20} color={COLORS.PRIMARY} />
+                <Title style={styles.announcementsSectionTitle}>Огласи</Title>
+              </Surface>
+              <View style={styles.announcementsList}>
+                {announcements.map((announcement) => (
+                  <AnnouncementCard key={announcement.id} announcement={announcement} />
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* News Section - Shows when News filter is active */}
+          {showNewsOnly && (
+            <View style={styles.newsSection}>
+              <Surface style={styles.newsSectionHeader}>
+                <MaterialCommunityIcons name={NEWS_ICON as any} size={20} color={NEWS_COLOR} />
+                <Title style={styles.newsSectionTitle}>Новости</Title>
+              </Surface>
+              {newsItems.length === 0 ? (
+                <Card style={styles.emptyNewsCard}>
+                  <Card.Content style={styles.emptyNewsContent}>
+                    <MaterialCommunityIcons name="newspaper-variant-outline" size={48} color="#ccc" />
+                    <Text style={styles.emptyNewsText}>Нема новости</Text>
+                  </Card.Content>
+                </Card>
+              ) : (
+                <View style={styles.newsList}>
+                  {newsItems.map((news) => (
+                    <NewsCard key={news.id} news={news} />
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Calendar Events - Hidden when News filter is active */}
+          {!showNewsOnly && Object.entries(filteredAndGroupedEvents).map(([month, monthEvents]) => (
+            <View
+              key={month}
+              style={styles.monthSection}
+              onLayout={(event) => {
+                const { y } = event.nativeEvent.layout;
+                monthPositions.current[parseInt(month)] = y;
+              }}
+            >
               <Surface style={styles.monthHeader}>
-                <Title style={styles.monthTitle}>{monthNames[parseInt(month)]}</Title>
+                <Title 
+                  style={styles.monthTitle}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {monthNames[parseInt(month)]}
+                </Title>
               </Surface>
               <View style={styles.eventList}>
                 {monthEvents
@@ -408,8 +939,8 @@ export const CalendarScreen = () => {
                         <View style={styles.cardContent}>
                           <Title style={styles.eventTitle}>{event.name}</Title>
                           
-                          {/* Display Saint Name ONLY for "Неделна Литургија" events */}
-                          {event.name === 'Неделна Литургија' && event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
+                          {/* Display Saint Name for events that have it */}
+                          {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
                             <Text style={styles.saintNameText}>
                               {event.saintName}
                             </Text>
@@ -420,7 +951,12 @@ export const CalendarScreen = () => {
                               <Text style={styles.dateDay}>
                                 {format(event.date, 'dd', { locale: mk })}
                               </Text>
-                              <Text style={styles.dateMonth}>
+                              <Text
+                                style={styles.dateMonth}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                                minimumFontScale={0.7}
+                              >
                                 {format(event.date, 'MMM', { locale: mk })}
                               </Text>
                             </View>
@@ -456,6 +992,18 @@ export const CalendarScreen = () => {
             </View>
           ))}
         </ScrollView>
+
+        {/* Today FAB Button */}
+        {showTodayButton && !showNewsOnly && (
+          <FAB
+            icon="calendar-today"
+            label="Денес"
+            onPress={scrollToToday}
+            style={styles.todayFab}
+            color={COLORS.TEXT_LIGHT}
+            small
+          />
+        )}
 
         <Portal>
           <Dialog
@@ -543,11 +1091,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   monthTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.TEXT_LIGHT,
     textAlign: 'center',
-    padding: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    flexShrink: 0,
   },
   eventList: {
     paddingHorizontal: 16,
@@ -637,7 +1187,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    maxWidth: '90%',
     flexWrap: 'wrap',
     borderColor: COLORS.BORDER,
     maxWidth: '100%',
@@ -685,6 +1234,31 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '130%',
     top: 0,
+  },
+  // NEW: Bulletproof image styles
+  imageWrapper: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  eventImageFixed: {
+    width: '100%',
+    height: 130, // Fixed pixel height instead of percentage
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  imageLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  iconFallbackContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fallbackIcon: {
     opacity: 0.7,
@@ -800,10 +1374,314 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saintNameText: {
-    fontSize: 14,
+    fontSize: 11,
     color: COLORS.TEXT,
     fontStyle: 'italic',
     marginBottom: 8,
     marginTop: -4,
+  },
+  // Announcement styles
+  announcementsSection: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  announcementsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.PRIMARY + '10',
+  },
+  announcementsList: {
+    gap: 0,
+  },
+  announcementsSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginLeft: 8,
+  },
+  announcementCard: {
+    marginBottom: 10,
+    borderRadius: 12,
+    borderLeftWidth: 5,
+    backgroundColor: '#fff',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  announcementHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  announcementIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  announcementContent: {
+    flex: 1,
+  },
+  announcementTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  announcementTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  announcementChip: {
+    height: 22,
+    marginLeft: 8,
+  },
+  announcementMessage: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  announcementLink: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  announcementDate: {
+    fontSize: 11,
+    color: '#999',
+  },
+  // News styles
+  newsSection: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  newsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 8,
+    backgroundColor: NEWS_COLOR + '15',
+  },
+  newsSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: NEWS_COLOR,
+    marginLeft: 8,
+  },
+  newsList: {
+    gap: 12,
+  },
+  newsCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+    borderLeftWidth: 5,
+    borderLeftColor: NEWS_COLOR,
+    backgroundColor: '#fff',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  newsHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  newsIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: NEWS_COLOR + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  newsContent: {
+    flex: 1,
+  },
+  newsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  newsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    flex: 1,
+    color: NEWS_COLOR,
+  },
+  newsChip: {
+    height: 22,
+    marginLeft: 8,
+    backgroundColor: NEWS_COLOR + '20',
+  },
+  newsMessage: {
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  newsLink: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6,
+    color: NEWS_COLOR,
+  },
+  newsDate: {
+    fontSize: 12,
+    color: '#888',
+    fontWeight: '500',
+  },
+  newsImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  newsGallery: {
+    marginTop: 12,
+  },
+  newsGalleryImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  newsGallerySingleImage: {
+    width: Dimensions.get('window').width - 80,
+    height: 200,
+  },
+  newsGalleryCount: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  newsVideos: {
+    marginTop: 12,
+  },
+  newsVideoContainer: {
+    marginBottom: 8,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#000',
+  },
+  newsVideo: {
+    width: '100%',
+    height: 200,
+  },
+  expandedImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  expandedImage: {
+    width: Dimensions.get('window').width - 40,
+    height: Dimensions.get('window').height * 0.7,
+  },
+  closeExpandedButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 8,
+  },
+  emptyNewsCard: {
+    marginTop: 20,
+  },
+  emptyNewsContent: {
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyNewsText: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 12,
+  },
+  // Month Quick-Jump styles
+  monthQuickJumpContainer: {
+    marginBottom: 12,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingVertical: 8,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  monthQuickJumpContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  monthQuickJumpItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginHorizontal: 2,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+  },
+  monthQuickJumpItemSelected: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  monthQuickJumpItemCurrent: {
+    borderWidth: 2,
+    borderColor: '#D4AF37',
+  },
+  monthQuickJumpItemDisabled: {
+    opacity: 0.3,
+  },
+  monthQuickJumpText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.TEXT,
+  },
+  monthQuickJumpTextSelected: {
+    color: COLORS.TEXT_LIGHT,
+  },
+  monthQuickJumpTextDisabled: {
+    color: '#999',
+  },
+  currentMonthDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D4AF37',
+    marginTop: 2,
+  },
+  // Today FAB Button styles
+  todayFab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    backgroundColor: COLORS.PRIMARY,
+    borderRadius: 28,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
 });
