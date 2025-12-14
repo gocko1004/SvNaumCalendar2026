@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Platform, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, Linking as RNLinking, RefreshControl } from 'react-native';
 import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal, FAB } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
 import { CHURCH_EVENTS, ChurchEvent, SPECIAL_FEAST_URLS, getServiceTypeLabel, ServiceType, getEventsForDate } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
 import { getDenoviImageUrl } from '../services/DenoviImageService';
@@ -418,6 +419,10 @@ const NewsCard = ({ news }: { news: NewsItem }) => {
 };
 
 export const CalendarScreen = () => {
+  const [fontsLoaded] = useFonts({
+    Triodion_400Regular,
+  });
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<ChurchEvent[]>(CHURCH_EVENTS);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -952,21 +957,22 @@ export const CalendarScreen = () => {
             >
               <View style={styles.monthHeaderContainer}>
                 <LinearGradient
-                  colors={['#831B26', '#6B161F', '#831B26']}
+                  colors={['#831B26', '#5C1219', '#831B26']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.monthHeaderGradient}
                 >
                   <View style={styles.monthHeaderContent}>
-                    <View style={styles.monthHeaderLine} />
-                    <Title
-                      style={styles.monthTitle}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
+                    <MaterialCommunityIcons name="cross" size={18} color="#D4AF37" style={{ marginRight: 12 }} />
+                    <Text
+                      style={[
+                        styles.monthTitle,
+                        fontsLoaded && { fontFamily: 'Triodion_400Regular' }
+                      ]}
                     >
                       {monthNames[parseInt(month)]}
-                    </Title>
-                    <View style={styles.monthHeaderLine} />
+                    </Text>
+                    <MaterialCommunityIcons name="cross" size={18} color="#D4AF37" style={{ marginLeft: 12 }} />
                   </View>
                 </LinearGradient>
               </View>
@@ -1003,11 +1009,11 @@ export const CalendarScreen = () => {
                           <Text style={styles.integratedTime}>
                             {event.description || `${event.time}ч`}
                           </Text>
-                          <Text style={styles.integratedTitle} numberOfLines={2}>
+                          <Text style={styles.integratedTitle} numberOfLines={3}>
                             {event.name}
                           </Text>
                           {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
-                            <Text style={styles.integratedSaintName} numberOfLines={1}>
+                            <Text style={styles.integratedSaintName} numberOfLines={2}>
                               {event.saintName}
                             </Text>
                           )}
@@ -1153,43 +1159,37 @@ const styles = StyleSheet.create({
   monthSection: {
     marginBottom: 24,
   },
-  // New gradient month header styles
+  // Church-style month header
   monthHeaderContainer: {
     marginHorizontal: 16,
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
     elevation: 6,
     shadowColor: '#831B26',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D4AF37',
   },
   monthHeaderGradient: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   monthHeaderContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  monthHeaderLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#D4AF37',
-    opacity: 0.6,
-  },
   monthTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 22,
     color: COLORS.TEXT_LIGHT,
     textAlign: 'center',
-    paddingHorizontal: 16,
-    letterSpacing: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    letterSpacing: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 3,
   },
   // Legacy monthHeader (kept for compatibility)
   monthHeader: {
@@ -1237,11 +1237,12 @@ const styles = StyleSheet.create({
   integratedCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 125,
+    minHeight: 130,
+    paddingVertical: 8,
   },
   integratedDateSection: {
     width: 70,
-    height: '100%',
+    alignSelf: 'stretch',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1295,7 +1296,7 @@ const styles = StyleSheet.create({
   },
   integratedImageSection: {
     width: 100,
-    height: '100%',
+    alignSelf: 'stretch',
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
   },
