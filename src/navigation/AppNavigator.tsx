@@ -31,11 +31,23 @@ const MainTabs = () => {
         tabBarLabelStyle: {
           fontSize: tabLabelFontSize,
           fontWeight: '600',
+          marginBottom: 4,
         },
         tabBarStyle: {
-          paddingBottom: 4,
-          paddingTop: 4,
-          height: isVerySmallScreen ? 52 : 56,
+          backgroundColor: '#FFFDF8',
+          borderTopWidth: 1,
+          borderTopColor: '#D4AF37',
+          paddingTop: 8,
+          paddingBottom: 20,
+          height: isVerySmallScreen ? 70 : 80,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+          elevation: 10,
+        },
+        tabBarIconStyle: {
+          marginTop: 4,
         },
       }}
     >
