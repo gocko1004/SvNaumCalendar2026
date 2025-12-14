@@ -500,10 +500,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: COLORS.BACKGROUND,
+    backgroundColor: '#F5F5F0',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 24,
     color: COLORS.PRIMARY,
@@ -511,11 +511,20 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 16,
-    elevation: 2,
+    borderRadius: 12,
+    backgroundColor: '#FFFDF8',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   logoutButton: {
     marginTop: 24,
     marginBottom: 40,
+    borderColor: COLORS.PRIMARY,
+    borderWidth: 1.5,
+    borderRadius: 10,
   },
   dialog: {
     backgroundColor: COLORS.SURFACE,

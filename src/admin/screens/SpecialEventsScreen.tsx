@@ -253,17 +253,23 @@ export const SpecialEventsScreen: React.FC<SpecialEventsScreenProps> = ({ naviga
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BACKGROUND,
+    backgroundColor: '#F5F5F0',
   },
   title: {
     margin: 16,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: COLORS.PRIMARY,
   },
   eventCard: {
     margin: 16,
-    elevation: 4,
+    elevation: 5,
+    borderRadius: 14,
+    backgroundColor: '#FFFDF8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   cardHeader: {
     flexDirection: 'row',

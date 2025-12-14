@@ -278,24 +278,29 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F5F0',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#FFFDF8',
+    borderBottomWidth: 0,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.PRIMARY,
   },
   refreshButton: {
     borderColor: COLORS.PRIMARY,
+    borderRadius: 10,
   },
   scrollView: {
     flex: 1,
@@ -308,7 +313,13 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     marginBottom: 16,
-    borderRadius: 12,
+    borderRadius: 14,
+    backgroundColor: '#FFFDF8',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
   statsTitle: {
     fontSize: 16,

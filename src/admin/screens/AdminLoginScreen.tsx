@@ -150,27 +150,32 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BACKGROUND,
+    backgroundColor: '#F5F5F0',
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 16,
+    padding: 20,
     justifyContent: 'center',
   },
   title: {
-    marginBottom: 24,
+    marginBottom: 28,
     textAlign: 'center',
     color: COLORS.PRIMARY,
+    fontSize: 28,
+    fontWeight: 'bold',
   },
   input: {
     marginBottom: 16,
+    backgroundColor: '#FFFDF8',
   },
   button: {
-    marginTop: 8,
+    marginTop: 12,
     backgroundColor: COLORS.PRIMARY,
+    borderRadius: 10,
+    elevation: 4,
   },
   buttonContent: {
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   errorText: {
     color: COLORS.ERROR || '#D32F2F',

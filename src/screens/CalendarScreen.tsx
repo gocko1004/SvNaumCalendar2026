@@ -20,7 +20,7 @@ import { Linking } from 'react-native';
 const SERVICE_TYPE_COLORS = {
   LITURGY: '#8B1A1A',          // Deep burgundy red
   EVENING_SERVICE: '#2C4A6E',  // Softer icon blue
-  CHURCH_OPEN: '#6B4C5A',      // Dusty mauve/wine - warmer purple
+  CHURCH_OPEN: '#8B5A2B',      // Warm burnt sienna - orange/brown mix
   PICNIC: '#CD853F'            // Peru/tan gold
 } as const;
 
@@ -815,21 +815,16 @@ export const CalendarScreen = () => {
         >
           {/* Church Branding Header */}
           <View style={styles.brandingHeader}>
-            <LinearGradient
-              colors={['#831B26', '#5C1219', '#831B26']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.brandingGradient}
-            >
+            <View style={styles.brandingSolid}>
               <View style={styles.brandingContent}>
-                <MaterialCommunityIcons name="cross" size={28} color="#D4AF37" />
-                <View style={styles.brandingTextContainer}>
+                <View style={styles.brandingTitleRow}>
                   <Text style={styles.brandingTitle}>Св. Наум Охридски</Text>
-                  <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
+                  <Text style={styles.brandingSeparator}>•</Text>
+                  <Text style={styles.brandingLocation}>Триенген, CH</Text>
                 </View>
-                <MaterialCommunityIcons name="cross" size={28} color="#D4AF37" />
+                <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
               </View>
-            </LinearGradient>
+            </View>
           </View>
 
           <Searchbar
@@ -956,23 +951,16 @@ export const CalendarScreen = () => {
               }}
             >
               <View style={styles.monthHeaderContainer}>
-                <LinearGradient
-                  colors={['#831B26', '#5C1219', '#831B26']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.monthHeaderGradient}
-                >
-                  <View style={styles.monthHeaderContent}>
-                    <Text
-                      style={[
-                        styles.monthTitle,
-                        fontsLoaded && { fontFamily: 'Triodion_400Regular' }
-                      ]}
-                    >
-                      {monthNames[parseInt(month)]}
-                    </Text>
-                  </View>
-                </LinearGradient>
+                <View style={styles.monthHeaderSolid}>
+                  <Text
+                    style={[
+                      styles.monthTitle,
+                      fontsLoaded && { fontFamily: 'Triodion_400Regular' }
+                    ]}
+                  >
+                    {monthNames[parseInt(month)]}
+                  </Text>
+                </View>
               </View>
               <View style={styles.eventList}>
                 {monthEvents
@@ -998,15 +986,6 @@ export const CalendarScreen = () => {
 
                         {/* Content Section */}
                         <View style={styles.integratedContentSection}>
-                          <Text style={[
-                            styles.integratedEventType,
-                            { color: SERVICE_TYPE_COLORS[event.serviceType] }
-                          ]}>
-                            {getServiceTypeLabel(event.serviceType)}
-                          </Text>
-                          <Text style={styles.integratedTime}>
-                            {event.description || `${event.time}ч`}
-                          </Text>
                           <Text style={styles.integratedTitle} numberOfLines={3}>
                             {event.name}
                           </Text>
@@ -1015,6 +994,29 @@ export const CalendarScreen = () => {
                               {event.saintName}
                             </Text>
                           )}
+                          <View style={styles.integratedInfoRow}>
+                            <MaterialCommunityIcons
+                              name={SERVICE_TYPE_ICONS[event.serviceType]}
+                              size={14}
+                              color={SERVICE_TYPE_COLORS[event.serviceType]}
+                            />
+                            <Text style={[
+                              styles.integratedEventType,
+                              { color: SERVICE_TYPE_COLORS[event.serviceType] }
+                            ]}>
+                              {getServiceTypeLabel(event.serviceType)}
+                            </Text>
+                          </View>
+                          <View style={styles.integratedInfoRow}>
+                            <MaterialCommunityIcons
+                              name="clock-outline"
+                              size={14}
+                              color="#555555"
+                            />
+                            <Text style={styles.integratedTime}>
+                              {event.description || `${event.time}ч`}
+                            </Text>
+                          </View>
                         </View>
 
                         {/* Image Section */}
@@ -1122,30 +1124,46 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
   },
+  brandingSolid: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
   brandingContent: {
+    alignItems: 'center',
+  },
+  brandingTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandingTextContainer: {
-    alignItems: 'center',
-    marginHorizontal: 16,
+    alignItems: 'flex-start',
   },
   brandingTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
     color: COLORS.TEXT_LIGHT,
     letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   brandingSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#D4AF37',
     fontWeight: '600',
     marginTop: 4,
     letterSpacing: 1,
+  },
+  brandingSeparator: {
+    fontSize: 17,
+    color: '#D4AF37',
+    fontWeight: 'bold',
+    marginHorizontal: 10,
+  },
+  brandingLocation: {
+    fontSize: 17,
+    color: COLORS.TEXT_LIGHT,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   searchBar: {
     marginHorizontal: 16,
@@ -1163,17 +1181,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 12,
     overflow: 'hidden',
-    elevation: 6,
-    shadowColor: '#831B26',
+    elevation: 8,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D4AF37',
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
   },
   monthHeaderGradient: {
     paddingVertical: 12,
     paddingHorizontal: 16,
+  },
+  monthHeaderSolid: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   monthHeaderContent: {
     flexDirection: 'row',
@@ -1181,7 +1204,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   monthTitle: {
-    fontSize: 22,
+    fontSize: 26,
     color: COLORS.TEXT_LIGHT,
     textAlign: 'center',
     letterSpacing: 2,
@@ -1234,11 +1257,11 @@ const styles = StyleSheet.create({
   },
   integratedCardRow: {
     flexDirection: 'row',
-    height: 140,
+    height: 160,
   },
   integratedDateSection: {
     width: 70,
-    height: 140,
+    height: 160,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1261,38 +1284,48 @@ const styles = StyleSheet.create({
   },
   integratedContentSection: {
     flex: 1,
-    height: 140,
-    paddingVertical: 10,
+    height: 160,
+    paddingVertical: 12,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
-  integratedEventType: {
-    fontSize: 14,
+  integratedTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    marginBottom: 3,
+    color: COLORS.PRIMARY,
+    lineHeight: 20,
+    flexWrap: 'wrap',
+    marginBottom: 8,
+  },
+  integratedSaintName: {
+    fontSize: 10,
+    color: '#666',
+    fontStyle: 'italic',
+    marginBottom: 10,
+    flexWrap: 'wrap',
+  },
+  integratedInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 3,
+    flexWrap: 'wrap',
+  },
+  integratedEventType: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 5,
+    flex: 1,
+    flexWrap: 'wrap',
   },
   integratedTime: {
     fontSize: 13,
-    color: COLORS.TERTIARY,
+    color: '#555555',
     fontWeight: '600',
-    marginBottom: 5,
-  },
-  integratedTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.PRIMARY,
-    lineHeight: 19,
-    flexWrap: 'wrap',
-  },
-  integratedSaintName: {
-    fontSize: 11,
-    color: '#666',
-    fontStyle: 'italic',
-    marginTop: 3,
+    marginLeft: 5,
   },
   integratedImageSection: {
     width: 100,
-    height: 140,
+    height: 160,
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
   },

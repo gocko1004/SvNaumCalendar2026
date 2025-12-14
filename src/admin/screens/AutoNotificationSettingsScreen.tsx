@@ -445,25 +445,30 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F5F5F0',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#FFFDF8',
+    borderBottomWidth: 0,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: COLORS.PRIMARY,
     flex: 1,
   },
   initButton: {
     borderColor: COLORS.PRIMARY,
+    borderRadius: 10,
   },
   loadingContainer: {
     flex: 1,

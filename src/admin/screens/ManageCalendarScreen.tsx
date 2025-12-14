@@ -31,10 +31,10 @@ import { sanitizeChurchEvent, rateLimiter } from '../../services/ValidationServi
 const CALENDAR_STORAGE_KEY = '@church_calendar';
 
 const SERVICE_TYPE_COLORS = {
-  LITURGY: '#E57373',
-  EVENING_SERVICE: '#81C784',
-  CHURCH_OPEN: '#64B5F6',
-  PICNIC: '#FFB74D'
+  LITURGY: '#8B1A1A',          // Deep burgundy red
+  EVENING_SERVICE: '#2C4A6E',  // Softer icon blue
+  CHURCH_OPEN: '#8B5A2B',      // Warm burnt sienna
+  PICNIC: '#CD853F'            // Peru/tan gold
 } as const;
 
 const SERVICE_TYPE_ICONS = {
@@ -490,10 +490,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: COLORS.BACKGROUND,
+    backgroundColor: '#F5F5F0',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 16,
     color: COLORS.PRIMARY,
@@ -501,27 +501,28 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     marginBottom: 16,
+    borderRadius: 10,
+    elevation: 3,
   },
   addButton: {
     marginBottom: 16,
     backgroundColor: COLORS.PRIMARY,
+    borderRadius: 10,
+    elevation: 4,
   },
   eventCard: {
     marginBottom: 16,
     padding: 0,
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-    borderRadius: 12,
-    backgroundColor: '#F8F4E9',
+    borderRadius: 14,
+    backgroundColor: '#FFFDF8',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
     borderLeftWidth: 4,
     overflow: 'hidden',
   },
