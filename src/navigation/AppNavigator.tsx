@@ -49,6 +49,11 @@ const MainTabs = () => {
         tabBarIconStyle: {
           marginTop: 4,
         },
+        tabBarItemStyle: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
       }}
     >
       <Tab.Screen
