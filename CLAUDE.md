@@ -25,6 +25,9 @@ npm run web
 
 # Build for web (Vercel deployment)
 npm run vercel-build
+
+# TypeScript check (run before commits)
+npx tsc --noEmit
 ```
 
 ### EAS Cloud Builds
@@ -34,11 +37,9 @@ npm run vercel-build
 npx eas-cli build --platform android --profile preview
 npx eas-cli build --platform ios --profile preview
 
-# Production build (AAB for Play Store)
+# Production build (App Store / Play Store)
+npx eas-cli build --platform ios --profile production
 npx eas-cli build --platform android --profile production
-
-# TypeScript check
-npx tsc --noEmit
 ```
 
 ### Local Native Builds
@@ -59,10 +60,17 @@ npx expo run:android
 - `src/App.js` - Web version entry point (uses `react-router-dom`, Material UI)
 
 ### Navigation (React Navigation)
-The app uses bottom tab navigation with three main sections:
-- **Calendar Tab** - Main church calendar with events
-- **Settings Tab** - Notification preferences
-- **Admin Tab** - Protected admin features (nested stack navigator)
+The app uses a root stack navigator with bottom tabs:
+
+**Visible Bottom Tabs:**
+- **Календар** - Main church calendar with events (`CalendarScreen`)
+- **Новости** - News and announcements (`NewsScreen`)
+- **Поставки** - Notification preferences (`NotificationSettingsScreen`)
+
+**Hidden Admin Access:**
+- Admin panel is NOT visible in tabs (security measure)
+- Access: Tap the church header ("Св. Наум Охридски • Триенген, CH") **5 times within 3 seconds**
+- Opens as modal overlay with Firebase authentication
 
 ### Core Services
 
@@ -74,29 +82,44 @@ The app uses bottom tab navigation with three main sections:
 - Stores push tokens in Firebase Firestore (`pushTokens` collection)
 
 **ChurchCalendarService** (`src/services/ChurchCalendarService.ts`)
-- Contains `CHURCH_EVENTS_2026` array (87 events)
+- Contains `CHURCH_EVENTS` array (87 events for 2026)
 - Service types: `LITURGY`, `EVENING_SERVICE`, `CHURCH_OPEN`, `PICNIC`
 
 **DenoviImageService** (`src/services/DenoviImageService.ts`)
 - Fetches saint images from `https://denovi.mk/synaxarion/[month]/[day]-020.jpg`
 - Falls back to service-type icons on failure
 
+**ValidationService** (`src/services/ValidationService.ts`)
+- Input sanitization (XSS prevention, HTML stripping)
+- URL validation (whitelist: `denovi.mk` only)
+- Rate limiting for abuse prevention
+
+**NewsService** (`src/services/NewsService.ts`)
+- Firestore CRUD for news items
+- Supports image galleries and video attachments
+
 **Firebase** (`src/firebase.js`)
-- Firestore collections: `pushTokens`, `customEvents`
+- Firestore collections: `pushTokens`, `customEvents`, `announcements`, `news`, `notificationHistory`
 - Email/password authentication for admin access
 
 ### Key Directories
-- `src/screens/` - Main app screens (CalendarScreen, NotificationSettingsScreen)
+- `src/screens/` - Main app screens (CalendarScreen, NewsScreen, NotificationSettingsScreen)
 - `src/admin/screens/` - Admin dashboard and management screens
 - `src/services/` - Business logic services
 - `src/navigation/` - React Navigation configuration
 - `src/constants/` - Theme (`#831B26` primary), config, languages
 
+### Theme Colors
+- Primary: `#831B26` (burgundy)
+- Service types: `LITURGY` (#8B1A1A), `EVENING_SERVICE` (#2C4A6E), `CHURCH_OPEN` (#8B5A2B), `PICNIC` (#CD853F)
+- Card backgrounds: `#FFFDF8` (cream)
+- Gold accents: `#D4AF37`
+
 ## Configuration Files
 
 - `app.json` - Expo configuration, iOS encryption exemption (`ITSAppUsesNonExemptEncryption: false`)
-- `eas.json` - Build profiles (preview: APK/internal, production: AAB)
-- `metro.config.js` - Simplified default Expo config (5 lines)
+- `eas.json` - Build profiles (preview: APK/internal, production: AAB/App Store)
+- `metro.config.js` - Simplified default Expo config
 
 ## Build Profiles
 
@@ -107,8 +130,11 @@ The app uses bottom tab navigation with three main sections:
 
 ## Known Issues
 
-### EAS Build Metro Errors
-If builds fail with Metro bundler errors, building locally on Mac with Xcode is more reliable than EAS cloud builds.
+### EAS Build iOS Credentials
+iOS builds require interactive mode for Apple credentials. Run in terminal:
+```bash
+npx eas-cli build --platform ios --profile production
+```
 
 ### Android SDK Setup
 Create `android/local.properties` with SDK path:
@@ -121,4 +147,4 @@ All image files (icon.png, splash.png, adaptive-icon.png) must be valid before r
 
 ## Language
 
-The app uses Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian (e.g., "Годишен План 2026 година"). The `LanguageContext` provides internationalization infrastructure.
+The app uses Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian. The `LanguageContext` provides internationalization infrastructure.
