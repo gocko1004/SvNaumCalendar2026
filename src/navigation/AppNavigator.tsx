@@ -6,6 +6,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 // Screens
 import { CalendarScreen } from '../screens/CalendarScreen';
+import { NewsScreen } from '../screens/NewsScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { AdminNavigator } from './AdminNavigator';
 import { COLORS } from '../constants/theme';
@@ -29,6 +30,17 @@ const MainTabs = () => {
           title: 'Годишен План 2026 година',
           tabBarIcon: ({ color, size }) => (
             <Icon name="calendar" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="News"
+        component={NewsScreen}
+        options={{
+          headerShown: false,
+          title: 'Новости',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="newspaper-variant" size={size} color={color} />
           ),
         }}
       />

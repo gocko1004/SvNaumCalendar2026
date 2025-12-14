@@ -9,7 +9,6 @@ import { getImageForEvent } from '../services/LocalImageService';
 import { getDenoviImageUrl } from '../services/DenoviImageService';
 import { getAllEvents, mergeEvents } from '../services/FirestoreEventService';
 import { getActiveAnnouncements, Announcement, ANNOUNCEMENT_TYPE_COLORS, ANNOUNCEMENT_TYPE_ICONS } from '../services/AnnouncementsService';
-import { getActiveNews, NewsItem, NEWS_COLOR, NEWS_ICON } from '../services/NewsService';
 import { Video, ResizeMode } from 'expo-av';
 import { COLORS, CARD_STYLES } from '../constants/theme';
 import { format } from 'date-fns';
@@ -306,119 +305,6 @@ const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
   );
 };
 
-// News Card Component with Gallery and Video Support
-const NewsCard = ({ news }: { news: NewsItem }) => {
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
-
-  const handleLinkPress = () => {
-    if (news.linkUrl) {
-      Linking.openURL(news.linkUrl);
-    }
-  };
-
-  // Combine legacy imageUrl with imageUrls array
-  const allImages = [
-    ...(news.imageUrl ? [news.imageUrl] : []),
-    ...(news.imageUrls || []),
-  ].filter((url, index, self) => self.indexOf(url) === index); // Remove duplicates
-
-  const videos = news.videoUrls || [];
-
-  return (
-    <Card style={styles.newsCard}>
-      <Card.Content>
-        <View style={styles.newsHeader}>
-          <View style={styles.newsIconContainer}>
-            <MaterialCommunityIcons name={NEWS_ICON as any} size={24} color={NEWS_COLOR} />
-          </View>
-          <View style={styles.newsContent}>
-            <View style={styles.newsTitleRow}>
-              <Text style={styles.newsTitle}>{news.title}</Text>
-              <Chip style={styles.newsChip} textStyle={{ color: NEWS_COLOR, fontSize: 10 }}>
-                Новост
-              </Chip>
-            </View>
-            <Text style={styles.newsMessage} numberOfLines={6}>{news.content}</Text>
-            {news.linkUrl && news.linkText && (
-              <TouchableOpacity onPress={handleLinkPress}>
-                <Text style={styles.newsLink}>{news.linkText} →</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={styles.newsDate}>
-              {format(news.date, 'dd MMMM yyyy', { locale: mk })}
-            </Text>
-          </View>
-        </View>
-
-        {/* Image Gallery */}
-        {allImages.length > 0 && (
-          <View style={styles.newsGallery}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {allImages.map((imageUrl, index) => (
-                <TouchableOpacity
-                  key={`img-${index}`}
-                  onPress={() => setExpandedImage(imageUrl)}
-                  activeOpacity={0.9}
-                >
-                  <Image
-                    source={{ uri: imageUrl }}
-                    style={[
-                      styles.newsGalleryImage,
-                      allImages.length === 1 && styles.newsGallerySingleImage,
-                    ]}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            {allImages.length > 1 && (
-              <Text style={styles.newsGalleryCount}>{allImages.length} слики</Text>
-            )}
-          </View>
-        )}
-
-        {/* Video Players */}
-        {videos.length > 0 && (
-          <View style={styles.newsVideos}>
-            {videos.map((videoUrl, index) => (
-              <View key={`vid-${index}`} style={styles.newsVideoContainer}>
-                <Video
-                  source={{ uri: videoUrl }}
-                  style={styles.newsVideo}
-                  useNativeControls
-                  resizeMode={ResizeMode.CONTAIN}
-                  isLooping={false}
-                />
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Expanded Image Modal */}
-        {expandedImage && (
-          <TouchableOpacity
-            style={styles.expandedImageOverlay}
-            onPress={() => setExpandedImage(null)}
-            activeOpacity={1}
-          >
-            <Image
-              source={{ uri: expandedImage }}
-              style={styles.expandedImage}
-              resizeMode="contain"
-            />
-            <TouchableOpacity
-              style={styles.closeExpandedButton}
-              onPress={() => setExpandedImage(null)}
-            >
-              <MaterialCommunityIcons name="close" size={30} color="#fff" />
-            </TouchableOpacity>
-          </TouchableOpacity>
-        )}
-      </Card.Content>
-    </Card>
-  );
-};
-
 export const CalendarScreen = () => {
   const navigation = useNavigation<any>();
   const [fontsLoaded] = useFonts({
@@ -428,12 +314,10 @@ export const CalendarScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<ChurchEvent[]>(CHURCH_EVENTS);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [serviceTypeFilters, setServiceTypeFilters] = useState<ServiceType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceTypes, setSelectedServiceTypes] = useState<Set<ServiceType>>(new Set());
-  const [showNewsOnly, setShowNewsOnly] = useState(false);
   const [contactDialogVisible, setContactDialogVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showTodayButton, setShowTodayButton] = useState(false);
@@ -516,17 +400,6 @@ export const CalendarScreen = () => {
     };
     loadAnnouncements();
 
-    // Load news items
-    const loadNews = async () => {
-      try {
-        const activeNews = await getActiveNews();
-        setNewsItems(activeNews);
-      } catch (error) {
-        console.error('Error loading news:', error);
-      }
-    };
-    loadNews();
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -545,17 +418,15 @@ export const CalendarScreen = () => {
     };
 
     try {
-      const [firestoreEvents, activeAnnouncements, activeNews] = await Promise.all([
+      const [firestoreEvents, activeAnnouncements] = await Promise.all([
         getAllEvents(),
         getActiveAnnouncements(),
-        getActiveNews(),
       ]);
 
       const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
       const enriched = enrichEventsWithImages(merged);
       setEvents(enriched);
       setAnnouncements(activeAnnouncements);
-      setNewsItems(activeNews);
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -590,7 +461,6 @@ export const CalendarScreen = () => {
       const nextEvent = upcomingEvents[0];
       const nextEventMonth = nextEvent.date.getMonth();
       scrollToMonth(nextEventMonth);
-      setShowNewsOnly(false);
       setSelectedServiceTypes(new Set());
     }
   }, [events, scrollToMonth]);
@@ -717,46 +587,6 @@ export const CalendarScreen = () => {
           );
         })}
 
-        {/* News Filter Button */}
-        <TouchableOpacity
-          onPress={() => {
-            setShowNewsOnly(!showNewsOnly);
-            if (!showNewsOnly) {
-              setSelectedServiceTypes(new Set()); // Clear other filters when showing news
-            }
-          }}
-          style={[
-            styles.filterChipTouchable,
-            {
-              backgroundColor: showNewsOnly ? NEWS_COLOR : COLORS.SURFACE,
-              width: isVerySmall ? 90 : 110,
-              minHeight: isVerySmall ? 36 : 40,
-              borderColor: showNewsOnly ? NEWS_COLOR : COLORS.BORDER,
-            }
-          ]}
-        >
-          <MaterialCommunityIcons
-            name={NEWS_ICON as any}
-            size={isVerySmall ? 14 : isSmall ? 15 : 16}
-            color={showNewsOnly ? COLORS.TEXT_LIGHT : COLORS.TEXT}
-            style={{ marginRight: 6 }}
-          />
-          <Text
-            style={[
-              styles.filterChipText,
-              {
-                color: showNewsOnly ? COLORS.TEXT_LIGHT : COLORS.TEXT,
-                fontSize: isVerySmall ? 9 : isSmall ? 10 : 11,
-                flex: 1,
-              }
-            ]}
-            numberOfLines={1}
-            adjustsFontSizeToFit={true}
-            minimumFontScale={0.65}
-          >
-            Новости
-          </Text>
-        </TouchableOpacity>
     </ScrollView>
   );
   };
@@ -931,10 +761,10 @@ export const CalendarScreen = () => {
           {renderServiceTypeFilters()}
 
           {/* Month Quick-Jump Bar */}
-          {!showNewsOnly && renderMonthQuickJump()}
+          {renderMonthQuickJump()}
 
           {/* Active Announcements Section */}
-          {announcements.length > 0 && !showNewsOnly && (
+          {announcements.length > 0 && (
             <View style={styles.announcementsSection}>
               <Surface style={styles.announcementsSectionHeader}>
                 <MaterialCommunityIcons name="bullhorn" size={20} color={COLORS.PRIMARY} />
@@ -948,32 +778,8 @@ export const CalendarScreen = () => {
             </View>
           )}
 
-          {/* News Section - Shows when News filter is active */}
-          {showNewsOnly && (
-            <View style={styles.newsSection}>
-              <Surface style={styles.newsSectionHeader}>
-                <MaterialCommunityIcons name={NEWS_ICON as any} size={20} color={NEWS_COLOR} />
-                <Title style={styles.newsSectionTitle}>Новости</Title>
-              </Surface>
-              {newsItems.length === 0 ? (
-                <Card style={styles.emptyNewsCard}>
-                  <Card.Content style={styles.emptyNewsContent}>
-                    <MaterialCommunityIcons name="newspaper-variant-outline" size={48} color="#ccc" />
-                    <Text style={styles.emptyNewsText}>Нема новости</Text>
-                  </Card.Content>
-                </Card>
-              ) : (
-                <View style={styles.newsList}>
-                  {newsItems.map((news) => (
-                    <NewsCard key={news.id} news={news} />
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* Calendar Events - Hidden when News filter is active */}
-          {!showNewsOnly && Object.entries(filteredAndGroupedEvents).map(([month, monthEvents]) => (
+          {/* Calendar Events */}
+          {Object.entries(filteredAndGroupedEvents).map(([month, monthEvents]) => (
             <View
               key={month}
               style={styles.monthSection}
@@ -1064,7 +870,7 @@ export const CalendarScreen = () => {
         </ScrollView>
 
         {/* Next Event FAB Button */}
-        {showTodayButton && !showNewsOnly && (
+        {showTodayButton && (
           <FAB
             icon="calendar-arrow-right"
             label="Следен"
@@ -1797,164 +1603,6 @@ const styles = StyleSheet.create({
   announcementDate: {
     fontSize: 11,
     color: '#999',
-  },
-  // News styles
-  newsSection: {
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  newsSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    marginBottom: 8,
-    borderRadius: 8,
-    backgroundColor: '#FFFDF8',
-  },
-  newsSectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY,
-    marginLeft: 8,
-  },
-  newsList: {
-    gap: 10,
-  },
-  newsCard: {
-    marginBottom: 18,
-    borderRadius: 14,
-    backgroundColor: '#FFFDF8',
-    borderWidth: 0.5,
-    borderColor: '#D4AF37',
-    shadowColor: '#831B26',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  newsHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  newsIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: NEWS_COLOR + '10',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  newsContent: {
-    flex: 1,
-  },
-  newsTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  newsTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    flex: 1,
-    color: COLORS.PRIMARY,
-  },
-  newsChip: {
-    height: 20,
-    marginLeft: 8,
-    backgroundColor: NEWS_COLOR + '15',
-  },
-  newsMessage: {
-    fontSize: 13,
-    color: '#555',
-    lineHeight: 19,
-    marginBottom: 8,
-  },
-  newsLink: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-    color: COLORS.PRIMARY,
-  },
-  newsDate: {
-    fontSize: 11,
-    color: '#999',
-    fontWeight: '500',
-  },
-  newsImage: {
-    width: '100%',
-    height: 150,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  newsGallery: {
-    marginTop: 12,
-  },
-  newsGalleryImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  newsGallerySingleImage: {
-    width: Dimensions.get('window').width - 80,
-    height: 200,
-  },
-  newsGalleryCount: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  newsVideos: {
-    marginTop: 12,
-  },
-  newsVideoContainer: {
-    marginBottom: 8,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#000',
-  },
-  newsVideo: {
-    width: '100%',
-    height: 200,
-  },
-  expandedImageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  expandedImage: {
-    width: Dimensions.get('window').width - 40,
-    height: Dimensions.get('window').height * 0.7,
-  },
-  closeExpandedButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-    padding: 8,
-  },
-  emptyNewsCard: {
-    marginTop: 20,
-  },
-  emptyNewsContent: {
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyNewsText: {
-    fontSize: 16,
-    color: '#999',
-    marginTop: 12,
   },
   // Month Quick-Jump styles
   monthQuickJumpContainer: {
