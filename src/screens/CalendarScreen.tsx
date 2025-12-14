@@ -974,64 +974,62 @@ export const CalendarScreen = () => {
                 {monthEvents
                   .sort((a, b) => a.date.getTime() - b.date.getTime())
                   .map((event, index) => (
-                    <Card 
-                      key={`${month}-${index}`} 
+                    <Card
+                      key={`${month}-${index}`}
                       style={[
                         styles.eventCard,
-                        { borderLeftColor: SERVICE_TYPE_COLORS[event.serviceType] }
+                        { borderTopColor: SERVICE_TYPE_COLORS[event.serviceType] }
                       ]}
                     >
-                      <Card.Content>
-                        <View style={styles.cardContent}>
-                          <Title style={styles.eventTitle}>{event.name}</Title>
-                          
-                          {/* Display Saint Name for events that have it */}
-                          {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
-                            <Text style={styles.saintNameText}>
-                              {event.saintName}
-                            </Text>
-                          )}
-
-                          <View style={styles.cardDetails}>
-                            <View style={styles.dateContainer}>
-                              <Text style={styles.dateDay}>
-                                {format(event.date, 'dd', { locale: mk })}
-                              </Text>
-                              <Text
-                                style={styles.dateMonth}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                                minimumFontScale={0.7}
-                              >
-                                {format(event.date, 'MMM', { locale: mk })}
-                              </Text>
-                            </View>
-                            <View style={styles.eventInfo}>
-                              <View style={styles.serviceTypeContainer}>
-                                <MaterialCommunityIcons 
-                                  name={SERVICE_TYPE_ICONS[event.serviceType]} 
-                                  size={16} 
-                                  color={SERVICE_TYPE_COLORS[event.serviceType]} 
-                                />
-                                <Text style={[
-                                  styles.serviceType,
-                                  { color: SERVICE_TYPE_COLORS[event.serviceType] }
-                                ]}>
-                                  {getServiceTypeLabel(event.serviceType)}
-                                </Text>
-                              </View>
-                              <Text style={styles.time}>
-                                {event.description || `Време: ${event.time}ч`}
-                              </Text>
-                            </View>
-                            <View style={styles.rightContainer}>
-                              <View style={styles.imageContainer}>
-                                <EventImage event={event} />
-                              </View>
-                            </View>
-                          </View>
+                      {/* Image Section with Date Overlay */}
+                      <View style={styles.cardImageSection}>
+                        <View style={styles.cardImageWrapper}>
+                          <EventImage event={event} />
                         </View>
-                      </Card.Content>
+                        {/* Date Badge Overlay */}
+                        <View style={styles.dateBadgeOverlay}>
+                          <Text style={styles.dateBadgeDay}>
+                            {format(event.date, 'dd', { locale: mk })}
+                          </Text>
+                          <Text style={styles.dateBadgeMonth}>
+                            {format(event.date, 'MMM', { locale: mk })}
+                          </Text>
+                        </View>
+                        {/* Service Type Badge */}
+                        <View style={[
+                          styles.serviceTypeBadge,
+                          { backgroundColor: SERVICE_TYPE_COLORS[event.serviceType] }
+                        ]}>
+                          <MaterialCommunityIcons
+                            name={SERVICE_TYPE_ICONS[event.serviceType]}
+                            size={14}
+                            color="#fff"
+                          />
+                          <Text style={styles.serviceTypeBadgeText}>
+                            {getServiceTypeLabel(event.serviceType)}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Content Section */}
+                      <View style={styles.cardContentSection}>
+                        <Title style={styles.eventTitle}>{event.name}</Title>
+
+                        {/* Saint Name */}
+                        {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
+                          <Text style={styles.saintNameText}>
+                            {event.saintName}
+                          </Text>
+                        )}
+
+                        {/* Time */}
+                        <View style={styles.timeRow}>
+                          <MaterialCommunityIcons name="clock-outline" size={16} color={COLORS.TERTIARY} />
+                          <Text style={styles.timeText}>
+                            {event.description || `${event.time}ч`}
+                          </Text>
+                        </View>
+                      </View>
                     </Card>
                   ))}
               </View>
@@ -1221,25 +1219,102 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   eventCard: {
-    marginBottom: 18,
-    padding: 0,
+    marginBottom: 20,
     borderRadius: 16,
-    backgroundColor: '#FFFDF8', // Slightly warmer, lighter parchment
-    // Softer, more modern shadow
+    backgroundColor: '#FFFDF8',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 4,
-    borderLeftWidth: 5, // Slightly thicker left border
+    elevation: 5,
     overflow: 'hidden',
-    // Subtle gold accent border
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
+    borderTopWidth: 4,
   },
+  // New Modern Card Layout Styles
+  cardImageSection: {
+    position: 'relative',
+    height: 160,
+    backgroundColor: '#F5F5F0',
+  },
+  cardImageWrapper: {
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+  },
+  dateBadgeOverlay: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    backgroundColor: COLORS.PRIMARY,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#D4AF37',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  dateBadgeDay: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.TEXT_LIGHT,
+    lineHeight: 26,
+  },
+  dateBadgeMonth: {
+    fontSize: 11,
+    color: '#D4AF37',
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  serviceTypeBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  serviceTypeBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#fff',
+    marginLeft: 4,
+  },
+  cardContentSection: {
+    padding: 14,
+  },
+  eventTitle: {
+    fontSize: 17,
+    color: COLORS.PRIMARY,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    marginBottom: 4,
+    lineHeight: 22,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  timeText: {
+    fontSize: 14,
+    color: COLORS.TERTIARY,
+    fontWeight: '500',
+    marginLeft: 6,
+  },
+  // Legacy styles kept for compatibility
   cardContent: {
     flex: 1,
     paddingBottom: 8,
@@ -1252,28 +1327,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     width: '100%',
   },
-  eventTitle: {
-    fontSize: Dimensions.get('window').width < 360 ? 15 : 16,
-    color: COLORS.PRIMARY,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    flexShrink: 1,
-    lineHeight: 22,
-  },
   dateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
-    minWidth: Dimensions.get('window').width < 360 ? 54 : 64,
-    width: Dimensions.get('window').width < 360 ? 54 : 64,
+    minWidth: 64,
+    width: 64,
     backgroundColor: COLORS.PRIMARY,
     padding: 10,
     borderRadius: 14,
-    // Enhanced gold border
     borderWidth: 2.5,
     borderColor: '#D4AF37',
-    // Better shadow
     shadowColor: '#831B26',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
@@ -1291,7 +1355,7 @@ const styles = StyleSheet.create({
   },
   dateMonth: {
     fontSize: 11,
-    color: '#D4AF37', // Gold color for month
+    color: '#D4AF37',
     textTransform: 'uppercase',
     fontWeight: '700',
     marginTop: 2,
@@ -1368,7 +1432,7 @@ const styles = StyleSheet.create({
     height: '130%',
     top: 0,
   },
-  // NEW: Bulletproof image styles
+  // Bulletproof image styles for new card layout
   imageWrapper: {
     width: '100%',
     height: '100%',
@@ -1376,7 +1440,7 @@ const styles = StyleSheet.create({
   },
   eventImageFixed: {
     width: '100%',
-    height: 130, // Fixed pixel height instead of percentage
+    height: 200, // Taller for new card layout
     position: 'absolute',
     top: 0,
     left: 0,
