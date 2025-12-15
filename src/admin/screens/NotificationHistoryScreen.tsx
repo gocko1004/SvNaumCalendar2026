@@ -145,7 +145,7 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
               <Chip
                 key={category}
                 style={[styles.categoryChip, { backgroundColor: NOTIFICATION_CATEGORY_COLORS[category as NotificationCategory] + '20' }]}
-                textStyle={{ color: NOTIFICATION_CATEGORY_COLORS[category as NotificationCategory], fontSize: 11 }}
+                textStyle={{ color: NOTIFICATION_CATEGORY_COLORS[category as NotificationCategory], fontSize: 12 }}
               >
                 {getCategoryLabel(category as NotificationCategory)}: {count}
               </Chip>
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     borderColor: COLORS.PRIMARY,
-    borderRadius: 10,
+    borderRadius: 6,
   },
   scrollView: {
     flex: 1,
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     marginBottom: 16,
-    borderRadius: 14,
+    borderRadius: 6,
     backgroundColor: '#FFFDF8',
     elevation: 4,
     shadowColor: '#000',
@@ -361,12 +361,13 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 6,
   },
   categoryChip: {
-    height: 24,
+    height: 32,
+    paddingHorizontal: 4,
     marginRight: 4,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   sectionTitle: {
     fontSize: 16,
