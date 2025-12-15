@@ -25,7 +25,13 @@ type EventNotificationContent = {
 };
 
 export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) => {
-  const { logout } = useAuth();
+  const { logout, updateLastActivity } = useAuth();
+
+  // Update activity timestamp when navigating
+  const handleNavigation = (screen: keyof AdminStackParamList, params?: any) => {
+    updateLastActivity();
+    navigation.navigate(screen as any, params);
+  };
   const [notificationDialogVisible, setNotificationDialogVisible] = useState(false);
   const [automatedSettingsVisible, setAutomatedSettingsVisible] = useState(false);
   const [eventContentDialogVisible, setEventContentDialogVisible] = useState(false);
@@ -232,70 +238,70 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
     <ScrollView style={styles.container}>
       <Title style={styles.title}>Администраторски Панел</Title>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('AddEvent')}>
+      <Card style={styles.card} onPress={() => handleNavigation('AddEvent')}>
         <Card.Content>
           <Title>Додади Настан</Title>
           <Paragraph>Креирај нов настан во календарот</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('ManageCalendar')}>
+      <Card style={styles.card} onPress={() => handleNavigation('ManageCalendar')}>
         <Card.Content>
           <Title>Годишен Календар</Title>
           <Paragraph>Измени ги настаните во годишниот календар</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => setAutomatedSettingsVisible(true)}>
+      <Card style={styles.card} onPress={() => { updateLastActivity(); setAutomatedSettingsVisible(true); }}>
         <Card.Content>
           <Title>Автоматски Известувања</Title>
           <Paragraph>Постави автоматски известувања за сите настани во годината</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('AutoNotificationSettings')}>
+      <Card style={styles.card} onPress={() => handleNavigation('AutoNotificationSettings')}>
         <Card.Content>
           <Title>Големи Настани - Автоматизација</Title>
           <Paragraph>Конфигурирај известувања за пикници и празници (3 дена, 1 недела пред)</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('SpecialEvents')}>
+      <Card style={styles.card} onPress={() => handleNavigation('SpecialEvents')}>
         <Card.Content>
           <Title>Специјални Настани</Title>
           <Paragraph>Управувај со пикници и специјални собири</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('ManageLocations', { eventId: undefined })}>
+      <Card style={styles.card} onPress={() => handleNavigation('ManageLocations', { eventId: undefined })}>
         <Card.Content>
           <Title>Локации</Title>
           <Paragraph>Додади и измени локации за настани</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('ManageAnnouncements')}>
+      <Card style={styles.card} onPress={() => handleNavigation('ManageAnnouncements')}>
         <Card.Content>
           <Title>Огласи / Известувања</Title>
           <Paragraph>Додади огласи кои ќе се прикажуваат во календарот со временски период</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('ManageNews')}>
+      <Card style={styles.card} onPress={() => handleNavigation('ManageNews')}>
         <Card.Content>
           <Title>Новости</Title>
           <Paragraph>Додади новости кои ќе се прикажуваат во календарот</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => setNotificationDialogVisible(true)}>
+      <Card style={styles.card} onPress={() => { updateLastActivity(); setNotificationDialogVisible(true); }}>
         <Card.Content>
           <Title>Испрати Нотификација</Title>
           <Paragraph>Испрати push нотификација до сите корисници</Paragraph>
         </Card.Content>
       </Card>
 
-      <Card style={styles.card} onPress={() => navigation.navigate('NotificationHistory')}>
+      <Card style={styles.card} onPress={() => handleNavigation('NotificationHistory')}>
         <Card.Content>
           <Title>Историја на Нотификации</Title>
           <Paragraph>Преглед на испратени нотификации (последни 30 дена)</Paragraph>

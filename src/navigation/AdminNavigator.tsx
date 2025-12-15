@@ -1,4 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { AdminStackParamList } from './types';
 import {
   AdminLoginScreen,
@@ -12,7 +13,7 @@ import {
 import { ManageAnnouncementsScreen } from '../admin/screens/ManageAnnouncementsScreen';
 import { NotificationHistoryScreen } from '../admin/screens/NotificationHistoryScreen';
 import { EventFormScreen } from '../screens/EventFormScreen';
-import { COLORS } from '../constants/theme';
+import { COLORS, theme } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
 
 const AdminStack = createNativeStackNavigator<AdminStackParamList>();
@@ -23,18 +24,21 @@ export const AdminNavigator = () => {
   // Show login screen if not authenticated
   if (!isLoading && !isAuthenticated) {
     return (
-      <AdminStack.Navigator screenOptions={{ headerShown: false }}>
-        <AdminStack.Screen
-          name="AdminLogin"
-          component={AdminLoginScreen}
-          options={{ headerShown: false }}
-        />
-      </AdminStack.Navigator>
+      <PaperProvider theme={theme}>
+        <AdminStack.Navigator screenOptions={{ headerShown: false }}>
+          <AdminStack.Screen
+            name="AdminLogin"
+            component={AdminLoginScreen}
+            options={{ headerShown: false }}
+          />
+        </AdminStack.Navigator>
+      </PaperProvider>
     );
   }
 
   return (
-    <AdminStack.Navigator
+    <PaperProvider theme={theme}>
+      <AdminStack.Navigator
       screenOptions={{
         headerStyle: {
           backgroundColor: COLORS.PRIMARY,
@@ -97,5 +101,6 @@ export const AdminNavigator = () => {
         options={{ title: 'Автоматски известувања' }}
       />
     </AdminStack.Navigator>
+    </PaperProvider>
   );
 }; 

@@ -201,6 +201,7 @@ export const ManageLocationsScreen: React.FC<ManageLocationsScreenProps> = ({ na
       <FAB
         style={styles.fab}
         icon="plus"
+        color="#FFFFFF"
         onPress={() => {
           setSelectedLocation(null);
           setModalVisible(true);

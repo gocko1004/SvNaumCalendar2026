@@ -240,6 +240,7 @@ export const SpecialEventsScreen: React.FC<SpecialEventsScreenProps> = ({ naviga
       <FAB
         style={styles.fab}
         icon="plus"
+        color="#FFFFFF"
         onPress={() => {
           setSelectedEvent(null);
           setModalVisible(true);

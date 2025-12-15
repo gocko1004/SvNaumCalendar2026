@@ -1,25 +1,75 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../firebase';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const LAST_ACTIVITY_KEY = '@admin_last_activity';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
+  // Update last activity timestamp
+  const updateLastActivity = useCallback(async () => {
+    try {
+      await AsyncStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    } catch (error) {
+      console.error('Error updating last activity:', error);
+    }
+  }, []);
+
+  // Check if session has expired
+  const checkSessionExpiry = useCallback(async () => {
+    try {
+      const lastActivity = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
+      if (lastActivity) {
+        const lastActivityTime = parseInt(lastActivity, 10);
+        const timeSinceLastActivity = Date.now() - lastActivityTime;
+        if (timeSinceLastActivity > SESSION_TIMEOUT_MS) {
+          // Session expired, log out
+          if (isDevelopment) {
+            console.log('Session expired, logging out...');
+          }
+          await firebaseSignOut(auth);
+          await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
+          return true; // Session was expired
+        }
+      }
+      return false; // Session is valid
+    } catch (error) {
+      console.error('Error checking session expiry:', error);
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     // Listen to Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setIsAuthenticated(!!firebaseUser);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // Check if session has expired
+        const expired = await checkSessionExpiry();
+        if (!expired) {
+          setUser(firebaseUser);
+          setIsAuthenticated(true);
+          // Update activity on auth state change
+          await updateLastActivity();
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
       setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [checkSessionExpiry, updateLastActivity]);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -49,6 +99,8 @@ export const useAuth = () => {
       if (userCredential.user) {
         setIsAuthenticated(true);
         setUser(userCredential.user);
+        // Set initial activity timestamp on login
+        await updateLastActivity();
         return { success: true };
       }
       return { success: false, error: 'Невалидно корисничко име или лозинка' };
@@ -93,6 +145,7 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       await firebaseSignOut(auth);
+      await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
       setIsAuthenticated(false);
       setUser(null);
     } catch (error) {
@@ -106,5 +159,6 @@ export const useAuth = () => {
     user,
     login,
     logout,
+    updateLastActivity, // Export to call from admin screens on user interaction
   };
 }; 

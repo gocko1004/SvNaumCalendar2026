@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
-import { TextInput, Button, Title, Snackbar } from 'react-native-paper';
+import { TextInput, Button, Title, Snackbar, Menu } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
 import { COLORS } from '../constants/theme';
-import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { addEvent } from '../services/FirestoreEventService';
+import { ServiceType } from '../services/ChurchCalendarService';
+
+const SERVICE_TYPES: { value: ServiceType; label: string }[] = [
+  { value: 'LITURGY', label: 'Литургија' },
+  { value: 'EVENING_SERVICE', label: 'Вечерна Богослужба' },
+  { value: 'CHURCH_OPEN', label: 'Црквата е отворена' },
+  { value: 'PICNIC', label: 'Пикник' },
+];
 
 export const EventFormScreen = () => {
   const { t } = useLanguage();
@@ -15,10 +22,13 @@ export const EventFormScreen = () => {
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
   const [location, setLocation] = useState('');
+  const [serviceType, setServiceType] = useState<ServiceType>('LITURGY');
+  const [serviceTypeMenuVisible, setServiceTypeMenuVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -37,68 +47,64 @@ export const EventFormScreen = () => {
   const handleSubmit = async () => {
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
-    const trimmedLocation = location.trim();
 
     // Comprehensive input validation
-    if (!trimmedTitle || !trimmedDescription) {
-      setSnackbarMessage('Пополнете ги задолжителните полиња (наслов и опис)');
+    if (!trimmedTitle) {
+      setSnackbarMessage('Внесете име на настанот');
       setSnackbarVisible(true);
       return;
     }
 
     if (trimmedTitle.length < 3) {
-      setSnackbarMessage('Насловот мора да има барем 3 знаци');
+      setSnackbarMessage('Името мора да има барем 3 знаци');
       setSnackbarVisible(true);
       return;
     }
 
     if (trimmedTitle.length > 100) {
-      setSnackbarMessage('Насловот не може да биде подолг од 100 знаци');
+      setSnackbarMessage('Името не може да биде подолго од 100 знаци');
       setSnackbarVisible(true);
       return;
     }
 
-    if (trimmedDescription.length < 10) {
-      setSnackbarMessage('Описот мора да има барем 10 знаци');
-      setSnackbarVisible(true);
-      return;
-    }
-
-    if (trimmedDescription.length > 500) {
-      setSnackbarMessage('Описот не може да биде подолг од 500 знаци');
-      setSnackbarVisible(true);
-      return;
-    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       // Combine date and time
       const eventDateTime = new Date(date);
       eventDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
 
-      // Save event to Firestore
-      const eventsRef = collection(db, 'customEvents');
-      await addDoc(eventsRef, {
-        title: trimmedTitle,
-        description: trimmedDescription,
-        location: trimmedLocation,
-        date: eventDateTime.toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      // Save event to Firestore using the shared service
+      const eventId = await addEvent({
+        name: trimmedTitle,
+        date: eventDateTime,
+        time: format(time, 'HH:mm'),
+        serviceType: serviceType,
+        description: trimmedDescription || undefined,
       });
 
-      setSnackbarMessage(t.eventSaved || 'Настанот е зачуван успешно');
-      setSnackbarVisible(true);
+      if (eventId) {
+        setSnackbarMessage(t.eventSaved || 'Настанот е зачуван успешно');
+        setSnackbarVisible(true);
 
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setLocation('');
-      setDate(new Date());
-      setTime(new Date());
+        // Reset form
+        setTitle('');
+        setDescription('');
+        setLocation('');
+        setDate(new Date());
+        setTime(new Date());
+        setServiceType('LITURGY');
+      } else {
+        setSnackbarMessage('Грешка при зачувување на настанот');
+        setSnackbarVisible(true);
+      }
     } catch (error) {
       console.error('Error saving event:', error);
       setSnackbarMessage('Грешка при зачувување на настанот');
       setSnackbarVisible(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -107,19 +113,11 @@ export const EventFormScreen = () => {
       <Title style={styles.title}>{t.addEvent}</Title>
 
       <TextInput
-        label={t.eventTitle}
+        label="Име на настанот"
         value={title}
         onChangeText={setTitle}
         style={styles.input}
-      />
-
-      <TextInput
-        label={t.eventDescription}
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={4}
-        style={styles.input}
+        maxLength={100}
       />
 
       <Button
@@ -156,10 +154,37 @@ export const EventFormScreen = () => {
         />
       )}
 
+      <Menu
+        visible={serviceTypeMenuVisible}
+        onDismiss={() => setServiceTypeMenuVisible(false)}
+        anchor={
+          <Button
+            mode="outlined"
+            onPress={() => setServiceTypeMenuVisible(true)}
+            style={styles.input}
+          >
+            {SERVICE_TYPES.find(st => st.value === serviceType)?.label || 'Избери тип'}
+          </Button>
+        }
+      >
+        {SERVICE_TYPES.map((st) => (
+          <Menu.Item
+            key={st.value}
+            onPress={() => {
+              setServiceType(st.value);
+              setServiceTypeMenuVisible(false);
+            }}
+            title={st.label}
+          />
+        ))}
+      </Menu>
+
       <TextInput
-        label={t.eventLocation}
-        value={location}
-        onChangeText={setLocation}
+        label="Опис (опционално)"
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        numberOfLines={3}
         style={styles.input}
       />
 
@@ -167,8 +192,10 @@ export const EventFormScreen = () => {
         mode="contained"
         onPress={handleSubmit}
         style={styles.submitButton}
+        loading={isSubmitting}
+        disabled={isSubmitting}
       >
-        {t.saveEvent}
+        {isSubmitting ? 'Се зачувува...' : (t.saveEvent || 'Зачувај')}
       </Button>
 
       <Snackbar
