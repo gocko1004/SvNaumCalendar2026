@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Keyboard } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -20,7 +20,7 @@ import { COLORS } from '../../constants/theme';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { auth, db } from '../../firebase';
+import { db } from '../../firebase';
 
 type SpecialEventsScreenProps = {
   navigation: NativeStackNavigationProp<AdminStackParamList, 'SpecialEvents'>;
@@ -145,17 +145,18 @@ export const SpecialEventsScreen: React.FC<SpecialEventsScreenProps> = ({ naviga
       <Portal>
         <Modal
           visible={modalVisible}
-          onDismiss={() => setModalVisible(false)}
+          onDismiss={() => { Keyboard.dismiss(); setModalVisible(false); }}
           contentContainerStyle={styles.modal}
         >
-          <ScrollView>
-            <Title>{selectedEvent ? 'Измени Настан' : 'Нов Специјален Настан'}</Title>
-            
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <Title style={styles.modalTitle}>{selectedEvent ? 'Измени Настан' : 'Нов Специјален Настан'}</Title>
+
             <TextInput
               label="Име на настанот"
               value={newEvent.name}
               onChangeText={name => setNewEvent({ ...newEvent, name })}
               style={styles.input}
+              mode="outlined"
             />
 
             <TextInput
@@ -165,6 +166,7 @@ export const SpecialEventsScreen: React.FC<SpecialEventsScreenProps> = ({ naviga
               multiline
               numberOfLines={3}
               style={styles.input}
+              mode="outlined"
             />
 
             <Button
@@ -200,33 +202,35 @@ export const SpecialEventsScreen: React.FC<SpecialEventsScreenProps> = ({ naviga
             <TextInput
               label="Контакт лице"
               value={newEvent.contactPerson?.name}
-              onChangeText={name => 
-                setNewEvent({ 
-                  ...newEvent, 
-                  contactPerson: { ...newEvent.contactPerson, name } as any 
+              onChangeText={name =>
+                setNewEvent({
+                  ...newEvent,
+                  contactPerson: { ...newEvent.contactPerson, name } as any
                 })
               }
               style={styles.input}
+              mode="outlined"
             />
 
             <TextInput
               label="Телефон"
               value={newEvent.contactPerson?.phone}
-              onChangeText={phone => 
-                setNewEvent({ 
-                  ...newEvent, 
-                  contactPerson: { ...newEvent.contactPerson, phone } as any 
+              onChangeText={phone =>
+                setNewEvent({
+                  ...newEvent,
+                  contactPerson: { ...newEvent.contactPerson, phone } as any
                 })
               }
               style={styles.input}
+              mode="outlined"
             />
 
             <View style={styles.buttonContainer}>
-              <Button onPress={() => setModalVisible(false)} style={styles.button}>
+              <Button onPress={() => { Keyboard.dismiss(); setModalVisible(false); }} style={styles.button}>
                 Откажи
               </Button>
-              <Button 
-                mode="contained" 
+              <Button
+                mode="contained"
                 onPress={handleCreateEvent}
                 style={styles.button}
               >
@@ -302,7 +306,13 @@ const styles = StyleSheet.create({
     padding: 20,
     margin: 20,
     maxHeight: '80%',
-    borderRadius: 8,
+    borderRadius: 6,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginBottom: 16,
   },
   input: {
     marginBottom: 16,

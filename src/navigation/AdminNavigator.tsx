@@ -8,7 +8,8 @@ import {
   ManageLocationsScreen,
   SpecialEventsScreen,
   AutoNotificationSettingsScreen,
-  ManageNewsScreen
+  ManageNewsScreen,
+  ManageParkingScreen
 } from '../admin/screens';
 import { ManageAnnouncementsScreen } from '../admin/screens/ManageAnnouncementsScreen';
 import { NotificationHistoryScreen } from '../admin/screens/NotificationHistoryScreen';
@@ -21,20 +22,8 @@ const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 export const AdminNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Show login screen if not authenticated
-  if (!isLoading && !isAuthenticated) {
-    return (
-      <PaperProvider theme={theme}>
-        <AdminStack.Navigator screenOptions={{ headerShown: false }}>
-          <AdminStack.Screen
-            name="AdminLogin"
-            component={AdminLoginScreen}
-            options={{ headerShown: false }}
-          />
-        </AdminStack.Navigator>
-      </PaperProvider>
-    );
-  }
+  // Determine initial route based on auth state
+  const initialRoute = isAuthenticated ? "AdminDashboard" : "AdminLogin";
 
   return (
     <PaperProvider theme={theme}>
@@ -48,7 +37,7 @@ export const AdminNavigator = () => {
           fontWeight: 'bold',
         },
       }}
-      initialRouteName={isAuthenticated ? "AdminDashboard" : "AdminLogin"}
+      initialRouteName={initialRoute}
     >
       <AdminStack.Screen
         name="AdminLogin"
@@ -89,6 +78,11 @@ export const AdminNavigator = () => {
         name="ManageNews"
         component={ManageNewsScreen}
         options={{ title: 'Новости' }}
+      />
+      <AdminStack.Screen
+        name="ManageParking"
+        component={ManageParkingScreen}
+        options={{ title: 'Паркинг' }}
       />
       <AdminStack.Screen
         name="NotificationHistory"

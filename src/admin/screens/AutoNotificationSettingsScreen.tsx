@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, RefreshControl, Alert, TouchableOpacity, Text as RNText, Modal, SafeAreaView, TextInput as RNTextInput } from 'react-native';
 import {
   Title,
   Card,
   Button,
   Text,
   ActivityIndicator,
-  Chip,
   Switch,
   Divider,
   Surface,
-  FAB,
-  Portal,
-  Dialog,
-  TextInput,
-  Checkbox,
 } from 'react-native-paper';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
@@ -27,7 +21,7 @@ import {
   deleteAutoNotificationConfig,
   toggleAutoNotificationConfig,
   initializeDefaultConfigs,
-  getBigEvents,
+  getAllFutureEvents,
   TIMING_LABELS,
   DEFAULT_TIMINGS_BY_TYPE,
   calculateNotificationDate,
@@ -50,7 +44,7 @@ const SERVICE_TYPE_COLORS = {
 
 export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsScreenProps> = ({ navigation }) => {
   const [configs, setConfigs] = useState<AutoNotificationConfig[]>([]);
-  const [bigEvents, setBigEvents] = useState<ChurchEvent[]>([]);
+  const [allEvents, setAllEvents] = useState<ChurchEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [dialogVisible, setDialogVisible] = useState(false);
@@ -68,10 +62,10 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
     try {
       const [configsData, eventsData] = await Promise.all([
         getAllAutoNotificationConfigs(),
-        Promise.resolve(getBigEvents()),
+        Promise.resolve(getAllFutureEvents()),
       ]);
       setConfigs(configsData);
-      setBigEvents(eventsData);
+      setAllEvents(eventsData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -221,12 +215,11 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
                 color={COLORS.PRIMARY}
               />
             </View>
-            <Chip
-              style={[styles.serviceChip, { backgroundColor: color + '20' }]}
-              textStyle={{ color, fontSize: 10 }}
-            >
-              {getServiceTypeLabel(config.serviceType)}
-            </Chip>
+            <View style={[styles.serviceChipNative, { backgroundColor: color + '20' }]}>
+              <RNText style={[styles.serviceChipText, { color }]}>
+                {getServiceTypeLabel(config.serviceType)}
+              </RNText>
+            </View>
           </View>
 
           <Text style={styles.configDate}>
@@ -253,11 +246,10 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
           )}
 
           <View style={styles.configActions}>
-            <Button
-              mode="outlined"
+            <TouchableOpacity
               onPress={() => {
                 setEditingConfig(config);
-                const event = bigEvents.find(
+                const event = allEvents.find(
                   e => `${e.date.toISOString()}_${e.name}` === config.eventId
                 );
                 if (event) {
@@ -267,18 +259,16 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
                   setDialogVisible(true);
                 }
               }}
-              style={styles.editButton}
+              style={styles.editButtonTouch}
             >
-              Измени
-            </Button>
-            <Button
-              mode="outlined"
-              textColor="#F44336"
+              <RNText style={styles.editButtonText}>Измени</RNText>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => handleDeleteConfig(config)}
-              style={styles.deleteButton}
+              style={styles.deleteButtonTouch}
             >
-              Избриши
-            </Button>
+              <RNText style={styles.deleteButtonText}>Избриши</RNText>
+            </TouchableOpacity>
           </View>
         </Card.Content>
       </Card>
@@ -305,20 +295,25 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
                 {format(event.date, 'dd.MM.yyyy', { locale: mk })}
               </Text>
             </View>
-            <Chip
-              style={[styles.eventChip, { backgroundColor: color + '20' }]}
-              textStyle={{ color, fontSize: 10 }}
-            >
-              {getServiceTypeLabel(event.serviceType)}
-            </Chip>
-            <Button
-              mode={hasConfig ? 'outlined' : 'contained'}
+            <View style={[styles.eventChipNative, { backgroundColor: color + '20' }]}>
+              <RNText style={[styles.eventChipText, { color }]}>
+                {getServiceTypeLabel(event.serviceType)}
+              </RNText>
+            </View>
+            <TouchableOpacity
               onPress={() => openAddDialog(event)}
-              compact
-              style={styles.configureButton}
+              style={[
+                styles.configureButtonTouch,
+                hasConfig ? styles.configureButtonOutlined : styles.configureButtonFilled
+              ]}
             >
-              {hasConfig ? 'Измени' : 'Конфигурирај'}
-            </Button>
+              <RNText style={[
+                styles.configureButtonText,
+                hasConfig ? styles.configureButtonTextOutlined : styles.configureButtonTextFilled
+              ]}>
+                {hasConfig ? 'Измени' : 'Конфигурирај'}
+              </RNText>
+            </TouchableOpacity>
           </View>
           {hasConfig && config && (
             <View style={styles.configSummary}>
@@ -368,11 +363,11 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
 
           {/* Available Events Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Големи настани за конфигурирање</Text>
+            <Text style={styles.sectionTitle}>Сите настани ({allEvents.length})</Text>
             <Text style={styles.sectionSubtitle}>
-              Пикници и големи празници кои можат да имаат автоматски известувања
+              Изберете кои настани да имаат автоматски известувања
             </Text>
-            {bigEvents.map(renderEventCard)}
+            {allEvents.map(renderEventCard)}
           </View>
 
           <View style={styles.footer}>
@@ -383,61 +378,86 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
         </ScrollView>
       )}
 
-      {/* Configure Dialog */}
-      <Portal>
-        <Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)}>
-          <Dialog.Title style={styles.dialogTitle}>
-            {editingConfig ? 'Измени конфигурација' : 'Нова конфигурација'}
-          </Dialog.Title>
-          <Dialog.ScrollArea style={styles.dialogScrollArea}>
-            <ScrollView>
+      {/* Configure Modal */}
+      <Modal
+        visible={dialogVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setDialogVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <RNText style={styles.modalTitle}>
+                {editingConfig ? 'Измени конфигурација' : 'Нова конфигурација'}
+              </RNText>
+              <TouchableOpacity onPress={() => setDialogVisible(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
               {selectedEvent && (
-                <View style={styles.dialogContent}>
-                  <Text style={styles.dialogEventName}>{selectedEvent.name}</Text>
-                  <Text style={styles.dialogEventDate}>
+                <View style={styles.modalContent}>
+                  <RNText style={styles.dialogEventName}>{selectedEvent.name}</RNText>
+                  <RNText style={styles.dialogEventDate}>
                     {format(selectedEvent.date, 'dd MMMM yyyy', { locale: mk })}
-                  </Text>
+                  </RNText>
 
-                  <Text style={styles.dialogLabel}>Кога да се испрати известување:</Text>
+                  <RNText style={styles.dialogLabel}>Кога да се испрати известување:</RNText>
 
-                  {(['1_WEEK', '3_DAYS', '1_DAY', '12_HOURS'] as NotificationTiming[]).map(timing => (
-                    <View key={timing} style={styles.checkboxRow}>
-                      <Checkbox
-                        status={selectedTimings.includes(timing) ? 'checked' : 'unchecked'}
+                  {(['1_WEEK', '3_DAYS', '1_DAY', '12_HOURS'] as NotificationTiming[]).map(timing => {
+                    const isSelected = selectedTimings.includes(timing);
+                    return (
+                      <TouchableOpacity
+                        key={timing}
+                        style={[styles.timingOption, isSelected && styles.timingOptionSelected]}
                         onPress={() => toggleTiming(timing)}
-                        color={COLORS.PRIMARY}
-                      />
-                      <View style={styles.checkboxContent}>
-                        <Text style={styles.checkboxLabel}>{TIMING_LABELS[timing]}</Text>
-                        <Text style={styles.checkboxDate}>
-                          {format(calculateNotificationDate(selectedEvent.date, timing), 'dd.MM.yyyy HH:mm', { locale: mk })}
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
+                      >
+                        <View style={[styles.customCheckbox, isSelected && styles.customCheckboxChecked]}>
+                          {isSelected && <MaterialCommunityIcons name="check" size={16} color="#fff" />}
+                        </View>
+                        <View style={styles.timingOptionContent}>
+                          <RNText style={styles.timingOptionLabel}>{TIMING_LABELS[timing]}</RNText>
+                          <RNText style={styles.timingOptionDate}>
+                            {format(calculateNotificationDate(selectedEvent.date, timing), 'dd.MM.yyyy HH:mm', { locale: mk })}
+                          </RNText>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
 
-                  <TextInput
-                    label="Прилагодена порака (опционално)"
+                  <RNText style={styles.messageLabel}>Прилагодена порака (опционално)</RNText>
+                  <RNTextInput
                     value={customMessage}
                     onChangeText={setCustomMessage}
-                    mode="outlined"
                     multiline
                     numberOfLines={3}
-                    style={styles.messageInput}
+                    style={styles.messageInputNative}
                     placeholder="Оставете празно за стандардна порака"
+                    placeholderTextColor="#999"
                   />
                 </View>
               )}
             </ScrollView>
-          </Dialog.ScrollArea>
-          <Dialog.Actions>
-            <Button onPress={() => setDialogVisible(false)}>Откажи</Button>
-            <Button onPress={handleSaveConfig} mode="contained">
-              Зачувај
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalButtonCancel}
+                onPress={() => setDialogVisible(false)}
+              >
+                <RNText style={styles.modalButtonCancelText}>Откажи</RNText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButtonSave}
+                onPress={handleSaveConfig}
+              >
+                <RNText style={styles.modalButtonSaveText}>Зачувај</RNText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -515,9 +535,15 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#333',
   },
-  serviceChip: {
-    height: 22,
+  serviceChipNative: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
     alignSelf: 'flex-start',
+  },
+  serviceChipText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   configDate: {
     fontSize: 13,
@@ -567,11 +593,29 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 8,
   },
-  editButton: {
+  editButtonTouch: {
+    borderWidth: 1,
     borderColor: COLORS.PRIMARY,
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
-  deleteButton: {
+  editButtonText: {
+    color: COLORS.PRIMARY,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  deleteButtonTouch: {
+    borderWidth: 1,
     borderColor: '#F44336',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  deleteButtonText: {
+    color: '#F44336',
+    fontSize: 13,
+    fontWeight: '600',
   },
   eventCard: {
     marginBottom: 8,
@@ -597,11 +641,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  eventChip: {
-    height: 22,
+  eventChipNative: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  configureButton: {
+  eventChipText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  configureButtonTouch: {
     marginLeft: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  configureButtonFilled: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  configureButtonOutlined: {
+    borderWidth: 1,
+    borderColor: COLORS.PRIMARY,
+    backgroundColor: 'transparent',
+  },
+  configureButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  configureButtonTextFilled: {
+    color: '#fff',
+  },
+  configureButtonTextOutlined: {
+    color: COLORS.PRIMARY,
   },
   configSummary: {
     flexDirection: 'row',
@@ -622,17 +693,45 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
   },
-  dialogTitle: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '100%',
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: COLORS.PRIMARY,
   },
-  dialogScrollArea: {
+  modalScrollView: {
     maxHeight: 400,
   },
-  dialogContent: {
+  modalContent: {
     padding: 16,
   },
   dialogEventName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.PRIMARY,
     marginBottom: 4,
@@ -640,33 +739,100 @@ const styles = StyleSheet.create({
   dialogEventDate: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   dialogLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 12,
     color: '#333',
   },
-  checkboxRow: {
+  timingOption: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 12,
     marginBottom: 8,
+    borderRadius: 10,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  checkboxContent: {
+  timingOptionSelected: {
+    backgroundColor: COLORS.PRIMARY + '10',
+    borderColor: COLORS.PRIMARY,
+  },
+  customCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  customCheckboxChecked: {
+    backgroundColor: COLORS.PRIMARY,
+    borderColor: COLORS.PRIMARY,
+  },
+  timingOptionContent: {
     flex: 1,
   },
-  checkboxLabel: {
-    fontSize: 14,
+  timingOptionLabel: {
+    fontSize: 15,
+    fontWeight: '600',
     color: '#333',
   },
-  checkboxDate: {
-    fontSize: 12,
-    color: '#999',
+  timingOptionDate: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
   },
-  messageInput: {
+  messageLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
     marginTop: 16,
+    marginBottom: 8,
+  },
+  messageInputNative: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: '#333',
     backgroundColor: '#fff',
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    gap: 12,
+  },
+  modalButtonCancel: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  modalButtonCancelText: {
+    fontSize: 15,
+    color: '#666',
+    fontWeight: '600',
+  },
+  modalButtonSave: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  modalButtonSaveText: {
+    fontSize: 15,
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 

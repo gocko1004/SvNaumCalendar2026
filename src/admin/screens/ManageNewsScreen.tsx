@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -8,9 +8,10 @@ import {
   Platform,
   Image,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
+  TextInput as NativeTextInput,
+  Modal,
+  SafeAreaView
 } from 'react-native';
 import {
   Title,
@@ -184,7 +185,9 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
   };
 
   const handleSave = async () => {
-    if (!title.trim() || !content.trim()) {
+    const contentValue = content;
+
+    if (!title.trim() || !contentValue.trim()) {
       Alert.alert('Грешка', 'Наслов и содржина се задолжителни');
       return;
     }
@@ -218,7 +221,7 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
 
       const newsData = {
         title: title.trim(),
-        content: content.trim(),
+        content: contentValue.trim(),
         date,
         imageUrls: allImageUrls,
         videoUrls: allVideoUrls,
@@ -289,7 +292,11 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    // On Android, always hide the picker after selection
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    // Update date if a valid date was selected
     if (selectedDate) {
       setDate(selectedDate);
     }
@@ -498,150 +505,182 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
         color="#fff"
       />
 
-      {/* Add/Edit Dialog */}
-      <Portal>
-        <Dialog visible={dialogVisible} onDismiss={() => { if (!uploading) { Keyboard.dismiss(); setDialogVisible(false); }}} style={styles.dialog}>
-          <Dialog.Title style={styles.dialogTitle}>
-            {editingNews ? 'Измени новост' : 'Додади новост'}
-          </Dialog.Title>
-          <Dialog.ScrollArea style={styles.dialogScrollArea}>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                  <View style={styles.dialogContent}>
-                    <TextInput
-                      label="Наслов *"
-                      value={title}
-                      onChangeText={setTitle}
-                      mode="outlined"
-                      style={styles.input}
-                      outlineStyle={styles.inputOutline}
-                      disabled={uploading}
-                    />
+      {/* Add/Edit Modal */}
+      <Modal 
+        visible={dialogVisible} 
+        animationType="slide" 
+        onRequestClose={() => { if (!uploading) { setDialogVisible(false); }}}
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Title style={styles.dialogTitle}>
+              {editingNews ? 'Измени новост' : 'Додади новост'}
+            </Title>
+            <TouchableOpacity onPress={() => { Keyboard.dismiss(); setDialogVisible(false); }} disabled={uploading}>
+              <MaterialCommunityIcons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            contentContainerStyle={styles.modalScrollContent}
+            keyboardShouldPersistTaps="handled" 
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.dialogContent}>
+              <TextInput
+                label="Наслов *"
+                value={title}
+                onChangeText={setTitle}
+                mode="outlined"
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                disabled={uploading}
+              />
 
-                    <TextInput
-                      label="Содржина *"
-                      value={content}
-                      onChangeText={setContent}
-                      mode="outlined"
-                      multiline
-                      numberOfLines={4}
-                      style={styles.input}
-                      outlineStyle={styles.inputOutline}
-                      disabled={uploading}
-                    />
+              <TextInput
+                label="Содржина *"
+                value={content}
+                onChangeText={setContent}
+                mode="outlined"
+                multiline
+                numberOfLines={6}
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                disabled={uploading}
+                placeholder="Внесете ја содржината..."
+              />
 
-                <Text style={styles.dateLabel}>Датум:</Text>
-                <Button
-                  mode="outlined"
-                  onPress={() => setShowDatePicker(true)}
-                  style={styles.dateButton}
-                  icon="calendar"
-                  disabled={uploading}
-                >
-                  {format(date, 'dd MMMM yyyy', { locale: mk })}
-                </Button>
+              <Text style={styles.dateLabel}>Датум:</Text>
+              <Button
+                mode="outlined"
+                onPress={() => setShowDatePicker(!showDatePicker)}
+                style={styles.dateButton}
+                icon="calendar"
+                disabled={uploading}
+              >
+                {format(date, 'dd MMMM yyyy', { locale: mk })}
+              </Button>
 
-                {showDatePicker && (
+              {Platform.OS === 'ios' && showDatePicker && (
+                <View style={styles.iosDatePickerContainer}>
                   <DateTimePicker
                     value={date}
                     mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    display="inline"
                     onChange={onDateChange}
+                    style={styles.iosDatePicker}
+                    disabled={uploading}
                   />
-                )}
-
-                {/* Media Buttons */}
-                <View style={styles.mediaButtons}>
                   <Button
-                    mode="outlined"
-                    onPress={handlePickImages}
-                    icon="image-multiple"
-                    style={styles.mediaButton}
-                    disabled={uploading}
+                    mode="text"
+                    onPress={() => setShowDatePicker(false)}
+                    style={styles.datePickerDoneButton}
                   >
-                    Додади слики
-                  </Button>
-                  <Button
-                    mode="outlined"
-                    onPress={handlePickVideo}
-                    icon="video"
-                    style={styles.mediaButton}
-                    disabled={uploading}
-                  >
-                    Додади видео
+                    Готово
                   </Button>
                 </View>
+              )}
 
-                {/* Media Preview */}
-                {renderMediaPreview()}
+              {Platform.OS === 'android' && showDatePicker && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  display="default"
+                  onChange={onDateChange}
+                />
+              )}
 
-                <TextInput
-                      label="URL на линк (опционално)"
-                      value={linkUrl}
-                      onChangeText={setLinkUrl}
-                      mode="outlined"
-                      style={styles.input}
-                      outlineStyle={styles.inputOutline}
-                      placeholder="https://..."
-                      keyboardType="url"
-                      autoCapitalize="none"
-                      disabled={uploading}
-                    />
+              {/* Media Buttons */}
+              <View style={styles.mediaButtons}>
+                <Button
+                  mode="outlined"
+                  onPress={handlePickImages}
+                  icon="image-multiple"
+                  style={styles.mediaButton}
+                  disabled={uploading}
+                >
+                  Додади слики
+                </Button>
+                <Button
+                  mode="outlined"
+                  onPress={handlePickVideo}
+                  icon="video"
+                  style={styles.mediaButton}
+                  disabled={uploading}
+                >
+                  Додади видео
+                </Button>
+              </View>
 
-                    <TextInput
-                      label="Текст за линк (опционално)"
-                      value={linkText}
-                      onChangeText={setLinkText}
-                      mode="outlined"
-                      style={styles.input}
-                      outlineStyle={styles.inputOutline}
-                      placeholder="Прочитај повеќе"
-                      disabled={uploading}
-                    />
+              {/* Media Preview */}
+              {renderMediaPreview()}
 
-                    {/* Notification checkbox - only for new posts */}
-                    {!editingNews && (
-                      <View style={styles.checkboxRow}>
-                        <Checkbox
-                          status={sendNotification ? 'checked' : 'unchecked'}
-                          onPress={() => setSendNotification(!sendNotification)}
-                          color={COLORS.PRIMARY}
-                          disabled={uploading}
-                        />
-                        <Text style={styles.checkboxLabel}>
-                          Испрати известување до сите корисници
-                        </Text>
-                      </View>
-                    )}
+              <TextInput
+                label="URL на линк (опционално)"
+                value={linkUrl}
+                onChangeText={setLinkUrl}
+                mode="outlined"
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                placeholder="https://..."
+                keyboardType="url"
+                autoCapitalize="none"
+                disabled={uploading}
+              />
 
-                    {/* Upload Progress */}
-                    {uploading && (
-                      <View style={styles.uploadProgress}>
-                        <Text style={styles.uploadText}>
-                          Се прикачува... {Math.round(uploadProgress)}%
-                        </Text>
-                        <ProgressBar progress={uploadProgress / 100} color={COLORS.PRIMARY} />
-                      </View>
-                    )}
+              <TextInput
+                label="Текст за линк (опционално)"
+                value={linkText}
+                onChangeText={setLinkText}
+                mode="outlined"
+                style={styles.input}
+                outlineStyle={styles.inputOutline}
+                placeholder="Прочитај повеќе"
+                disabled={uploading}
+              />
 
-                    {/* Bottom padding for keyboard */}
-                    <View style={{ height: 50 }} />
-                  </View>
-                </ScrollView>
-              </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-          </Dialog.ScrollArea>
-          <Dialog.Actions>
-            <Button onPress={() => { Keyboard.dismiss(); setDialogVisible(false); }} disabled={uploading}>
-              Откажи
-            </Button>
-            <Button onPress={handleSave} mode="contained" loading={uploading} disabled={uploading}>
-              {uploading ? 'Се прикачува...' : 'Зачувај'}
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+              {/* Notification checkbox - only for new posts */}
+              {!editingNews && (
+                <View style={styles.checkboxRow}>
+                  <Checkbox
+                    status={sendNotification ? 'checked' : 'unchecked'}
+                    onPress={() => setSendNotification(!sendNotification)}
+                    color={COLORS.PRIMARY}
+                    disabled={uploading}
+                  />
+                  <Text style={styles.checkboxLabel}>
+                    Испрати известување до сите корисници
+                  </Text>
+                </View>
+              )}
+
+              {/* Upload Progress */}
+              {uploading && (
+                <View style={styles.uploadProgress}>
+                  <Text style={styles.uploadText}>
+                    Се прикачува... {Math.round(uploadProgress)}%
+                  </Text>
+                  <ProgressBar progress={uploadProgress / 100} color={COLORS.PRIMARY} />
+                </View>
+              )}
+
+              <Button 
+                onPress={handleSave} 
+                mode="contained" 
+                loading={uploading} 
+                disabled={uploading}
+                style={{ marginTop: 20 }}
+              >
+                {uploading ? 'Се прикачува...' : 'Зачувај'}
+              </Button>
+              
+              {/* Bottom padding for keyboard */}
+              <View style={{ height: 50 }} />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 };
@@ -803,6 +842,27 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: '#fff',
   },
+  flatInput: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 4,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  nativeInput: {
+    minHeight: 100,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 12,
+  },
   inputOutline: {
     borderRadius: 6,
   },
@@ -815,6 +875,23 @@ const styles = StyleSheet.create({
   dateButton: {
     marginBottom: 12,
     borderColor: COLORS.PRIMARY,
+  },
+  iosDatePickerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    overflow: 'hidden',
+  },
+  iosDatePicker: {
+    width: '100%',
+    height: 320,
+  },
+  datePickerDoneButton: {
+    alignSelf: 'flex-end',
+    marginRight: 8,
+    marginBottom: 8,
   },
   mediaButtons: {
     flexDirection: 'row',
@@ -904,6 +981,22 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY,
     marginBottom: 8,
     textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  modalScrollContent: {
+    padding: 0,
   },
 });
 

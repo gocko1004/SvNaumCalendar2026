@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Keyboard } from 'react-native';
 import { 
   Card, 
   Title, 
@@ -146,17 +146,18 @@ export const ManageLocationsScreen: React.FC<ManageLocationsScreenProps> = ({ na
       <Portal>
         <Modal
           visible={modalVisible}
-          onDismiss={() => setModalVisible(false)}
+          onDismiss={() => { Keyboard.dismiss(); setModalVisible(false); }}
           contentContainerStyle={styles.modal}
         >
-          <ScrollView>
-            <Title>{selectedLocation ? 'Измени Локација' : 'Нова Локација'}</Title>
-            
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <Title style={styles.modalTitle}>{selectedLocation ? 'Измени Локација' : 'Нова Локација'}</Title>
+
             <TextInput
               label="Име на локацијата"
               value={newLocation.name}
               onChangeText={name => setNewLocation({ ...newLocation, name })}
               style={styles.input}
+              mode="outlined"
             />
 
             <TextInput
@@ -164,6 +165,7 @@ export const ManageLocationsScreen: React.FC<ManageLocationsScreenProps> = ({ na
               value={newLocation.address}
               onChangeText={address => setNewLocation({ ...newLocation, address })}
               style={styles.input}
+              mode="outlined"
             />
 
             <TextInput
@@ -173,6 +175,7 @@ export const ManageLocationsScreen: React.FC<ManageLocationsScreenProps> = ({ na
               multiline
               numberOfLines={3}
               style={styles.input}
+              mode="outlined"
             />
 
             <TextInput
@@ -180,14 +183,15 @@ export const ManageLocationsScreen: React.FC<ManageLocationsScreenProps> = ({ na
               value={newLocation.parkingInfo}
               onChangeText={parkingInfo => setNewLocation({ ...newLocation, parkingInfo })}
               style={styles.input}
+              mode="outlined"
             />
 
             <View style={styles.buttonContainer}>
-              <Button onPress={() => setModalVisible(false)} style={styles.button}>
+              <Button onPress={() => { Keyboard.dismiss(); setModalVisible(false); }} style={styles.button}>
                 Откажи
               </Button>
-              <Button 
-                mode="contained" 
+              <Button
+                mode="contained"
                 onPress={handleCreateLocation}
                 style={styles.button}
               >
@@ -254,7 +258,13 @@ const styles = StyleSheet.create({
     padding: 20,
     margin: 20,
     maxHeight: '80%',
-    borderRadius: 8,
+    borderRadius: 6,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+    marginBottom: 16,
   },
   input: {
     marginBottom: 16,

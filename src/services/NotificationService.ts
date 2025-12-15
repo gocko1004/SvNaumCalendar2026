@@ -17,6 +17,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -237,11 +239,12 @@ class NotificationService {
         projectId,
       });
 
-      // Store token in Firestore
+      // Store token in Firestore using token hash as document ID to prevent duplicates
+      // This ensures each unique push token only has one entry
       const tokensRef = collection(db, 'pushTokens');
-      const deviceId = await this.getDeviceId();
-      
-      await setDoc(doc(tokensRef, deviceId), {
+      const tokenId = this.hashToken(token.data);
+
+      await setDoc(doc(tokensRef, tokenId), {
         token: token.data,
         platform: Platform.OS,
         createdAt: new Date(),
@@ -253,6 +256,19 @@ class NotificationService {
       console.error('Error registering push token:', error);
       return null;
     }
+  };
+
+  // Create a simple hash from token to use as document ID
+  hashToken = (token: string): string => {
+    // Create a simple hash from the token string
+    // This ensures the same token always gets the same document ID
+    let hash = 0;
+    for (let i = 0; i < token.length; i++) {
+      const char = token.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return `token_${Math.abs(hash).toString(36)}`;
   };
 
   getDeviceId = async (): Promise<string> => {
@@ -360,19 +376,23 @@ class NotificationService {
       // Get all push tokens from Firestore
       const tokensRef = collection(db, 'pushTokens');
       const tokensSnapshot = await getDocs(tokensRef);
-      
+
       if (tokensSnapshot.empty) {
         return { success: false, sentCount: 0, error: 'No devices registered for push notifications' };
       }
 
-      const tokens = tokensSnapshot.docs.map(doc => doc.data().token).filter(Boolean);
-      
-      if (tokens.length === 0) {
+      // IMPORTANT: Deduplicate tokens to prevent sending multiple notifications to same device
+      const allTokens = tokensSnapshot.docs.map(doc => doc.data().token).filter(Boolean);
+      const uniqueTokens = [...new Set(allTokens)];
+
+      console.log(`Found ${allTokens.length} tokens, ${uniqueTokens.length} unique`);
+
+      if (uniqueTokens.length === 0) {
         return { success: false, sentCount: 0, error: 'No valid push tokens found' };
       }
 
       // Send push notifications via Expo Push Notification API
-      const messages = tokens.map(token => ({
+      const messages = uniqueTokens.map(token => ({
         to: token,
         sound: 'default',
         title,

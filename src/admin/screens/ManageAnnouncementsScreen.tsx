@@ -9,18 +9,19 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Image
+  Image,
+  Modal,
+  SafeAreaView,
+  TouchableOpacity
 } from 'react-native';
 import {
   Title,
   Card,
-  Button,
   Portal,
   Dialog,
   TextInput,
   Text,
   ActivityIndicator,
-  Chip,
   Switch,
   SegmentedButtons
 } from 'react-native-paper';
@@ -114,6 +115,8 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
     setFormImageUri(null);
     setFormLinkUrl('');
     setFormLinkText('');
+    setShowStartDatePicker(false);
+    setShowEndDatePicker(false);
   };
 
   useEffect(() => {
@@ -292,25 +295,26 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
           <Text style={styles.cardMessage} numberOfLines={2}>{announcement.message}</Text>
 
           <View style={styles.chipRow}>
-            <Chip
-              style={[styles.typeChip, { backgroundColor: typeColor + '20' }]}
-              textStyle={{ color: typeColor, fontSize: 11 }}
-            >
-              {ANNOUNCEMENT_TYPES.find(t => t.value === announcement.type)?.label}
-            </Chip>
+            <View style={[styles.chipNative, { backgroundColor: typeColor + '20' }]}>
+              <Text style={[styles.chipTextNative, { color: typeColor }]}>
+                {ANNOUNCEMENT_TYPES.find(t => t.value === announcement.type)?.label}
+              </Text>
+            </View>
             {active && (
-              <Chip style={styles.activeChip} textStyle={{ color: '#4CAF50', fontSize: 11 }}>
-                Активно
-              </Chip>
+              <View style={[styles.chipNative, { backgroundColor: '#4CAF5020' }]}>
+                <Text style={[styles.chipTextNative, { color: '#4CAF50' }]}>Активно</Text>
+              </View>
             )}
             {expired && (
-              <Chip style={styles.expiredChip} textStyle={{ color: '#F44336', fontSize: 11 }}>
-                Истечено
-              </Chip>
+              <View style={[styles.chipNative, { backgroundColor: '#F4433620' }]}>
+                <Text style={[styles.chipTextNative, { color: '#F44336' }]}>Истечено</Text>
+              </View>
             )}
-            <Chip style={styles.priorityChip} textStyle={{ fontSize: 11 }}>
-              Приоритет: {announcement.priority}
-            </Chip>
+            <View style={[styles.chipNative, { backgroundColor: '#9E9E9E20' }]}>
+              <Text style={[styles.chipTextNative, { color: '#666' }]}>
+                Приоритет: {announcement.priority}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.dateRow}>
@@ -320,23 +324,18 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
           </View>
 
           <View style={styles.buttonRow}>
-            <Button
-              mode="outlined"
+            <TouchableOpacity
               onPress={() => handleEdit(announcement)}
-              style={styles.editButton}
-              labelStyle={{ fontSize: 12 }}
+              style={styles.editButtonTouch}
             >
-              Измени
-            </Button>
-            <Button
-              mode="outlined"
+              <Text style={styles.editButtonText}>Измени</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => handleDelete(announcement)}
-              style={styles.deleteButton}
-              textColor="#F44336"
-              labelStyle={{ fontSize: 12 }}
+              style={styles.deleteButtonTouch}
             >
-              Избриши
-            </Button>
+              <Text style={styles.deleteButtonText}>Избриши</Text>
+            </TouchableOpacity>
           </View>
         </Card.Content>
       </Card>
@@ -347,14 +346,12 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
     <View style={styles.container}>
       <View style={styles.header}>
         <Title style={styles.title}>Известувања</Title>
-        <Button
-          mode="contained"
+        <TouchableOpacity
           onPress={handleAddNew}
-          style={styles.addButton}
-          buttonColor={COLORS.PRIMARY}
+          style={styles.addButtonNative}
         >
-          + Додади
-        </Button>
+          <Text style={styles.addButtonText}>+ Додади</Text>
+        </TouchableOpacity>
       </View>
 
       {loading && (
@@ -378,149 +375,197 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
         )}
       </ScrollView>
 
-      {/* Edit/Add Dialog */}
-      <Portal>
-        <Dialog visible={editDialogVisible} onDismiss={() => { dismissKeyboard(); setEditDialogVisible(false); }} style={styles.dialog}>
-          <Dialog.Title style={styles.dialogTitle}>
-            {selectedAnnouncement ? 'Измени известување' : 'Ново известување'}
-          </Dialog.Title>
-          <Dialog.ScrollArea style={styles.dialogScrollArea}>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                  <TextInput
-                    label="Наслов *"
-                    value={formTitle}
-                    onChangeText={setFormTitle}
-                    style={styles.input}
-                    mode="outlined"
-                    maxLength={100}
-                    outlineStyle={styles.inputOutline}
-                  />
+      {/* Edit/Add Modal */}
+      <Modal
+        visible={editDialogVisible}
+        animationType="slide"
+        onRequestClose={() => { dismissKeyboard(); setEditDialogVisible(false); setShowStartDatePicker(false); setShowEndDatePicker(false); }}
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+          >
+            <View style={styles.modalHeader}>
+              <Title style={styles.dialogTitle}>
+                {selectedAnnouncement ? 'Измени известување' : 'Ново известување'}
+              </Title>
+              <TouchableOpacity onPress={() => { dismissKeyboard(); setEditDialogVisible(false); setShowStartDatePicker(false); setShowEndDatePicker(false); }}>
+                <MaterialCommunityIcons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
 
-                  <TextInput
-                    label="Порака *"
-                    value={formMessage}
-                    onChangeText={setFormMessage}
-                    style={styles.input}
-                    mode="outlined"
-                    multiline
-                    numberOfLines={3}
-                    maxLength={500}
-                    outlineStyle={styles.inputOutline}
-                  />
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <TextInput
+                label="Наслов *"
+                value={formTitle}
+                onChangeText={setFormTitle}
+                style={styles.input}
+                mode="outlined"
+                maxLength={100}
+                outlineStyle={styles.inputOutline}
+              />
 
-                  <Text style={styles.inputLabel}>Тип на известување</Text>
-                  <SegmentedButtons
-                    value={formType}
-                    onValueChange={(value) => setFormType(value as AnnouncementType)}
-                    buttons={ANNOUNCEMENT_TYPES.map(t => ({ value: t.value, label: t.label }))}
-                    style={styles.segmentedButtons}
-                  />
+              <TextInput
+                label="Порака *"
+                value={formMessage}
+                onChangeText={setFormMessage}
+                style={styles.input}
+                mode="outlined"
+                multiline
+                numberOfLines={6}
+                maxLength={500}
+                outlineStyle={styles.inputOutline}
+              />
 
-                  <View style={styles.datePickerRow}>
-                    <View style={styles.datePickerContainer}>
-                      <Text style={styles.inputLabel}>Почеток</Text>
-                      <Button
-                        mode="outlined"
-                        onPress={() => { dismissKeyboard(); setShowStartDatePicker(true); }}
-                        style={styles.dateButton}
-                      >
-                        📅 {format(formStartDate, 'dd.MM.yyyy')}
-                      </Button>
-                    </View>
-                    <View style={styles.datePickerContainer}>
-                      <Text style={styles.inputLabel}>Крај</Text>
-                      <Button
-                        mode="outlined"
-                        onPress={() => { dismissKeyboard(); setShowEndDatePicker(true); }}
-                        style={styles.dateButton}
-                      >
-                        📅 {format(formEndDate, 'dd.MM.yyyy')}
-                      </Button>
-                    </View>
+              <Text style={styles.inputLabel}>Тип на известување</Text>
+              <SegmentedButtons
+                value={formType}
+                onValueChange={(value) => setFormType(value as AnnouncementType)}
+                buttons={ANNOUNCEMENT_TYPES.map(t => ({ value: t.value, label: t.label }))}
+                style={styles.segmentedButtons}
+              />
+
+              <View style={styles.datePickerRow}>
+                <View style={styles.datePickerContainer}>
+                  <Text style={styles.inputLabel}>Почеток</Text>
+                  <TouchableOpacity
+                    onPress={() => { dismissKeyboard(); setShowStartDatePicker(!showStartDatePicker); setShowEndDatePicker(false); }}
+                    style={styles.dateButtonNative}
+                  >
+                    <Text style={styles.dateButtonText}>📅 {format(formStartDate, 'dd.MM.yyyy')}</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.datePickerContainer}>
+                  <Text style={styles.inputLabel}>Крај</Text>
+                  <TouchableOpacity
+                    onPress={() => { dismissKeyboard(); setShowEndDatePicker(!showEndDatePicker); setShowStartDatePicker(false); }}
+                    style={styles.dateButtonNative}
+                  >
+                    <Text style={styles.dateButtonText}>📅 {format(formEndDate, 'dd.MM.yyyy')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* iOS Inline Date Pickers */}
+              {Platform.OS === 'ios' && showStartDatePicker && (
+                <View style={styles.iosDatePickerContainer}>
+                  <Text style={styles.datePickerLabel}>Избери датум на почеток:</Text>
+                  <DateTimePicker
+                    value={formStartDate}
+                    mode="date"
+                    display="inline"
+                    onChange={(event, date) => {
+                      if (date) setFormStartDate(date);
+                    }}
+                    style={styles.iosDatePicker}
+                  />
+                  <TouchableOpacity onPress={() => setShowStartDatePicker(false)} style={styles.datePickerDoneButtonNative}>
+                    <Text style={styles.datePickerDoneText}>Готово</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {Platform.OS === 'ios' && showEndDatePicker && (
+                <View style={styles.iosDatePickerContainer}>
+                  <Text style={styles.datePickerLabel}>Избери датум на крај:</Text>
+                  <DateTimePicker
+                    value={formEndDate}
+                    mode="date"
+                    display="inline"
+                    onChange={(event, date) => {
+                      if (date) setFormEndDate(date);
+                    }}
+                    style={styles.iosDatePicker}
+                  />
+                  <TouchableOpacity onPress={() => setShowEndDatePicker(false)} style={styles.datePickerDoneButtonNative}>
+                    <Text style={styles.datePickerDoneText}>Готово</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <Text style={styles.inputLabel}>Приоритет (1-5)</Text>
+              <SegmentedButtons
+                value={String(formPriority)}
+                onValueChange={(value) => setFormPriority(parseInt(value))}
+                buttons={[
+                  { value: '1', label: '1' },
+                  { value: '2', label: '2' },
+                  { value: '3', label: '3' },
+                  { value: '4', label: '4' },
+                  { value: '5', label: '5' },
+                ]}
+                style={styles.segmentedButtons}
+              />
+
+              {/* Image Picker */}
+              <Text style={styles.inputLabel}>Слика (опционално)</Text>
+              <View style={styles.imageSection}>
+                {formImageUri ? (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: formImageUri }} style={styles.imagePreview} />
+                    <TouchableOpacity
+                      onPress={removeImage}
+                      style={styles.removeImageButtonNative}
+                    >
+                      <Text style={styles.removeImageButtonText}>Отстрани</Text>
+                    </TouchableOpacity>
                   </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={pickImage}
+                    style={styles.pickImageButtonNative}
+                  >
+                    <MaterialCommunityIcons name="image-plus" size={20} color={COLORS.PRIMARY} />
+                    <Text style={styles.pickImageButtonText}>Избери од галерија</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
-                  <Text style={styles.inputLabel}>Приоритет (1-5)</Text>
-                  <SegmentedButtons
-                    value={String(formPriority)}
-                    onValueChange={(value) => setFormPriority(parseInt(value))}
-                    buttons={[
-                      { value: '1', label: '1' },
-                      { value: '2', label: '2' },
-                      { value: '3', label: '3' },
-                      { value: '4', label: '4' },
-                      { value: '5', label: '5' },
-                    ]}
-                    style={styles.segmentedButtons}
-                  />
+              <TextInput
+                label="Линк URL (опционално)"
+                value={formLinkUrl}
+                onChangeText={setFormLinkUrl}
+                style={styles.input}
+                mode="outlined"
+                keyboardType="url"
+                autoCapitalize="none"
+                outlineStyle={styles.inputOutline}
+              />
 
-                  {/* Image Picker */}
-                  <Text style={styles.inputLabel}>Слика (опционално)</Text>
-                  <View style={styles.imageSection}>
-                    {formImageUri ? (
-                      <View style={styles.imagePreviewContainer}>
-                        <Image source={{ uri: formImageUri }} style={styles.imagePreview} />
-                        <Button
-                          mode="outlined"
-                          onPress={removeImage}
-                          style={styles.removeImageButton}
-                          textColor={COLORS.PRIMARY}
-                        >
-                          Отстрани
-                        </Button>
-                      </View>
-                    ) : (
-                      <Button
-                        mode="outlined"
-                        onPress={pickImage}
-                        icon="image-plus"
-                        style={styles.pickImageButton}
-                      >
-                        Избери од галерија
-                      </Button>
-                    )}
-                  </View>
+              <TextInput
+                label="Текст на линк (опционално)"
+                value={formLinkText}
+                onChangeText={setFormLinkText}
+                style={styles.input}
+                mode="outlined"
+                outlineStyle={styles.inputOutline}
+              />
 
-                  <TextInput
-                    label="Линк URL (опционално)"
-                    value={formLinkUrl}
-                    onChangeText={setFormLinkUrl}
-                    style={styles.input}
-                    mode="outlined"
-                    keyboardType="url"
-                    autoCapitalize="none"
-                    outlineStyle={styles.inputOutline}
-                  />
+              <TouchableOpacity
+                onPress={handleSave}
+                style={styles.saveButtonNative}
+                disabled={loading}
+              >
+                <Text style={styles.saveButtonText}>
+                  {loading ? 'Зачувувам...' : 'Зачувај'}
+                </Text>
+              </TouchableOpacity>
 
-                  <TextInput
-                    label="Текст на линк (опционално)"
-                    value={formLinkText}
-                    onChangeText={setFormLinkText}
-                    style={styles.input}
-                    mode="outlined"
-                    outlineStyle={styles.inputOutline}
-                  />
+              {/* Bottom padding for keyboard */}
+              <View style={{ height: 50 }} />
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
 
-                  {/* Bottom padding for keyboard */}
-                  <View style={{ height: 50 }} />
-                </ScrollView>
-              </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-          </Dialog.ScrollArea>
-          <Dialog.Actions>
-            <Button onPress={() => { dismissKeyboard(); setEditDialogVisible(false); }}>Откажи</Button>
-            <Button onPress={handleSave} loading={loading}>Зачувај</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-
-      {/* Date Pickers */}
-      {showStartDatePicker && (
+      {/* Android Date Pickers */}
+      {Platform.OS === 'android' && showStartDatePicker && (
         <DateTimePicker
           value={formStartDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display="default"
           onChange={(event, date) => {
             setShowStartDatePicker(false);
             if (date) {
@@ -530,11 +575,11 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
         />
       )}
 
-      {showEndDatePicker && (
+      {Platform.OS === 'android' && showEndDatePicker && (
         <DateTimePicker
           value={formEndDate}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display="default"
           onChange={(event, date) => {
             setShowEndDatePicker(false);
             if (date) {
@@ -556,7 +601,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 23,
+    paddingBottom: 16,
     backgroundColor: '#FFFDF8',
     borderBottomWidth: 0,
     elevation: 3,
@@ -573,6 +620,28 @@ const styles = StyleSheet.create({
   addButton: {
     borderRadius: 6,
     elevation: 3,
+  },
+  addButtonContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+    alignItems: 'flex-end',
+  },
+  addButtonNative: {
+    backgroundColor: COLORS.PRIMARY,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 6,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -623,22 +692,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 8,
-    gap: 4,
+    gap: 6,
   },
-  typeChip: {
-    height: 26,
+  chipNative: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
-  activeChip: {
-    backgroundColor: '#4CAF5020',
-    height: 26,
-  },
-  expiredChip: {
-    backgroundColor: '#F4433620',
-    height: 26,
-  },
-  priorityChip: {
-    backgroundColor: '#9E9E9E20',
-    height: 26,
+  chipTextNative: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   dateRow: {
     marginBottom: 8,
@@ -652,13 +715,29 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: 8,
   },
-  editButton: {
+  editButtonTouch: {
+    borderWidth: 1,
     borderColor: COLORS.PRIMARY,
     borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
-  deleteButton: {
+  editButtonText: {
+    color: COLORS.PRIMARY,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  deleteButtonTouch: {
+    borderWidth: 1,
     borderColor: '#F44336',
     borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  deleteButtonText: {
+    color: '#F44336',
+    fontSize: 13,
+    fontWeight: '600',
   },
   emptyCard: {
     padding: 20,
@@ -721,6 +800,69 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderRadius: 6,
   },
+  dateButtonNative: {
+    marginTop: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    color: '#333',
+    fontSize: 14,
+  },
+  saveButtonNative: {
+    backgroundColor: COLORS.PRIMARY,
+    marginHorizontal: 16,
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  iosDatePickerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    overflow: 'hidden',
+  },
+  iosDatePicker: {
+    width: '100%',
+    height: 320,
+  },
+  datePickerLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.PRIMARY,
+    padding: 12,
+    paddingBottom: 0,
+  },
+  datePickerDoneButton: {
+    alignSelf: 'flex-end',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  datePickerDoneButtonNative: {
+    alignSelf: 'flex-end',
+    marginRight: 12,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  datePickerDoneText: {
+    color: COLORS.PRIMARY,
+    fontSize: 16,
+    fontWeight: '600',
+  },
   imageSection: {
     marginHorizontal: 16,
     marginBottom: 16,
@@ -738,8 +880,49 @@ const styles = StyleSheet.create({
     borderColor: COLORS.PRIMARY,
     borderRadius: 6,
   },
+  removeImageButtonNative: {
+    borderWidth: 1,
+    borderColor: COLORS.PRIMARY,
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  removeImageButtonText: {
+    color: COLORS.PRIMARY,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   pickImageButton: {
     borderRadius: 6,
+  },
+  pickImageButtonNative: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  pickImageButtonText: {
+    color: COLORS.PRIMARY,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    backgroundColor: '#fff',
   },
 });
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Linking, KeyboardAvoidingView, Platform, Modal, TouchableWithoutFeedback, Keyboard, SafeAreaView, Text } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, ScrollView, StyleSheet, Linking, KeyboardAvoidingView, Platform, Modal, Keyboard, Text, TextInput as NativeTextInput } from 'react-native';
 import { Card, Title, Paragraph, Button, Portal, Dialog, TextInput, List, Switch, Divider, IconButton } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,6 +37,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
   const [eventContentDialogVisible, setEventContentDialogVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const notificationMessageRef = useRef('');
   const [sendingNotification, setSendingNotification] = useState(false);
   const [notificationResult, setNotificationResult] = useState<{ success: boolean; sentCount: number; error?: string } | null>(null);
   const [automatedSettings, setAutomatedSettings] = useState({
@@ -72,7 +73,8 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
   };
 
   const handleSendNotification = async () => {
-    if (!notificationMessage.trim()) {
+    const message = notificationMessageRef.current || notificationMessage;
+    if (!message.trim()) {
       return;
     }
 
@@ -83,7 +85,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
       // Send push notification to all users
       const result = await NotificationService.sendPushNotificationToAllUsers({
         title: 'Важно Известување',
-        message: notificationMessage,
+        message: message,
         urgent: true
       });
 
@@ -92,7 +94,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
       // Log to notification history
       await logSentNotification(
         'Важно Известување',
-        notificationMessage,
+        message,
         'INFO',
         result.sentCount,
         result.success ? result.sentCount : 0,
@@ -105,6 +107,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
 
       if (result.success) {
         setNotificationMessage('');
+        notificationMessageRef.current = '';
         // Keep dialog open to show success message
         setTimeout(() => {
           setNotificationDialogVisible(false);
@@ -238,79 +241,66 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
     <ScrollView style={styles.container}>
       <Title style={styles.title}>Администраторски Панел</Title>
 
-      <Card style={styles.card} onPress={() => handleNavigation('AddEvent')}>
-        <Card.Content>
-          <Title>Додади Настан</Title>
-          <Paragraph>Креирај нов настан во календарот</Paragraph>
-        </Card.Content>
-      </Card>
+      {/* ======= CONTENT MANAGEMENT ======= */}
+      <Title style={styles.sectionHeader}>Содржина</Title>
 
       <Card style={styles.card} onPress={() => handleNavigation('ManageCalendar')}>
         <Card.Content>
-          <Title>Годишен Календар</Title>
-          <Paragraph>Измени ги настаните во годишниот календар</Paragraph>
-        </Card.Content>
-      </Card>
-
-      <Card style={styles.card} onPress={() => { updateLastActivity(); setAutomatedSettingsVisible(true); }}>
-        <Card.Content>
-          <Title>Автоматски Известувања</Title>
-          <Paragraph>Постави автоматски известувања за сите настани во годината</Paragraph>
-        </Card.Content>
-      </Card>
-
-      <Card style={styles.card} onPress={() => handleNavigation('AutoNotificationSettings')}>
-        <Card.Content>
-          <Title>Големи Настани - Автоматизација</Title>
-          <Paragraph>Конфигурирај известувања за пикници и празници (3 дена, 1 недела пред)</Paragraph>
-        </Card.Content>
-      </Card>
-
-      <Card style={styles.card} onPress={() => handleNavigation('SpecialEvents')}>
-        <Card.Content>
-          <Title>Специјални Настани</Title>
-          <Paragraph>Управувај со пикници и специјални собири</Paragraph>
-        </Card.Content>
-      </Card>
-
-      <Card style={styles.card} onPress={() => handleNavigation('ManageLocations', { eventId: undefined })}>
-        <Card.Content>
-          <Title>Локации</Title>
-          <Paragraph>Додади и измени локации за настани</Paragraph>
+          <Title>📅 Годишен Календар 2026</Title>
+          <Paragraph>Преглед и управување со сите настани во годината</Paragraph>
         </Card.Content>
       </Card>
 
       <Card style={styles.card} onPress={() => handleNavigation('ManageAnnouncements')}>
         <Card.Content>
-          <Title>Огласи / Известувања</Title>
-          <Paragraph>Додади огласи кои ќе се прикажуваат во календарот со временски период</Paragraph>
+          <Title>📢 Огласи во Календар</Title>
+          <Paragraph>Огласи кои се прикажуваат во календарот со временски период</Paragraph>
         </Card.Content>
       </Card>
 
       <Card style={styles.card} onPress={() => handleNavigation('ManageNews')}>
         <Card.Content>
-          <Title>Новости</Title>
-          <Paragraph>Додади новости кои ќе се прикажуваат во календарот</Paragraph>
+          <Title>📰 Новости</Title>
+          <Paragraph>Новости во секцијата „Новости" (слики, видеа, линкови)</Paragraph>
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.card} onPress={() => handleNavigation('ManageParking')}>
+        <Card.Content>
+          <Title>🅿️ Паркинг</Title>
+          <Paragraph>Управувај со паркинг локации, правила и испраќај известувања</Paragraph>
+        </Card.Content>
+      </Card>
+
+      {/* ======= NOTIFICATIONS ======= */}
+      <Title style={styles.sectionHeader}>Нотификации</Title>
+
+      <Card style={styles.card} onPress={() => handleNavigation('AutoNotificationSettings')}>
+        <Card.Content>
+          <Title>⚙️ Автоматски Известувања</Title>
+          <Paragraph>Поставки за автоматски известувања пред настани</Paragraph>
         </Card.Content>
       </Card>
 
       <Card style={styles.card} onPress={() => { updateLastActivity(); setNotificationDialogVisible(true); }}>
         <Card.Content>
-          <Title>Испрати Нотификација</Title>
-          <Paragraph>Испрати push нотификација до сите корисници</Paragraph>
+          <Title>🚨 Итна Нотификација</Title>
+          <Paragraph>Испрати push нотификација до сите корисници веднаш</Paragraph>
         </Card.Content>
       </Card>
 
       <Card style={styles.card} onPress={() => handleNavigation('NotificationHistory')}>
         <Card.Content>
-          <Title>Историја на Нотификации</Title>
+          <Title>📋 Историја на Нотификации</Title>
           <Paragraph>Преглед на испратени нотификации (последни 30 дена)</Paragraph>
         </Card.Content>
       </Card>
 
+      {/* ======= SOCIAL MEDIA ======= */}
+      <Title style={styles.sectionHeader}>Социјални Мрежи</Title>
+
       <Card style={styles.card}>
         <Card.Content>
-          <Title>Социјални Мрежи</Title>
           <View style={styles.socialButtons}>
             <Button 
               mode="contained" 
@@ -340,7 +330,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
         Одјави се
       </Button>
 
-      {/* Custom Modal for Notification - prevents keyboard flickering */}
+      {/* Custom Modal for Notification */}
       <Modal
         visible={notificationDialogVisible}
         animationType="slide"
@@ -349,73 +339,73 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
           setNotificationDialogVisible(false);
           setNotificationResult(null);
           setNotificationMessage('');
+          notificationMessageRef.current = '';
         }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
         >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Title style={styles.modalTitle}>Испрати Известување до Сите Корисници</Title>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Title style={styles.modalTitle}>Испрати Известување до Сите Корисници</Title>
 
-                <TextInput
-                  label="Порака"
-                  value={notificationMessage}
-                  onChangeText={setNotificationMessage}
-                  multiline
-                  numberOfLines={6}
-                  disabled={sendingNotification}
-                  placeholder="Внесете ја пораката што сакате да ја испратите до сите корисници..."
-                  style={styles.notificationInput}
-                  mode="outlined"
-                />
+              <Text style={styles.inputLabel}>Порака</Text>
+              <NativeTextInput
+                defaultValue={notificationMessage}
+                onChangeText={(text) => { notificationMessageRef.current = text; }}
+                multiline
+                numberOfLines={6}
+                editable={!sendingNotification}
+                placeholder="Внесете ја пораката што сакате да ја испратите до сите корисници..."
+                style={styles.notificationInput}
+                textAlignVertical="top"
+              />
 
-                {notificationResult && (
-                  <View style={styles.resultContainer}>
-                    {notificationResult.success ? (
-                      <Text style={styles.successText}>
-                        Известувањето е успешно испратено до {notificationResult.sentCount} корисник(и)!
-                      </Text>
-                    ) : (
-                      <Text style={styles.errorText}>
-                        Грешка: {notificationResult.error || 'Неуспешно испраќање'}
-                      </Text>
-                    )}
-                  </View>
-                )}
-
-                <View style={styles.modalButtons}>
-                  <Button
-                    mode="outlined"
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setNotificationDialogVisible(false);
-                      setNotificationResult(null);
-                      setNotificationMessage('');
-                    }}
-                    disabled={sendingNotification}
-                    style={styles.modalButton}
-                  >
-                    Откажи
-                  </Button>
-                  <Button
-                    mode="contained"
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      handleSendNotification();
-                    }}
-                    loading={sendingNotification}
-                    disabled={sendingNotification || !notificationMessage.trim()}
-                    style={styles.modalButton}
-                  >
-                    {sendingNotification ? 'Испраќање...' : 'Испрати'}
-                  </Button>
+              {notificationResult && (
+                <View style={styles.resultContainer}>
+                  {notificationResult.success ? (
+                    <Text style={styles.successText}>
+                      Известувањето е успешно испратено до {notificationResult.sentCount} корисник(и)!
+                    </Text>
+                  ) : (
+                    <Text style={styles.errorText}>
+                      Грешка: {notificationResult.error || 'Неуспешно испраќање'}
+                    </Text>
+                  )}
                 </View>
+              )}
+
+              <View style={styles.modalButtons}>
+                <Button
+                  mode="outlined"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setNotificationDialogVisible(false);
+                    setNotificationResult(null);
+                    setNotificationMessage('');
+                    notificationMessageRef.current = '';
+                  }}
+                  disabled={sendingNotification}
+                  style={styles.modalButton}
+                >
+                  Откажи
+                </Button>
+                <Button
+                  mode="contained"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    handleSendNotification();
+                  }}
+                  loading={sendingNotification}
+                  disabled={sendingNotification}
+                  style={styles.modalButton}
+                >
+                  {sendingNotification ? 'Испраќање...' : 'Испрати'}
+                </Button>
               </View>
             </View>
-          </TouchableWithoutFeedback>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -515,6 +505,14 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY,
     textAlign: 'center',
   },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 8,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
   card: {
     marginBottom: 16,
     borderRadius: 12,
@@ -612,9 +610,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
   notificationInput: {
     minHeight: 150,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
   },
   modalButtons: {
     flexDirection: 'row',

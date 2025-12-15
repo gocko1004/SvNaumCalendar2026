@@ -12,23 +12,25 @@ import {
 } from 'react-native';
 import { Card, Title, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
-import { Linking } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getActiveNews, NewsItem, NEWS_COLOR, NEWS_ICON } from '../services/NewsService';
 import { COLORS } from '../constants/theme';
 
-// News Card Component with Gallery and Video Support
-const NewsCard = ({ news }: { news: NewsItem }) => {
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+type RootStackParamList = {
+  MainTabs: undefined;
+  NewsDetail: { news: NewsItem };
+};
 
-  const handleLinkPress = () => {
-    if (news.linkUrl) {
-      Linking.openURL(news.linkUrl);
-    }
-  };
+// News Card Component - Preview with tap to open detail
+type NewsCardProps = {
+  news: NewsItem;
+  onPress: () => void;
+};
 
+const NewsCard = ({ news, onPress }: NewsCardProps) => {
   // Combine legacy imageUrl with imageUrls array
   const allImages = [
     ...(news.imageUrl ? [news.imageUrl] : []),
@@ -36,106 +38,83 @@ const NewsCard = ({ news }: { news: NewsItem }) => {
   ].filter((url, index, self) => self.indexOf(url) === index);
 
   const videos = news.videoUrls || [];
+  const hasMedia = allImages.length > 0 || videos.length > 0;
 
   return (
-    <Card style={styles.newsCard}>
-      <Card.Content>
-        <View style={styles.newsHeader}>
-          <View style={styles.newsIconContainer}>
-            <MaterialCommunityIcons name={NEWS_ICON as any} size={24} color={NEWS_COLOR} />
-          </View>
-          <View style={styles.newsContent}>
-            <View style={styles.newsTitleRow}>
-              <Text style={styles.newsTitle}>{news.title}</Text>
-              <Chip style={styles.newsChip} textStyle={{ color: NEWS_COLOR, fontSize: 10 }}>
-                Новост
-              </Chip>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
+      <Card style={styles.newsCard}>
+        <Card.Content>
+          <View style={styles.newsHeader}>
+            <View style={styles.newsIconContainer}>
+              <MaterialCommunityIcons name={NEWS_ICON as any} size={24} color={NEWS_COLOR} />
             </View>
-            <Text style={styles.newsMessage} numberOfLines={6}>{news.content}</Text>
-            {news.linkUrl && news.linkText && (
-              <TouchableOpacity onPress={handleLinkPress}>
-                <Text style={styles.newsLink}>{news.linkText} →</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={styles.newsDate}>
-              {format(news.date, 'dd MMMM yyyy', { locale: mk })}
-            </Text>
-          </View>
-        </View>
-
-        {/* Image Gallery */}
-        {allImages.length > 0 && (
-          <View style={styles.newsGallery}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {allImages.map((imageUrl, index) => (
-                <TouchableOpacity
-                  key={`img-${index}`}
-                  onPress={() => setExpandedImage(imageUrl)}
-                  activeOpacity={0.9}
-                >
-                  <Image
-                    source={{ uri: imageUrl }}
-                    style={[
-                      styles.newsGalleryImage,
-                      allImages.length === 1 && styles.newsGallerySingleImage,
-                    ]}
-                    resizeMode="cover"
-                  />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            {allImages.length > 1 && (
-              <Text style={styles.newsGalleryCount}>{allImages.length} слики</Text>
-            )}
-          </View>
-        )}
-
-        {/* Video Players */}
-        {videos.length > 0 && (
-          <View style={styles.newsVideos}>
-            {videos.map((videoUrl, index) => (
-              <View key={`vid-${index}`} style={styles.newsVideoContainer}>
-                <Video
-                  source={{ uri: videoUrl }}
-                  style={styles.newsVideo}
-                  useNativeControls
-                  resizeMode={ResizeMode.CONTAIN}
-                  isLooping={false}
-                />
+            <View style={styles.newsContent}>
+              <View style={styles.newsTitleRow}>
+                <Text style={styles.newsTitle}>{news.title}</Text>
+                <Chip style={styles.newsChip} textStyle={{ color: NEWS_COLOR, fontSize: 10 }}>
+                  Новост
+                </Chip>
               </View>
-            ))}
+              <Text style={styles.newsMessage} numberOfLines={3}>{news.content}</Text>
+              <Text style={styles.newsDate}>
+                {format(news.date, 'dd MMMM yyyy', { locale: mk })}
+              </Text>
+            </View>
           </View>
-        )}
 
-        {/* Expanded Image Modal */}
-        {expandedImage && (
-          <TouchableOpacity
-            style={styles.expandedImageOverlay}
-            onPress={() => setExpandedImage(null)}
-            activeOpacity={1}
-          >
-            <Image
-              source={{ uri: expandedImage }}
-              style={styles.expandedImage}
-              resizeMode="contain"
-            />
-            <TouchableOpacity
-              style={styles.closeExpandedButton}
-              onPress={() => setExpandedImage(null)}
-            >
-              <MaterialCommunityIcons name="close" size={30} color="#fff" />
-            </TouchableOpacity>
-          </TouchableOpacity>
-        )}
-      </Card.Content>
-    </Card>
+          {/* Preview Image */}
+          {allImages.length > 0 && (
+            <View style={styles.newsGallery}>
+              <Image
+                source={{ uri: allImages[0] }}
+                style={styles.previewImage}
+                resizeMode="cover"
+              />
+              {allImages.length > 1 && (
+                <View style={styles.imageCountBadge}>
+                  <MaterialCommunityIcons name="image-multiple" size={14} color="#fff" />
+                  <Text style={styles.imageCountText}>+{allImages.length - 1}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Media indicators and tap hint */}
+          <View style={styles.cardFooter}>
+            <View style={styles.mediaIndicators}>
+              {allImages.length > 0 && (
+                <View style={styles.mediaIndicator}>
+                  <MaterialCommunityIcons name="image-multiple" size={14} color="#666" />
+                  <Text style={styles.mediaIndicatorText}>{allImages.length}</Text>
+                </View>
+              )}
+              {videos.length > 0 && (
+                <View style={styles.mediaIndicator}>
+                  <MaterialCommunityIcons name="video" size={14} color="#666" />
+                  <Text style={styles.mediaIndicatorText}>{videos.length}</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.tapHint}>
+              <Text style={styles.tapHintText}>Отвори</Text>
+              <MaterialCommunityIcons name="chevron-right" size={16} color={COLORS.PRIMARY} />
+            </View>
+          </View>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
 };
 
 export const NewsScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleNewsPress = (news: NewsItem) => {
+    navigation.navigate('NewsDetail', { news });
+  };
 
   const loadNews = async () => {
     try {
@@ -202,7 +181,11 @@ export const NewsScreen = () => {
               </Card>
             ) : (
               newsItems.map((news) => (
-                <NewsCard key={news.id} news={news} />
+                <NewsCard
+                  key={news.id}
+                  news={news}
+                  onPress={() => handleNewsPress(news)}
+                />
               ))
             )}
           </View>
@@ -330,58 +313,60 @@ const styles = StyleSheet.create({
   },
   newsGallery: {
     marginTop: 12,
+    position: 'relative',
   },
-  newsGalleryImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  newsGallerySingleImage: {
-    width: Dimensions.get('window').width - 80,
-    height: 200,
-  },
-  newsGalleryCount: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  newsVideos: {
-    marginTop: 12,
-  },
-  newsVideoContainer: {
-    marginBottom: 8,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#000',
-  },
-  newsVideo: {
+  previewImage: {
     width: '100%',
-    height: 200,
+    height: 160,
+    borderRadius: 10,
   },
-  expandedImageOverlay: {
+  imageCountBadge: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    justifyContent: 'center',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    flexDirection: 'row',
     alignItems: 'center',
-    zIndex: 1000,
   },
-  expandedImage: {
-    width: Dimensions.get('window').width - 40,
-    height: Dimensions.get('window').height * 0.7,
+  imageCountText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
-  closeExpandedButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-    padding: 8,
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  mediaIndicators: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  mediaIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mediaIndicatorText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+  },
+  tapHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tapHintText: {
+    fontSize: 13,
+    color: COLORS.PRIMARY,
+    fontWeight: '600',
   },
   emptyCard: {
     marginTop: 40,

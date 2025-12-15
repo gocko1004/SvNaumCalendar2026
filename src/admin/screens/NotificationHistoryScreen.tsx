@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, ScrollView, StyleSheet, RefreshControl, Text as RNText, TouchableOpacity } from 'react-native';
 import {
   Title,
   Card,
-  Button,
   Text,
   ActivityIndicator,
-  Chip,
   Divider,
   Surface
 } from 'react-native-paper';
@@ -142,13 +140,14 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
           <Text style={styles.categoryTitle}>По категорија:</Text>
           <View style={styles.categoryRow}>
             {Object.entries(stats.byCategory).map(([category, count]) => (
-              <Chip
+              <View
                 key={category}
                 style={[styles.categoryChip, { backgroundColor: NOTIFICATION_CATEGORY_COLORS[category as NotificationCategory] + '20' }]}
-                textStyle={{ color: NOTIFICATION_CATEGORY_COLORS[category as NotificationCategory], fontSize: 12 }}
               >
-                {getCategoryLabel(category as NotificationCategory)}: {count}
-              </Chip>
+                <RNText style={[styles.categoryChipText, { color: NOTIFICATION_CATEGORY_COLORS[category as NotificationCategory] }]}>
+                  {getCategoryLabel(category as NotificationCategory)}: {count}
+                </RNText>
+              </View>
             ))}
           </View>
         </Card.Content>
@@ -169,12 +168,11 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
               <MaterialCommunityIcons name={categoryIcon as any} size={20} color={categoryColor} />
               <Text style={styles.cardTitle} numberOfLines={1}>{notification.title}</Text>
             </View>
-            <Chip
-              style={[styles.statusChip, { backgroundColor: statusColor + '20' }]}
-              textStyle={{ color: statusColor, fontSize: 10 }}
-            >
-              {getStatusLabel(notification.status)}
-            </Chip>
+            <View style={[styles.statusChip, { backgroundColor: statusColor + '20' }]}>
+              <RNText style={[styles.statusChipText, { color: statusColor }]}>
+                {getStatusLabel(notification.status)}
+              </RNText>
+            </View>
           </View>
 
           <Text style={styles.cardBody} numberOfLines={2}>{notification.body}</Text>
@@ -195,9 +193,10 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
             </View>
 
             {notification.isAutomated && (
-              <Chip style={styles.automatedChip} textStyle={{ fontSize: 10 }}>
-                <MaterialCommunityIcons name="robot" size={10} /> Автоматско
-              </Chip>
+              <View style={styles.automatedChip}>
+                <MaterialCommunityIcons name="robot" size={10} color="#4CAF50" />
+                <RNText style={styles.automatedChipText}>Автоматско</RNText>
+              </View>
             )}
           </View>
 
@@ -224,15 +223,20 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Title style={styles.title}>Историја на известувања</Title>
-        <Button
-          mode="outlined"
+        <View style={styles.headerTop}>
+          <MaterialCommunityIcons name="bell-ring" size={24} color={COLORS.PRIMARY} />
+          <Title style={styles.title}>Историја</Title>
+        </View>
+        <TouchableOpacity
           onPress={onRefresh}
-          loading={refreshing}
           style={styles.refreshButton}
+          disabled={refreshing}
         >
-          Освежи
-        </Button>
+          <MaterialCommunityIcons name="refresh" size={16} color="#fff" />
+          <RNText style={styles.refreshButtonText}>
+            {refreshing ? 'Освежувам...' : 'Освежи'}
+          </RNText>
+        </TouchableOpacity>
       </View>
 
       {loading && !refreshing ? (
@@ -284,23 +288,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#FFFDF8',
-    borderBottomWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   title: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.PRIMARY,
+    marginBottom: 0,
   },
   refreshButton: {
-    borderColor: COLORS.PRIMARY,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.PRIMARY,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 6,
+    gap: 6,
+  },
+  refreshButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -364,10 +386,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   categoryChip: {
-    height: 32,
-    paddingHorizontal: 4,
-    marginRight: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 6,
     marginBottom: 6,
+  },
+  categoryChipText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 16,
@@ -398,7 +425,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusChip: {
-    height: 22,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusChipText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   cardBody: {
     fontSize: 13,
@@ -422,8 +455,18 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   automatedChip: {
-    height: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
     backgroundColor: '#4CAF5020',
+    gap: 4,
+  },
+  automatedChipText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#4CAF50',
   },
   dateText: {
     fontSize: 11,

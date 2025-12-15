@@ -245,6 +245,14 @@ export const getBigEvents = (): ChurchEvent[] => {
   });
 };
 
+// Get ALL future events for auto-notification configuration
+export const getAllFutureEvents = (): ChurchEvent[] => {
+  const now = new Date();
+  return CHURCH_EVENTS
+    .filter(event => event.date >= now)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+};
+
 // Initialize default auto-notification configs for big events
 export const initializeDefaultConfigs = async (): Promise<number> => {
   try {
@@ -308,15 +316,17 @@ export const checkAndScheduleNotifications = async (): Promise<void> => {
           if (event) {
             const { title, body } = getNotificationMessage(event, timing, config.customMessage);
 
-            // Schedule with Expo
-            const trigger = notifyDate;
+            // Schedule with Expo - SDK 54 requires trigger object with type
             await Notifications.scheduleNotificationAsync({
               content: {
                 title,
                 body,
                 data: { eventId: config.eventId, timing },
               },
-              trigger,
+              trigger: {
+                type: Notifications.SchedulableTriggerInputTypes.DATE,
+                date: notifyDate,
+              },
             });
 
             // Log the schedule

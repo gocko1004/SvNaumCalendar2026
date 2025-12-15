@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl, SectionList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Card, Title, Searchbar, Surface, Chip, Button, Dialog, Portal, FAB } from 'react-native-paper';
+import { Card, Title, Searchbar, Surface, Button, Dialog, Portal, FAB } from 'react-native-paper';
 import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
 import { CHURCH_EVENTS, ChurchEvent, SPECIAL_FEAST_URLS, getServiceTypeLabel, ServiceType } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
@@ -129,6 +129,19 @@ const EventImage = ({ event }: { event: ChurchEvent }) => {
   const [sequenceIndex, setSequenceIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
+  // For PICNIC events, show icon directly instead of trying to load images
+  if (event.serviceType === 'PICNIC') {
+    return (
+      <View style={styles.iconFallbackContainer}>
+        <MaterialCommunityIcons
+          name="food"
+          size={50}
+          color={SERVICE_TYPE_COLORS.PICNIC}
+        />
+      </View>
+    );
+  }
+
   const localImage = getImageForEvent(event.name, event.date);
   const imagePosition = getImagePositionForDate(event.date);
   const specialUrl = getSpecialImageUrl(event.date);
@@ -151,12 +164,12 @@ const EventImage = ({ event }: { event: ChurchEvent }) => {
   const lowNumberFallbacks = ['000', '001', '002', '003'];
 
   const sequences = [...monthSequences, ...lowNumberFallbacks, ...allMonthSequences];
-  
+
   // Current URL based on sequence index
-  const currentUrl = sequenceIndex < sequences.length 
+  const currentUrl = sequenceIndex < sequences.length
     ? getDenoviImageUrl(event.date, sequences[sequenceIndex])
     : null;
-  
+
   // STATE 1: Try Local Image (for major feasts)
   if (localImage && !localFailed) {
     return (
@@ -261,45 +274,44 @@ const LoadingScreen = () => {
 };
 
 // Announcement Card Component
-const AnnouncementCard = ({ announcement }: { announcement: Announcement }) => {
+const AnnouncementCard = ({ announcement, onPress }: { announcement: Announcement; onPress: () => void }) => {
   const typeColor = ANNOUNCEMENT_TYPE_COLORS[announcement.type];
   const typeIcon = ANNOUNCEMENT_TYPE_ICONS[announcement.type];
 
-  const handleLinkPress = () => {
-    if (announcement.linkUrl) {
-      Linking.openURL(announcement.linkUrl);
-    }
-  };
-
   return (
-    <Card style={[styles.announcementCard, { borderLeftColor: typeColor }]}>
-      <Card.Content>
-        <View style={styles.announcementHeader}>
-          <View style={styles.announcementIconContainer}>
-            <MaterialCommunityIcons name={typeIcon as any} size={24} color={typeColor} />
-          </View>
-          <View style={styles.announcementContent}>
-            <View style={styles.announcementTitleRow}>
-              <Text style={[styles.announcementTitle, { color: typeColor }]}>{announcement.title}</Text>
-              <Chip style={[styles.announcementChip, { backgroundColor: typeColor + '20' }]} textStyle={{ color: typeColor, fontSize: 10 }}>
-                {announcement.type === 'INFO' ? 'Информација' :
-                 announcement.type === 'URGENT' ? 'Итно' :
-                 announcement.type === 'EVENT' ? 'Настан' : 'Потсетник'}
-              </Chip>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <Card style={[styles.announcementCard, { borderLeftColor: typeColor }]}>
+        <Card.Content>
+          <View style={styles.announcementHeader}>
+            <View style={styles.announcementIconContainer}>
+              <MaterialCommunityIcons name={typeIcon as any} size={24} color={typeColor} />
             </View>
-            <Text style={styles.announcementMessage}>{announcement.message}</Text>
-            {announcement.linkUrl && announcement.linkText && (
-              <TouchableOpacity onPress={handleLinkPress}>
-                <Text style={[styles.announcementLink, { color: typeColor }]}>{announcement.linkText} →</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={styles.announcementDate}>
-              {format(announcement.startDate, 'dd.MM', { locale: mk })} - {format(announcement.endDate, 'dd.MM.yyyy', { locale: mk })}
-            </Text>
+            <View style={styles.announcementContent}>
+              <View style={styles.announcementTitleRow}>
+                <Text style={[styles.announcementTitle, { color: typeColor }]}>{announcement.title}</Text>
+                <View style={[styles.announcementTypeChip, { backgroundColor: typeColor + '20' }]}>
+                  <Text style={[styles.announcementTypeChipText, { color: typeColor }]}>
+                    {announcement.type === 'INFO' ? 'Информација' :
+                      announcement.type === 'URGENT' ? 'Итно' :
+                        announcement.type === 'EVENT' ? 'Настан' : 'Потсетник'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.announcementMessage} numberOfLines={2}>{announcement.message}</Text>
+              <View style={styles.announcementFooter}>
+                <Text style={styles.announcementDate}>
+                  {format(announcement.startDate, 'dd.MM', { locale: mk })} - {format(announcement.endDate, 'dd.MM.yyyy', { locale: mk })}
+                </Text>
+                <View style={styles.readMoreContainer}>
+                  <Text style={[styles.readMoreText, { color: typeColor }]}>Прочитај повеќе</Text>
+                  <MaterialCommunityIcons name="chevron-right" size={16} color={typeColor} />
+                </View>
+              </View>
+            </View>
           </View>
-        </View>
-      </Card.Content>
-    </Card>
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
 };
 
@@ -323,7 +335,7 @@ export const CalendarScreen = () => {
 
   // Hidden admin access - tap header 5 times within 3 seconds
   const [adminTapCount, setAdminTapCount] = useState(0);
-  const adminTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const adminTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleHeaderTap = useCallback(() => {
     // Clear previous timeout
@@ -346,7 +358,7 @@ export const CalendarScreen = () => {
     }
   }, [adminTapCount, navigation]);
 
-  const scrollViewRef = useRef<ScrollView>(null);
+  const sectionListRef = useRef<SectionList>(null);
   const monthPositions = useRef<Record<number, number>>({});
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -432,14 +444,54 @@ export const CalendarScreen = () => {
     setRefreshing(false);
   }, []);
 
+  // Month names in Macedonian
+  const monthNames = [
+    'Јануари', 'Февруари', 'Март', 'Април', 'Мај', 'Јуни',
+    'Јули', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
+  ];
+
+  // Group and filter events for SectionList
+  const sections = React.useMemo(() => {
+    const grouped = events
+      .filter(event => {
+        const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
+        return matchesSearch && matchesType;
+      })
+      .reduce((acc, event) => {
+        const month = event.date.getMonth();
+        if (!acc[month]) {
+          acc[month] = [];
+        }
+        acc[month].push(event);
+        return acc;
+      }, {} as Record<number, ChurchEvent[]>);
+
+    return Object.entries(grouped)
+      .map(([monthStr, events]) => ({
+        monthIndex: parseInt(monthStr),
+        title: monthNames[parseInt(monthStr)],
+        data: events.sort((a, b) => a.date.getTime() - b.date.getTime())
+      }))
+      .sort((a, b) => a.monthIndex - b.monthIndex);
+  }, [searchQuery, selectedServiceTypes, events]);
+
   // Scroll to specific month
   const scrollToMonth = useCallback((monthIndex: number) => {
     setSelectedMonth(monthIndex);
-    const position = monthPositions.current[monthIndex];
-    if (position !== undefined && scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ y: position - 100, animated: true });
+
+    // Find section index for this month
+    const sectionIndex = sections.findIndex(s => s.monthIndex === monthIndex);
+
+    if (sectionIndex !== -1 && sectionListRef.current) {
+      sectionListRef.current.scrollToLocation({
+        sectionIndex: sectionIndex,
+        itemIndex: 0,
+        animated: true,
+        viewOffset: 0,
+      });
     }
-  }, []);
+  }, [sections]);
 
   // Find and scroll to the next upcoming event
   const scrollToNextEvent = useCallback(() => {
@@ -479,23 +531,7 @@ export const CalendarScreen = () => {
     }
   }, []);
 
-  // Group and filter events
-  const filteredAndGroupedEvents = React.useMemo(() => {
-    return events
-      .filter(event => {
-        const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
-        return matchesSearch && matchesType;
-      })
-      .reduce((acc, event) => {
-        const month = event.date.getMonth();
-        if (!acc[month]) {
-          acc[month] = [];
-        }
-        acc[month].push(event);
-        return acc;
-      }, {} as Record<number, ChurchEvent[]>);
-  }, [searchQuery, selectedServiceTypes, events]);
+
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -511,28 +547,24 @@ export const CalendarScreen = () => {
     setSelectedServiceTypes(newSelectedTypes);
   };
 
-  // Month names in Macedonian
-  const monthNames = [
-    'Јануари', 'Февруари', 'Март', 'Април', 'Мај', 'Јуни',
-    'Јули', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
-  ];
+
 
   const renderServiceTypeFilters = () => {
     const screenWidth = Dimensions.get('window').width;
     const isVerySmall = screenWidth < 340;
     const isSmall = screenWidth < 380;
-    
+
     return (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false}
-      style={styles.filterContainer}
-      contentContainerStyle={styles.filterContentContainer}
-    >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterContainer}
+        contentContainerStyle={styles.filterContentContainer}
+      >
         {Object.entries(SERVICE_TYPE_COLORS).map(([type, color]) => {
           const label = getServiceTypeLabel(type as ServiceType);
           const isSelected = selectedServiceTypes.has(type as ServiceType);
-          
+
           // Calculate chip width based on label length and screen size
           const baseWidth = isVerySmall ? 6 : isSmall ? 7 : 8;
           const iconSpace = isVerySmall ? 30 : 40;
@@ -542,26 +574,26 @@ export const CalendarScreen = () => {
             Math.max(labelLength * baseWidth + iconSpace + padding, isVerySmall ? 90 : 110),
             screenWidth * 0.48
           );
-          
+
           const iconSize = isVerySmall ? 14 : isSmall ? 15 : 16;
           const fontSize = isVerySmall ? 9 : isSmall ? 10 : 11;
-          
+
           return (
             <TouchableOpacity
-          key={type}
-          onPress={() => toggleServiceTypeFilter(type as ServiceType)}
-          style={[
+              key={type}
+              onPress={() => toggleServiceTypeFilter(type as ServiceType)}
+              style={[
                 styles.filterChipTouchable,
-                { 
+                {
                   backgroundColor: isSelected ? color : COLORS.SURFACE,
                   width: chipWidth,
                   minHeight: isVerySmall ? 36 : 40,
                   borderColor: isSelected ? color : COLORS.BORDER,
                 }
-          ]}
+              ]}
             >
-            <MaterialCommunityIcons
-              name={SERVICE_TYPE_ICONS[type as ServiceType]}
+              <MaterialCommunityIcons
+                name={SERVICE_TYPE_ICONS[type as ServiceType]}
                 size={iconSize}
                 color={isSelected ? COLORS.TEXT_LIGHT : COLORS.TEXT}
                 style={{ marginRight: 6 }}
@@ -569,7 +601,7 @@ export const CalendarScreen = () => {
               <Text
                 style={[
                   styles.filterChipText,
-                  { 
+                  {
                     color: isSelected ? COLORS.TEXT_LIGHT : COLORS.TEXT,
                     fontSize: fontSize,
                     flex: 1,
@@ -585,15 +617,15 @@ export const CalendarScreen = () => {
           );
         })}
 
-    </ScrollView>
-  );
+      </ScrollView>
+    );
   };
 
   // Month Quick-Jump component
   const renderMonthQuickJump = () => {
     const shortMonthNames = ['Јан', 'Фев', 'Мар', 'Апр', 'Мај', 'Јун', 'Јул', 'Авг', 'Сеп', 'Окт', 'Ное', 'Дек'];
     const currentMonth = new Date().getMonth();
-    const availableMonths = Object.keys(filteredAndGroupedEvents).map(m => parseInt(m));
+    const availableMonths = sections.map(s => s.monthIndex);
 
     return (
       <View style={styles.monthQuickJumpContainer}>
@@ -650,140 +682,17 @@ export const CalendarScreen = () => {
           resizeMode="cover"
         />
         <View style={styles.overlay} />
-        
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[COLORS.PRIMARY]}
-              tintColor={COLORS.PRIMARY}
-              title="Се освежува..."
-              titleColor={COLORS.PRIMARY}
-            />
-          }
-        >
-          {/* Church Branding Header - Hidden admin access: tap 5 times */}
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={handleHeaderTap}
-          >
-            <View style={styles.brandingHeader}>
-              <View style={styles.brandingSolid}>
-                <View style={styles.brandingContent}>
-                  <View style={styles.brandingTitleRow}>
-                    <Text style={styles.brandingTitle}>Св. Наум Охридски</Text>
-                    <Text style={styles.brandingSeparator}>•</Text>
-                    <Text style={styles.brandingLocation}>Триенген, CH</Text>
-                  </View>
-                  <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
 
-          <Searchbar
-            placeholder="Пребарувај настани"
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={styles.searchBar}
-          />
-
-          {(() => {
-            const screenWidth = Dimensions.get('window').width;
-            const containerPadding = 32; // 16px on each side
-            const buttonSpacing = 24; // 12px between each button
-            const availableWidth = screenWidth - containerPadding - (buttonSpacing * 2); // space for 3 buttons with 2 gaps
-            const buttonWidth = availableWidth / 3;
-            const isVerySmall = screenWidth < 340;
-            const iconSize = isVerySmall ? 18 : screenWidth < 380 ? 20 : 22;
-            const fontSize = isVerySmall ? 10 : screenWidth < 380 ? 11 : 12;
-            
-            return (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-                  style={[
-                    styles.socialButton,
-                    {
-                      backgroundColor: '#4267B2',
-                      width: buttonWidth,
-                      marginRight: 12,
-                    }
-                  ]}
-              onPress={() => SocialMediaService.openFacebookGroup()}
-            >
-                  <MaterialCommunityIcons name="facebook" size={iconSize} color={COLORS.TEXT_LIGHT} />
-                  <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Facebook</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                  style={[
-                    styles.socialButton,
-                    {
-                      backgroundColor: COLORS.PRIMARY,
-                      width: buttonWidth,
-                      marginHorizontal: 6,
-                    }
-                  ]}
-              onPress={showContactInfo}
-            >
-                  <MaterialCommunityIcons name="phone" size={iconSize} color={COLORS.TEXT_LIGHT} />
-                  <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Контакт</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                  style={[
-                    styles.socialButton,
-                    {
-                      backgroundColor: COLORS.TERTIARY,
-                      width: buttonWidth,
-                      marginLeft: 12,
-                    }
-                  ]}
-              onPress={() => SocialMediaService.openWebsite()}
-            >
-                  <MaterialCommunityIcons name="web" size={iconSize} color={COLORS.TEXT_LIGHT} />
-                  <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">
-                    {isVerySmall ? 'Веб' : 'Веб-страна'}
-                  </Text>
-            </TouchableOpacity>
-          </View>
-            );
-          })()}
-          
-          {renderServiceTypeFilters()}
-
-          {/* Month Quick-Jump Bar */}
-          {renderMonthQuickJump()}
-
-          {/* Active Announcements Section */}
-          {announcements.length > 0 && (
-            <View style={styles.announcementsSection}>
-              <Surface style={styles.announcementsSectionHeader}>
-                <MaterialCommunityIcons name="bullhorn" size={20} color={COLORS.PRIMARY} />
-                <Title style={styles.announcementsSectionTitle}>Огласи</Title>
-              </Surface>
-              <View style={styles.announcementsList}>
-                {announcements.map((announcement) => (
-                  <AnnouncementCard key={announcement.id} announcement={announcement} />
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Calendar Events */}
-          {Object.entries(filteredAndGroupedEvents).map(([month, monthEvents]) => (
+        <SectionList
+          ref={sectionListRef}
+          sections={sections}
+          keyExtractor={(item, index) => item.date.toISOString() + index}
+          renderSectionHeader={({ section: { title, monthIndex } }) => (
             <View
-              key={month}
               style={styles.monthSection}
               onLayout={(event) => {
                 const { y } = event.nativeEvent.layout;
-                monthPositions.current[parseInt(month)] = y;
+                monthPositions.current[monthIndex] = y;
               }}
             >
               <View style={styles.monthHeaderContainer}>
@@ -794,78 +703,207 @@ export const CalendarScreen = () => {
                       fontsLoaded && { fontFamily: 'Triodion_400Regular' }
                     ]}
                   >
-                    {monthNames[parseInt(month)]}
+                    {title}
                   </Text>
                 </View>
               </View>
-              <View style={styles.eventList}>
-                {monthEvents
-                  .sort((a, b) => a.date.getTime() - b.date.getTime())
-                  .map((event, index) => (
-                    <Card
-                      key={`${month}-${index}`}
-                      style={styles.eventCardIntegrated}
-                    >
-                      <View style={styles.integratedCardRow}>
-                        {/* Date Section */}
-                        <View style={[
-                          styles.integratedDateSection,
-                          { backgroundColor: SERVICE_TYPE_COLORS[event.serviceType] }
-                        ]}>
-                          <Text style={styles.integratedDateDay}>
-                            {format(event.date, 'dd', { locale: mk })}
-                          </Text>
-                          <Text style={styles.integratedDateMonth}>
-                            {format(event.date, 'MMM', { locale: mk })}
-                          </Text>
-                        </View>
-
-                        {/* Content Section */}
-                        <View style={styles.integratedContentSection}>
-                          <Text style={styles.integratedTitle} numberOfLines={3}>
-                            {event.name}
-                          </Text>
-                          {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
-                            <Text style={styles.integratedSaintName} numberOfLines={2}>
-                              {event.saintName}
-                            </Text>
-                          )}
-                          <View style={styles.integratedInfoRow}>
-                            <MaterialCommunityIcons
-                              name={SERVICE_TYPE_ICONS[event.serviceType]}
-                              size={14}
-                              color={SERVICE_TYPE_COLORS[event.serviceType]}
-                            />
-                            <Text style={[
-                              styles.integratedEventType,
-                              { color: SERVICE_TYPE_COLORS[event.serviceType] }
-                            ]}>
-                              {getServiceTypeLabel(event.serviceType)}
-                            </Text>
-                          </View>
-                          <View style={styles.integratedInfoRow}>
-                            <MaterialCommunityIcons
-                              name="clock-outline"
-                              size={14}
-                              color="#555555"
-                            />
-                            <Text style={styles.integratedTime}>
-                              {event.description || `${event.time}ч`}
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* Image Section */}
-                        <View style={styles.integratedImageSection}>
-                          <EventImage event={event} />
-                        </View>
-                      </View>
-                    </Card>
-                  ))}
-              </View>
             </View>
-          ))}
-        </ScrollView>
+          )}
+          renderItem={({ item: event, index }) => (
+            <View style={styles.eventList}>
+              <Card
+                style={styles.eventCardIntegrated}
+              >
+                <View style={styles.integratedCardRow}>
+                  {/* Date Section */}
+                  <View style={[
+                    styles.integratedDateSection,
+                    { backgroundColor: SERVICE_TYPE_COLORS[event.serviceType as ServiceType] }
+                  ]}>
+                    <Text style={styles.integratedDateDay}>
+                      {format(event.date, 'dd', { locale: mk })}
+                    </Text>
+                    <Text style={styles.integratedDateMonth}>
+                      {format(event.date, 'MMM', { locale: mk })}
+                    </Text>
+                  </View>
+
+                  {/* Content Section */}
+                  <View style={styles.integratedContentSection}>
+                    <Text style={styles.integratedTitle} numberOfLines={3}>
+                      {event.name}
+                    </Text>
+                    {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
+                      <Text style={styles.integratedSaintName} numberOfLines={2}>
+                        {event.saintName}
+                      </Text>
+                    )}
+                    <View style={styles.integratedInfoRow}>
+                      <MaterialCommunityIcons
+                        name={SERVICE_TYPE_ICONS[event.serviceType as ServiceType]}
+                        size={14}
+                        color={SERVICE_TYPE_COLORS[event.serviceType as ServiceType]}
+                      />
+                      <Text style={[
+                        styles.integratedEventType,
+                        { color: SERVICE_TYPE_COLORS[event.serviceType as ServiceType] }
+                      ]}>
+                        {getServiceTypeLabel(event.serviceType)}
+                      </Text>
+                    </View>
+                    <View style={styles.integratedInfoRow}>
+                      <MaterialCommunityIcons
+                        name="clock-outline"
+                        size={14}
+                        color="#555555"
+                      />
+                      <Text style={styles.integratedTime}>
+                        {event.description || `${event.time}ч`}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Image Section */}
+                  <View style={styles.integratedImageSection}>
+                    <EventImage event={event} />
+                  </View>
+                </View>
+              </Card>
+            </View>
+          )}
+          stickySectionHeadersEnabled={false}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.PRIMARY]}
+              tintColor={COLORS.PRIMARY}
+              title="Се освежува..."
+              titleColor={COLORS.PRIMARY}
+            />
+          }
+          ListHeaderComponent={
+            <>
+              {/* Church Branding Header - Hidden admin access: tap 5 times */}
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={handleHeaderTap}
+              >
+                <View style={styles.brandingHeader}>
+                  <View style={styles.brandingSolid}>
+                    <View style={styles.brandingContent}>
+                      <View style={styles.brandingTitleRow}>
+                        <Text style={styles.brandingTitle}>Св. Наум Охридски</Text>
+                        <Text style={styles.brandingSeparator}>•</Text>
+                        <Text style={styles.brandingLocation}>Триенген, CH</Text>
+                      </View>
+                      <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              <Searchbar
+                placeholder="Пребарувај настани"
+                onChangeText={setSearchQuery}
+                value={searchQuery}
+                style={styles.searchBar}
+              />
+
+              {(() => {
+                const screenWidth = Dimensions.get('window').width;
+                const containerPadding = 32;
+                const buttonSpacing = 24;
+                const availableWidth = screenWidth - containerPadding - (buttonSpacing * 2);
+                const buttonWidth = availableWidth / 3;
+                const isVerySmall = screenWidth < 340;
+                const iconSize = isVerySmall ? 18 : screenWidth < 380 ? 20 : 22;
+                const fontSize = isVerySmall ? 10 : screenWidth < 380 ? 11 : 12;
+
+                return (
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.socialButton,
+                        {
+                          backgroundColor: '#4267B2',
+                          width: buttonWidth,
+                          marginRight: 12,
+                        }
+                      ]}
+                      onPress={() => SocialMediaService.openFacebookGroup()}
+                    >
+                      <MaterialCommunityIcons name="facebook" size={iconSize} color={COLORS.TEXT_LIGHT} />
+                      <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Facebook</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.socialButton,
+                        {
+                          backgroundColor: COLORS.PRIMARY,
+                          width: buttonWidth,
+                          marginHorizontal: 6,
+                        }
+                      ]}
+                      onPress={showContactInfo}
+                    >
+                      <MaterialCommunityIcons name="phone" size={iconSize} color={COLORS.TEXT_LIGHT} />
+                      <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">Контакт</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.socialButton,
+                        {
+                          backgroundColor: COLORS.TERTIARY,
+                          width: buttonWidth,
+                          marginLeft: 12,
+                        }
+                      ]}
+                      onPress={() => SocialMediaService.openWebsite()}
+                    >
+                      <MaterialCommunityIcons name="web" size={iconSize} color={COLORS.TEXT_LIGHT} />
+                      <Text style={[styles.buttonText, { fontSize }]} numberOfLines={1} ellipsizeMode="tail">
+                        {isVerySmall ? 'Веб' : 'Веб-страна'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })()}
+
+              {renderServiceTypeFilters()}
+
+              {/* Month Quick-Jump Bar */}
+              {renderMonthQuickJump()}
+
+              {/* Active Announcements Section */}
+              {announcements.length > 0 && (
+                <View style={styles.announcementsSection}>
+                  <Surface style={styles.announcementsSectionHeader}>
+                    <MaterialCommunityIcons name="bullhorn" size={20} color={COLORS.PRIMARY} />
+                    <Title style={styles.announcementsSectionTitle}>Огласи</Title>
+                  </Surface>
+                  <View style={styles.announcementsList}>
+                    {announcements.map((announcement) => (
+                      <AnnouncementCard
+                        key={announcement.id}
+                        announcement={announcement}
+                        onPress={() => navigation.navigate('NotificationDetail', {
+                          title: announcement.title,
+                          body: announcement.message + (announcement.linkUrl ? `\n\n🔗 Линк:\n${announcement.linkText || 'Отвори линк'}: ${announcement.linkUrl}` : ''),
+                          receivedAt: announcement.startDate.toISOString(),
+                        })}
+                      />
+                    ))}
+                  </View>
+                </View>
+              )}
+            </>
+          }
+        />
 
         {/* Next Event FAB Button */}
         {showTodayButton && (
@@ -1583,9 +1621,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flex: 1,
   },
-  announcementChip: {
-    height: 22,
+  announcementTypeChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  announcementTypeChipText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   announcementMessage: {
     fontSize: 13,
@@ -1598,9 +1644,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 6,
   },
+  announcementFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   announcementDate: {
     fontSize: 11,
     color: '#999',
+  },
+  readMoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  readMoreText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   // Month Quick-Jump styles
   monthQuickJumpContainer: {

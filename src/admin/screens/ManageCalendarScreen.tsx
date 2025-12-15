@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Image, Dimensions, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Image, Dimensions, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { 
   Title, 
   Card, 
@@ -344,13 +344,16 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
       <Portal>
         <Dialog
           visible={editDialogVisible}
-          onDismiss={() => setEditDialogVisible(false)}
+          onDismiss={() => { Keyboard.dismiss(); setEditDialogVisible(false); }}
           style={styles.dialog}
         >
           <Dialog.Title>
             {selectedEvent ? 'Измени Настан' : 'Нов Настан'}
           </Dialog.Title>
-          <Dialog.Content>
+          <Dialog.ScrollArea style={{ maxHeight: Dimensions.get('window').height * 0.6 }}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <TextInput
               label="Име на настанот"
               value={editedEvent.name}
@@ -475,9 +478,14 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
               style={styles.input}
               maxLength={200}
             />
-          </Dialog.Content>
+            {/* Bottom padding for keyboard */}
+            <View style={{ height: 50 }} />
+                </ScrollView>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+          </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={() => setEditDialogVisible(false)}>Откажи</Button>
+            <Button onPress={() => { Keyboard.dismiss(); setEditDialogVisible(false); }}>Откажи</Button>
             <Button onPress={handleSaveEvent}>Зачувај</Button>
           </Dialog.Actions>
         </Dialog>
@@ -656,6 +664,7 @@ const styles = StyleSheet.create({
   },
   dialog: {
     backgroundColor: COLORS.SURFACE,
+    borderRadius: 6,
   },
   input: {
     marginBottom: 16,
