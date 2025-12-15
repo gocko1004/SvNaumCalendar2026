@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut as firebaseSignOut, onAuthStateChanged, User, Auth } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth as uncastAuth, initError } from '../firebase';
 
-// Cast auth to correct type to satisfy TypeScript
-const auth = uncastAuth as User | null | any; // Using any temporarily to bypass strict checks on the complex Auth object
+// Import from JS file with proper typing
+const firebaseModule = require('../firebase');
+const auth: Auth | null = firebaseModule.auth;
+const initError: Error | null = firebaseModule.initError;
 
 const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
 const LAST_ACTIVITY_KEY = '@admin_last_activity';
