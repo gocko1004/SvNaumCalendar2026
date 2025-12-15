@@ -288,15 +288,15 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
         <Card.Content>
           <View style={styles.eventRow}>
             <View style={styles.eventInfo}>
-              <Text style={styles.eventName} numberOfLines={1}>
+              <RNText style={styles.eventName} numberOfLines={1}>
                 {event.name}
-              </Text>
-              <Text style={styles.eventDate}>
+              </RNText>
+              <RNText style={styles.eventDate}>
                 {format(event.date, 'dd.MM.yyyy', { locale: mk })}
-              </Text>
+              </RNText>
             </View>
             <View style={[styles.eventChipNative, { backgroundColor: color + '20' }]}>
-              <RNText style={[styles.eventChipText, { color }]}>
+              <RNText style={[styles.eventChipText, { color }]} numberOfLines={1}>
                 {getServiceTypeLabel(event.serviceType)}
               </RNText>
             </View>
@@ -311,7 +311,7 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
                 styles.configureButtonText,
                 hasConfig ? styles.configureButtonTextOutlined : styles.configureButtonTextFilled
               ]}>
-                {hasConfig ? 'Измени' : 'Конфигурирај'}
+                Конфигурирај
               </RNText>
             </TouchableOpacity>
           </View>
@@ -631,6 +631,7 @@ const styles = StyleSheet.create({
   },
   eventInfo: {
     flex: 1,
+    minWidth: 100,
   },
   eventName: {
     fontSize: 14,
@@ -640,11 +641,14 @@ const styles = StyleSheet.create({
   eventDate: {
     fontSize: 12,
     color: '#666',
+    flexShrink: 0,
   },
   eventChipNative: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    maxWidth: 100,
+    flexShrink: 1,
   },
   eventChipText: {
     fontSize: 10,
