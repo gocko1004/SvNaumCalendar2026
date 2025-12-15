@@ -11,7 +11,7 @@
       "ios": {
         "simulator": false,
         "distribution": "internal",
-        "image": "sdk-51"
+        "image": "macos-sonoma-14.6-xcode-16.1"
       }
     },
     "production": {
@@ -28,7 +28,7 @@
           "COCOAPODS_SKIP_UPDATE_MESSAGE": "true",
           "COCOAPODS_DISABLE_DETERMINISTIC_UUIDS": "true"
         },
-        "image": "sdk-51",
+        "image": "macos-sonoma-14.6-xcode-16.1",
         "cache": {
           "disabled": false
         }

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Св. Наум Охридски, Триенген",
+    "name": "Св. Наум Триенген",
     "slug": "sv-naum-calendar",
     "version": "2.0.0",
     "orientation": "portrait",
@@ -25,7 +25,7 @@
     },
     "android": {
       "package": "com.svnaum.calendar",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/iconnew.png",
         "backgroundColor": "#831B26"
