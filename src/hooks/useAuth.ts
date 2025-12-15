@@ -22,45 +22,44 @@ export const useAuth = () => {
     }
   }, []);
 
-  // Check if session has expired
-  const checkSessionExpiry = useCallback(async () => {
+  // Check if session has expired - only used for explicit checks, not on auth state change
+  const checkSessionExpiry = useCallback(async (): Promise<boolean> => {
     try {
       const lastActivity = await AsyncStorage.getItem(LAST_ACTIVITY_KEY);
-      if (lastActivity) {
-        const lastActivityTime = parseInt(lastActivity, 10);
-        const timeSinceLastActivity = Date.now() - lastActivityTime;
-        if (timeSinceLastActivity > SESSION_TIMEOUT_MS) {
-          // Session expired, log out
-          if (isDevelopment) {
-            console.log('Session expired, logging out...');
-          }
-          await firebaseSignOut(auth);
-          await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
-          return true; // Session was expired
+      // If no activity stored, session is valid (first login or fresh start)
+      if (!lastActivity) {
+        return false;
+      }
+      const lastActivityTime = parseInt(lastActivity, 10);
+      if (isNaN(lastActivityTime)) {
+        // Invalid timestamp, clear it and consider valid
+        await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
+        return false;
+      }
+      const timeSinceLastActivity = Date.now() - lastActivityTime;
+      if (timeSinceLastActivity > SESSION_TIMEOUT_MS) {
+        if (isDevelopment) {
+          console.log('Session expired after', Math.round(timeSinceLastActivity / 1000 / 60), 'minutes');
         }
+        return true; // Session was expired
       }
       return false; // Session is valid
     } catch (error) {
       console.error('Error checking session expiry:', error);
-      return false;
+      return false; // On error, assume valid to avoid locking out user
     }
   }, []);
 
   useEffect(() => {
     // Listen to Firebase auth state changes
+    // Note: We don't check expiry here - Firebase handles the auth state
+    // Expiry is checked when entering admin panel via updateLastActivity
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Check if session has expired
-        const expired = await checkSessionExpiry();
-        if (!expired) {
-          setUser(firebaseUser);
-          setIsAuthenticated(true);
-          // Update activity on auth state change
-          await updateLastActivity();
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
+        setUser(firebaseUser);
+        setIsAuthenticated(true);
+        // Update activity on auth state change
+        await updateLastActivity();
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -69,7 +68,7 @@ export const useAuth = () => {
     });
 
     return () => unsubscribe();
-  }, [checkSessionExpiry, updateLastActivity]);
+  }, [updateLastActivity]);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {

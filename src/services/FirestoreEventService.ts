@@ -3,7 +3,7 @@
  * Allows admins to add, edit, and delete events that sync to all users
  */
 
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ChurchEvent, ServiceType } from './ChurchCalendarService';
 
@@ -45,17 +45,25 @@ const eventToFirestore = (event: Partial<ChurchEvent>) => {
  */
 export const getAllEvents = async (): Promise<ChurchEvent[]> => {
   try {
-    const eventsQuery = query(
-      collection(db, EVENTS_COLLECTION),
-      orderBy('date', 'asc')
-    );
-    const querySnapshot = await getDocs(eventsQuery);
-    
+    // Simple query without orderBy to avoid index requirement
+    const querySnapshot = await getDocs(collection(db, EVENTS_COLLECTION));
+
     const events: ChurchEvent[] = [];
-    querySnapshot.forEach((doc) => {
-      events.push(firestoreToEvent(doc.data(), doc.id));
+    querySnapshot.forEach((docSnapshot) => {
+      try {
+        const data = docSnapshot.data();
+        if (data && data.date) {
+          events.push(firestoreToEvent(data, docSnapshot.id));
+        }
+      } catch (parseError) {
+        console.warn('Error parsing event document:', docSnapshot.id, parseError);
+      }
     });
-    
+
+    // Sort in memory instead of in Firestore query
+    events.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    console.log('Loaded', events.length, 'events from Firestore');
     return events;
   } catch (error) {
     console.error('Error fetching events from Firestore:', error);

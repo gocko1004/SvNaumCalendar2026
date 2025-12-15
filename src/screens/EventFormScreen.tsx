@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Platform } from 'react-native';
-import { TextInput, Button, Title, Snackbar, Menu } from 'react-native-paper';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Image,
+  Alert
+} from 'react-native';
+import { TextInput, Button, Title, Snackbar, Menu, Text, Card } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import { format } from 'date-fns';
 import { useLanguage } from '../contexts/LanguageContext';
 import { COLORS } from '../constants/theme';
@@ -21,7 +32,7 @@ export const EventFormScreen = () => {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(new Date());
-  const [location, setLocation] = useState('');
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [serviceType, setServiceType] = useState<ServiceType>('LITURGY');
   const [serviceTypeMenuVisible, setServiceTypeMenuVisible] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -29,6 +40,39 @@ export const EventFormScreen = () => {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dismiss keyboard when tapping outside
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
+  // Pick image from gallery
+  const pickImage = async () => {
+    dismissKeyboard();
+
+    // Request permission
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Дозвола', 'Потребна е дозвола за пристап до галеријата');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  // Remove selected image
+  const removeImage = () => {
+    setImageUri(null);
+  };
 
   const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -91,7 +135,7 @@ export const EventFormScreen = () => {
         // Reset form
         setTitle('');
         setDescription('');
-        setLocation('');
+        setImageUri(null);
         setDate(new Date());
         setTime(new Date());
         setServiceType('LITURGY');
@@ -109,122 +153,205 @@ export const EventFormScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Title style={styles.title}>{t.addEvent}</Title>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoid}
+    >
+      <TouchableWithoutFeedback onPress={dismissKeyboard}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Title style={styles.title}>{t.addEvent || 'Додади Настан'}</Title>
 
-      <TextInput
-        label="Име на настанот"
-        value={title}
-        onChangeText={setTitle}
-        style={styles.input}
-        maxLength={100}
-      />
+          <TextInput
+            label="Име на настанот"
+            value={title}
+            onChangeText={setTitle}
+            style={styles.input}
+            maxLength={100}
+          />
 
-      <Button
-        mode="outlined"
-        onPress={() => setShowDatePicker(true)}
-        style={styles.input}
-      >
-        {format(date, 'dd.MM.yyyy')}
-      </Button>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onDateChange}
-        />
-      )}
-
-      <Button
-        mode="outlined"
-        onPress={() => setShowTimePicker(true)}
-        style={styles.input}
-      >
-        {format(time, 'HH:mm')}
-      </Button>
-
-      {showTimePicker && (
-        <DateTimePicker
-          value={time}
-          mode="time"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onTimeChange}
-        />
-      )}
-
-      <Menu
-        visible={serviceTypeMenuVisible}
-        onDismiss={() => setServiceTypeMenuVisible(false)}
-        anchor={
           <Button
             mode="outlined"
-            onPress={() => setServiceTypeMenuVisible(true)}
+            onPress={() => { dismissKeyboard(); setShowDatePicker(true); }}
             style={styles.input}
           >
-            {SERVICE_TYPES.find(st => st.value === serviceType)?.label || 'Избери тип'}
+            📅 {format(date, 'dd.MM.yyyy')}
           </Button>
-        }
-      >
-        {SERVICE_TYPES.map((st) => (
-          <Menu.Item
-            key={st.value}
-            onPress={() => {
-              setServiceType(st.value);
-              setServiceTypeMenuVisible(false);
-            }}
-            title={st.label}
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onDateChange}
+            />
+          )}
+
+          <Button
+            mode="outlined"
+            onPress={() => { dismissKeyboard(); setShowTimePicker(true); }}
+            style={styles.input}
+          >
+            🕐 {format(time, 'HH:mm')}
+          </Button>
+
+          {showTimePicker && (
+            <DateTimePicker
+              value={time}
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onTimeChange}
+            />
+          )}
+
+          <Menu
+            visible={serviceTypeMenuVisible}
+            onDismiss={() => setServiceTypeMenuVisible(false)}
+            anchor={
+              <Button
+                mode="outlined"
+                onPress={() => { dismissKeyboard(); setServiceTypeMenuVisible(true); }}
+                style={styles.input}
+              >
+                {SERVICE_TYPES.find(st => st.value === serviceType)?.label || 'Избери тип'}
+              </Button>
+            }
+          >
+            {SERVICE_TYPES.map((st) => (
+              <Menu.Item
+                key={st.value}
+                onPress={() => {
+                  setServiceType(st.value);
+                  setServiceTypeMenuVisible(false);
+                }}
+                title={st.label}
+              />
+            ))}
+          </Menu>
+
+          <TextInput
+            label="Опис (опционално)"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={3}
+            style={styles.input}
           />
-        ))}
-      </Menu>
 
-      <TextInput
-        label="Опис (опционално)"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        numberOfLines={3}
-        style={styles.input}
-      />
+          {/* Image Picker Section */}
+          <Card style={styles.imageCard}>
+            <Card.Content>
+              <Text style={styles.imageLabel}>Слика (опционално)</Text>
+              {imageUri ? (
+                <View style={styles.imagePreviewContainer}>
+                  <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+                  <Button
+                    mode="outlined"
+                    onPress={removeImage}
+                    style={styles.removeImageButton}
+                    textColor={COLORS.PRIMARY}
+                  >
+                    Отстрани
+                  </Button>
+                </View>
+              ) : (
+                <Button
+                  mode="outlined"
+                  onPress={pickImage}
+                  icon="image-plus"
+                  style={styles.pickImageButton}
+                >
+                  Избери од галерија
+                </Button>
+              )}
+            </Card.Content>
+          </Card>
 
-      <Button
-        mode="contained"
-        onPress={handleSubmit}
-        style={styles.submitButton}
-        loading={isSubmitting}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? 'Се зачувува...' : (t.saveEvent || 'Зачувај')}
-      </Button>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            style={styles.submitButton}
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Се зачувува...' : (t.saveEvent || 'Зачувај')}
+          </Button>
 
-      <Snackbar
-        visible={snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-        duration={3000}
-      >
-        {snackbarMessage}
-      </Snackbar>
-    </ScrollView>
+          {/* Extra padding at bottom for keyboard */}
+          <View style={styles.bottomPadding} />
+
+          <Snackbar
+            visible={snackbarVisible}
+            onDismiss={() => setSnackbarVisible(false)}
+            duration={3000}
+          >
+            {snackbarMessage}
+          </Snackbar>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: COLORS.BACKGROUND,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 40,
   },
   title: {
     marginBottom: 24,
     textAlign: 'center',
     color: COLORS.PRIMARY,
+    fontSize: 22,
+    fontWeight: 'bold',
   },
   input: {
     marginBottom: 16,
+    borderRadius: 6,
+  },
+  imageCard: {
+    marginBottom: 16,
+    borderRadius: 6,
+    backgroundColor: '#FFFDF8',
+  },
+  imageLabel: {
+    fontSize: 14,
+    color: COLORS.TEXT,
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  imagePreviewContainer: {
+    alignItems: 'center',
+  },
+  imagePreview: {
+    width: 150,
+    height: 150,
+    borderRadius: 6,
+    marginBottom: 12,
+  },
+  removeImageButton: {
+    borderColor: COLORS.PRIMARY,
+  },
+  pickImageButton: {
+    borderStyle: 'dashed',
   },
   submitButton: {
     marginTop: 8,
     backgroundColor: COLORS.PRIMARY,
+    borderRadius: 6,
+    paddingVertical: 4,
+  },
+  bottomPadding: {
+    height: 100,
   },
 }); 
