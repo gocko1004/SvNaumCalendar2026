@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Image
+} from 'react-native';
 import {
   Title,
   Card,
@@ -7,9 +18,6 @@ import {
   Portal,
   Dialog,
   TextInput,
-  List,
-  IconButton,
-  Divider,
   Text,
   ActivityIndicator,
   Chip,
@@ -35,6 +43,7 @@ import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 type ManageAnnouncementsScreenProps = {
   navigation: NativeStackNavigationProp<AdminStackParamList, 'ManageAnnouncements'>;
@@ -55,15 +64,57 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-  const [editedAnnouncement, setEditedAnnouncement] = useState<Partial<Announcement>>({
-    title: '',
-    message: '',
-    type: 'INFO',
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 days
-    priority: 1,
-    isActive: true,
-  });
+  // Separate state for each form field to prevent flickering
+  const [formTitle, setFormTitle] = useState('');
+  const [formMessage, setFormMessage] = useState('');
+  const [formType, setFormType] = useState<AnnouncementType>('INFO');
+  const [formStartDate, setFormStartDate] = useState(new Date());
+  const [formEndDate, setFormEndDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+  const [formPriority, setFormPriority] = useState(1);
+  const [formImageUri, setFormImageUri] = useState<string | null>(null);
+  const [formLinkUrl, setFormLinkUrl] = useState('');
+  const [formLinkText, setFormLinkText] = useState('');
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
+  // Pick image from gallery
+  const pickImage = async () => {
+    dismissKeyboard();
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Дозвола', 'Потребна е дозвола за пристап до галеријата');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setFormImageUri(result.assets[0].uri);
+    }
+  };
+
+  const removeImage = () => {
+    setFormImageUri(null);
+  };
+
+  const resetForm = () => {
+    setFormTitle('');
+    setFormMessage('');
+    setFormType('INFO');
+    setFormStartDate(new Date());
+    setFormEndDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+    setFormPriority(1);
+    setFormImageUri(null);
+    setFormLinkUrl('');
+    setFormLinkText('');
+  };
 
   useEffect(() => {
     loadAnnouncements();
@@ -86,58 +137,59 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
 
   const handleAddNew = () => {
     setSelectedAnnouncement(null);
-    setEditedAnnouncement({
-      title: '',
-      message: '',
-      type: 'INFO',
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      priority: 1,
-      isActive: true,
-    });
+    resetForm();
     setEditDialogVisible(true);
   };
 
   const handleEdit = (announcement: Announcement) => {
     setSelectedAnnouncement(announcement);
-    setEditedAnnouncement({
-      title: announcement.title,
-      message: announcement.message,
-      type: announcement.type,
-      startDate: announcement.startDate,
-      endDate: announcement.endDate,
-      priority: announcement.priority,
-      isActive: announcement.isActive,
-      imageUrl: announcement.imageUrl,
-      linkUrl: announcement.linkUrl,
-      linkText: announcement.linkText,
-    });
+    setFormTitle(announcement.title);
+    setFormMessage(announcement.message);
+    setFormType(announcement.type);
+    setFormStartDate(announcement.startDate);
+    setFormEndDate(announcement.endDate);
+    setFormPriority(announcement.priority);
+    setFormImageUri(announcement.imageUrl || null);
+    setFormLinkUrl(announcement.linkUrl || '');
+    setFormLinkText(announcement.linkText || '');
     setEditDialogVisible(true);
   };
 
   const handleSave = async () => {
-    if (!editedAnnouncement.title || !editedAnnouncement.message) {
+    if (!formTitle.trim() || !formMessage.trim()) {
       Alert.alert('Грешка', 'Наслов и порака се задолжителни');
       return;
     }
 
-    if (editedAnnouncement.startDate && editedAnnouncement.endDate &&
-        editedAnnouncement.startDate > editedAnnouncement.endDate) {
+    if (formStartDate > formEndDate) {
       Alert.alert('Грешка', 'Датумот на почеток мора да биде пред датумот на крај');
       return;
     }
 
+    const announcementData: Partial<Announcement> = {
+      title: formTitle.trim(),
+      message: formMessage.trim(),
+      type: formType,
+      startDate: formStartDate,
+      endDate: formEndDate,
+      priority: formPriority,
+      isActive: true,
+      imageUrl: formImageUri || undefined,
+      linkUrl: formLinkUrl.trim() || undefined,
+      linkText: formLinkText.trim() || undefined,
+    };
+
     setLoading(true);
     try {
       if (selectedAnnouncement?.id) {
-        const success = await updateAnnouncement(selectedAnnouncement.id, editedAnnouncement);
+        const success = await updateAnnouncement(selectedAnnouncement.id, announcementData);
         if (success) {
           Alert.alert('Успех', 'Известувањето е ажурирано');
         } else {
           Alert.alert('Грешка', 'Не можеше да се ажурира известувањето');
         }
       } else {
-        const id = await addAnnouncement(editedAnnouncement);
+        const id = await addAnnouncement(announcementData);
         if (id) {
           Alert.alert('Успех', 'Известувањето е додадено');
         } else {
@@ -145,6 +197,7 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
         }
       }
       setEditDialogVisible(false);
+      resetForm();
       await loadAnnouncements();
     } catch (error) {
       console.error('Error saving announcement:', error);
@@ -327,108 +380,136 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
 
       {/* Edit/Add Dialog */}
       <Portal>
-        <Dialog visible={editDialogVisible} onDismiss={() => setEditDialogVisible(false)} style={styles.dialog}>
-          <Dialog.Title>
+        <Dialog visible={editDialogVisible} onDismiss={() => { dismissKeyboard(); setEditDialogVisible(false); }} style={styles.dialog}>
+          <Dialog.Title style={styles.dialogTitle}>
             {selectedAnnouncement ? 'Измени известување' : 'Ново известување'}
           </Dialog.Title>
           <Dialog.ScrollArea style={styles.dialogScrollArea}>
-            <ScrollView>
-              <TextInput
-                label="Наслов *"
-                value={editedAnnouncement.title}
-                onChangeText={(text) => setEditedAnnouncement({ ...editedAnnouncement, title: text })}
-                style={styles.input}
-                mode="outlined"
-                maxLength={100}
-              />
-
-              <TextInput
-                label="Порака *"
-                value={editedAnnouncement.message}
-                onChangeText={(text) => setEditedAnnouncement({ ...editedAnnouncement, message: text })}
-                style={styles.input}
-                mode="outlined"
-                multiline
-                numberOfLines={3}
-                maxLength={500}
-              />
-
-              <Text style={styles.inputLabel}>Тип на известување</Text>
-              <SegmentedButtons
-                value={editedAnnouncement.type || 'INFO'}
-                onValueChange={(value) => setEditedAnnouncement({ ...editedAnnouncement, type: value as AnnouncementType })}
-                buttons={ANNOUNCEMENT_TYPES.map(t => ({ value: t.value, label: t.label }))}
-                style={styles.segmentedButtons}
-              />
-
-              <View style={styles.datePickerRow}>
-                <View style={styles.datePickerContainer}>
-                  <Text style={styles.inputLabel}>Почеток</Text>
-                  <Button
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                  <TextInput
+                    label="Наслов *"
+                    value={formTitle}
+                    onChangeText={setFormTitle}
+                    style={styles.input}
                     mode="outlined"
-                    onPress={() => setShowStartDatePicker(true)}
-                    style={styles.dateButton}
-                  >
-                    {editedAnnouncement.startDate
-                      ? format(editedAnnouncement.startDate, 'dd.MM.yyyy')
-                      : 'Избери датум'}
-                  </Button>
-                </View>
-                <View style={styles.datePickerContainer}>
-                  <Text style={styles.inputLabel}>Крај</Text>
-                  <Button
+                    maxLength={100}
+                    outlineStyle={styles.inputOutline}
+                  />
+
+                  <TextInput
+                    label="Порака *"
+                    value={formMessage}
+                    onChangeText={setFormMessage}
+                    style={styles.input}
                     mode="outlined"
-                    onPress={() => setShowEndDatePicker(true)}
-                    style={styles.dateButton}
-                  >
-                    {editedAnnouncement.endDate
-                      ? format(editedAnnouncement.endDate, 'dd.MM.yyyy')
-                      : 'Избери датум'}
-                  </Button>
-                </View>
-              </View>
+                    multiline
+                    numberOfLines={3}
+                    maxLength={500}
+                    outlineStyle={styles.inputOutline}
+                  />
 
-              <Text style={styles.inputLabel}>Приоритет (1-5)</Text>
-              <SegmentedButtons
-                value={String(editedAnnouncement.priority || 1)}
-                onValueChange={(value) => setEditedAnnouncement({ ...editedAnnouncement, priority: parseInt(value) })}
-                buttons={[
-                  { value: '1', label: '1' },
-                  { value: '2', label: '2' },
-                  { value: '3', label: '3' },
-                  { value: '4', label: '4' },
-                  { value: '5', label: '5' },
-                ]}
-                style={styles.segmentedButtons}
-              />
+                  <Text style={styles.inputLabel}>Тип на известување</Text>
+                  <SegmentedButtons
+                    value={formType}
+                    onValueChange={(value) => setFormType(value as AnnouncementType)}
+                    buttons={ANNOUNCEMENT_TYPES.map(t => ({ value: t.value, label: t.label }))}
+                    style={styles.segmentedButtons}
+                  />
 
-              <TextInput
-                label="URL на слика (опционално)"
-                value={editedAnnouncement.imageUrl || ''}
-                onChangeText={(text) => setEditedAnnouncement({ ...editedAnnouncement, imageUrl: text })}
-                style={styles.input}
-                mode="outlined"
-              />
+                  <View style={styles.datePickerRow}>
+                    <View style={styles.datePickerContainer}>
+                      <Text style={styles.inputLabel}>Почеток</Text>
+                      <Button
+                        mode="outlined"
+                        onPress={() => { dismissKeyboard(); setShowStartDatePicker(true); }}
+                        style={styles.dateButton}
+                      >
+                        📅 {format(formStartDate, 'dd.MM.yyyy')}
+                      </Button>
+                    </View>
+                    <View style={styles.datePickerContainer}>
+                      <Text style={styles.inputLabel}>Крај</Text>
+                      <Button
+                        mode="outlined"
+                        onPress={() => { dismissKeyboard(); setShowEndDatePicker(true); }}
+                        style={styles.dateButton}
+                      >
+                        📅 {format(formEndDate, 'dd.MM.yyyy')}
+                      </Button>
+                    </View>
+                  </View>
 
-              <TextInput
-                label="Линк URL (опционално)"
-                value={editedAnnouncement.linkUrl || ''}
-                onChangeText={(text) => setEditedAnnouncement({ ...editedAnnouncement, linkUrl: text })}
-                style={styles.input}
-                mode="outlined"
-              />
+                  <Text style={styles.inputLabel}>Приоритет (1-5)</Text>
+                  <SegmentedButtons
+                    value={String(formPriority)}
+                    onValueChange={(value) => setFormPriority(parseInt(value))}
+                    buttons={[
+                      { value: '1', label: '1' },
+                      { value: '2', label: '2' },
+                      { value: '3', label: '3' },
+                      { value: '4', label: '4' },
+                      { value: '5', label: '5' },
+                    ]}
+                    style={styles.segmentedButtons}
+                  />
 
-              <TextInput
-                label="Текст на линк (опционално)"
-                value={editedAnnouncement.linkText || ''}
-                onChangeText={(text) => setEditedAnnouncement({ ...editedAnnouncement, linkText: text })}
-                style={styles.input}
-                mode="outlined"
-              />
-            </ScrollView>
+                  {/* Image Picker */}
+                  <Text style={styles.inputLabel}>Слика (опционално)</Text>
+                  <View style={styles.imageSection}>
+                    {formImageUri ? (
+                      <View style={styles.imagePreviewContainer}>
+                        <Image source={{ uri: formImageUri }} style={styles.imagePreview} />
+                        <Button
+                          mode="outlined"
+                          onPress={removeImage}
+                          style={styles.removeImageButton}
+                          textColor={COLORS.PRIMARY}
+                        >
+                          Отстрани
+                        </Button>
+                      </View>
+                    ) : (
+                      <Button
+                        mode="outlined"
+                        onPress={pickImage}
+                        icon="image-plus"
+                        style={styles.pickImageButton}
+                      >
+                        Избери од галерија
+                      </Button>
+                    )}
+                  </View>
+
+                  <TextInput
+                    label="Линк URL (опционално)"
+                    value={formLinkUrl}
+                    onChangeText={setFormLinkUrl}
+                    style={styles.input}
+                    mode="outlined"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    outlineStyle={styles.inputOutline}
+                  />
+
+                  <TextInput
+                    label="Текст на линк (опционално)"
+                    value={formLinkText}
+                    onChangeText={setFormLinkText}
+                    style={styles.input}
+                    mode="outlined"
+                    outlineStyle={styles.inputOutline}
+                  />
+
+                  {/* Bottom padding for keyboard */}
+                  <View style={{ height: 50 }} />
+                </ScrollView>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={() => setEditDialogVisible(false)}>Откажи</Button>
+            <Button onPress={() => { dismissKeyboard(); setEditDialogVisible(false); }}>Откажи</Button>
             <Button onPress={handleSave} loading={loading}>Зачувај</Button>
           </Dialog.Actions>
         </Dialog>
@@ -437,13 +518,13 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
       {/* Date Pickers */}
       {showStartDatePicker && (
         <DateTimePicker
-          value={editedAnnouncement.startDate || new Date()}
+          value={formStartDate}
           mode="date"
-          display="default"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(event, date) => {
             setShowStartDatePicker(false);
             if (date) {
-              setEditedAnnouncement({ ...editedAnnouncement, startDate: date });
+              setFormStartDate(date);
             }
           }}
         />
@@ -451,13 +532,13 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
 
       {showEndDatePicker && (
         <DateTimePicker
-          value={editedAnnouncement.endDate || new Date()}
+          value={formEndDate}
           mode="date"
-          display="default"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(event, date) => {
             setShowEndDatePicker(false);
             if (date) {
-              setEditedAnnouncement({ ...editedAnnouncement, endDate: date });
+              setFormEndDate(date);
             }
           }}
         />
@@ -490,7 +571,7 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY,
   },
   addButton: {
-    borderRadius: 10,
+    borderRadius: 6,
     elevation: 3,
   },
   scrollView: {
@@ -504,7 +585,7 @@ const styles = StyleSheet.create({
   announcementCard: {
     marginBottom: 14,
     borderLeftWidth: 4,
-    borderRadius: 12,
+    borderRadius: 6,
     backgroundColor: '#FFFDF8',
     elevation: 4,
     shadowColor: '#000',
@@ -573,13 +654,16 @@ const styles = StyleSheet.create({
   },
   editButton: {
     borderColor: COLORS.PRIMARY,
+    borderRadius: 6,
   },
   deleteButton: {
     borderColor: '#F44336',
+    borderRadius: 6,
   },
   emptyCard: {
     padding: 20,
     alignItems: 'center',
+    borderRadius: 6,
   },
   emptyText: {
     fontSize: 16,
@@ -595,6 +679,11 @@ const styles = StyleSheet.create({
   },
   dialog: {
     maxHeight: Dimensions.get('window').height * 0.85,
+    borderRadius: 8,
+  },
+  dialogTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   dialogScrollArea: {
     paddingHorizontal: 0,
@@ -604,11 +693,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginHorizontal: 16,
   },
+  inputOutline: {
+    borderRadius: 6,
+  },
   inputLabel: {
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
     marginHorizontal: 16,
+    fontWeight: '500',
   },
   segmentedButtons: {
     marginBottom: 16,
@@ -626,6 +719,27 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     marginTop: 4,
+    borderRadius: 6,
+  },
+  imageSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  imagePreviewContainer: {
+    alignItems: 'center',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 120,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  removeImageButton: {
+    borderColor: COLORS.PRIMARY,
+    borderRadius: 6,
+  },
+  pickImageButton: {
+    borderRadius: 6,
   },
 });
 
