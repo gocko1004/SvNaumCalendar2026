@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl, Alert, Platform, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  RefreshControl,
+  Alert,
+  Platform,
+  Image,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard
+} from 'react-native';
 import {
   Title,
   Card,
@@ -488,32 +500,36 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
 
       {/* Add/Edit Dialog */}
       <Portal>
-        <Dialog visible={dialogVisible} onDismiss={() => !uploading && setDialogVisible(false)} style={styles.dialog}>
+        <Dialog visible={dialogVisible} onDismiss={() => { if (!uploading) { Keyboard.dismiss(); setDialogVisible(false); }}} style={styles.dialog}>
           <Dialog.Title style={styles.dialogTitle}>
             {editingNews ? 'Измени новост' : 'Додади новост'}
           </Dialog.Title>
           <Dialog.ScrollArea style={styles.dialogScrollArea}>
-            <ScrollView>
-              <View style={styles.dialogContent}>
-                <TextInput
-                  label="Наслов *"
-                  value={title}
-                  onChangeText={setTitle}
-                  mode="outlined"
-                  style={styles.input}
-                  disabled={uploading}
-                />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                  <View style={styles.dialogContent}>
+                    <TextInput
+                      label="Наслов *"
+                      value={title}
+                      onChangeText={setTitle}
+                      mode="outlined"
+                      style={styles.input}
+                      outlineStyle={styles.inputOutline}
+                      disabled={uploading}
+                    />
 
-                <TextInput
-                  label="Содржина *"
-                  value={content}
-                  onChangeText={setContent}
-                  mode="outlined"
-                  multiline
-                  numberOfLines={4}
-                  style={styles.input}
-                  disabled={uploading}
-                />
+                    <TextInput
+                      label="Содржина *"
+                      value={content}
+                      onChangeText={setContent}
+                      mode="outlined"
+                      multiline
+                      numberOfLines={4}
+                      style={styles.input}
+                      outlineStyle={styles.inputOutline}
+                      disabled={uploading}
+                    />
 
                 <Text style={styles.dateLabel}>Датум:</Text>
                 <Button
@@ -561,54 +577,63 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
                 {renderMediaPreview()}
 
                 <TextInput
-                  label="URL на линк (опционално)"
-                  value={linkUrl}
-                  onChangeText={setLinkUrl}
-                  mode="outlined"
-                  style={styles.input}
-                  placeholder="https://..."
-                  disabled={uploading}
-                />
-
-                <TextInput
-                  label="Текст за линк (опционално)"
-                  value={linkText}
-                  onChangeText={setLinkText}
-                  mode="outlined"
-                  style={styles.input}
-                  placeholder="Прочитај повеќе"
-                  disabled={uploading}
-                />
-
-                {/* Notification checkbox - only for new posts */}
-                {!editingNews && (
-                  <View style={styles.checkboxRow}>
-                    <Checkbox
-                      status={sendNotification ? 'checked' : 'unchecked'}
-                      onPress={() => setSendNotification(!sendNotification)}
-                      color={COLORS.PRIMARY}
+                      label="URL на линк (опционално)"
+                      value={linkUrl}
+                      onChangeText={setLinkUrl}
+                      mode="outlined"
+                      style={styles.input}
+                      outlineStyle={styles.inputOutline}
+                      placeholder="https://..."
+                      keyboardType="url"
+                      autoCapitalize="none"
                       disabled={uploading}
                     />
-                    <Text style={styles.checkboxLabel}>
-                      Испрати известување до сите корисници
-                    </Text>
-                  </View>
-                )}
 
-                {/* Upload Progress */}
-                {uploading && (
-                  <View style={styles.uploadProgress}>
-                    <Text style={styles.uploadText}>
-                      Се прикачува... {Math.round(uploadProgress)}%
-                    </Text>
-                    <ProgressBar progress={uploadProgress / 100} color={COLORS.PRIMARY} />
+                    <TextInput
+                      label="Текст за линк (опционално)"
+                      value={linkText}
+                      onChangeText={setLinkText}
+                      mode="outlined"
+                      style={styles.input}
+                      outlineStyle={styles.inputOutline}
+                      placeholder="Прочитај повеќе"
+                      disabled={uploading}
+                    />
+
+                    {/* Notification checkbox - only for new posts */}
+                    {!editingNews && (
+                      <View style={styles.checkboxRow}>
+                        <Checkbox
+                          status={sendNotification ? 'checked' : 'unchecked'}
+                          onPress={() => setSendNotification(!sendNotification)}
+                          color={COLORS.PRIMARY}
+                          disabled={uploading}
+                        />
+                        <Text style={styles.checkboxLabel}>
+                          Испрати известување до сите корисници
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Upload Progress */}
+                    {uploading && (
+                      <View style={styles.uploadProgress}>
+                        <Text style={styles.uploadText}>
+                          Се прикачува... {Math.round(uploadProgress)}%
+                        </Text>
+                        <ProgressBar progress={uploadProgress / 100} color={COLORS.PRIMARY} />
+                      </View>
+                    )}
+
+                    {/* Bottom padding for keyboard */}
+                    <View style={{ height: 50 }} />
                   </View>
-                )}
-              </View>
-            </ScrollView>
+                </ScrollView>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={() => setDialogVisible(false)} disabled={uploading}>
+            <Button onPress={() => { Keyboard.dismiss(); setDialogVisible(false); }} disabled={uploading}>
               Откажи
             </Button>
             <Button onPress={handleSave} mode="contained" loading={uploading} disabled={uploading}>
@@ -660,7 +685,7 @@ const styles = StyleSheet.create({
   },
   newsCard: {
     marginBottom: 14,
-    borderRadius: 14,
+    borderRadius: 6,
     borderLeftWidth: 4,
     borderLeftColor: NEWS_COLOR,
     backgroundColor: '#FFFDF8',
@@ -762,7 +787,7 @@ const styles = StyleSheet.create({
   },
   dialog: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 8,
     maxHeight: '90%',
   },
   dialogTitle: {
@@ -777,6 +802,9 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 12,
     backgroundColor: '#fff',
+  },
+  inputOutline: {
+    borderRadius: 6,
   },
   dateLabel: {
     fontSize: 14,

@@ -27,10 +27,10 @@ const newsCollection = collection(db, 'news');
 // Get all news items (for admin)
 export const getAllNews = async (): Promise<NewsItem[]> => {
   try {
-    const q = query(newsCollection, orderBy('date', 'desc'));
-    const querySnapshot = await getDocs(q);
+    // Simple query without orderBy to avoid index requirement
+    const querySnapshot = await getDocs(newsCollection);
 
-    return querySnapshot.docs.map(doc => {
+    const items = querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -48,6 +48,11 @@ export const getAllNews = async (): Promise<NewsItem[]> => {
         updatedAt: data.updatedAt?.toDate() || new Date(),
       } as NewsItem;
     });
+
+    // Sort in memory by date descending
+    items.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    return items;
   } catch (error) {
     console.error('Error getting all news:', error);
     return [];
@@ -57,31 +62,34 @@ export const getAllNews = async (): Promise<NewsItem[]> => {
 // Get active news items (for calendar display)
 export const getActiveNews = async (): Promise<NewsItem[]> => {
   try {
-    const q = query(
-      newsCollection,
-      where('isActive', '==', true),
-      orderBy('date', 'desc')
-    );
-    const querySnapshot = await getDocs(q);
+    // Simple query without orderBy to avoid index requirement
+    const querySnapshot = await getDocs(newsCollection);
 
-    return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        title: data.title,
-        content: data.content,
-        date: data.date?.toDate() || new Date(),
-        imageUrl: data.imageUrl,
-        imageUrls: data.imageUrls || [],
-        videoUrls: data.videoUrls || [],
-        linkUrl: data.linkUrl,
-        linkText: data.linkText,
-        isActive: data.isActive ?? true,
-        priority: data.priority || 0,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-      } as NewsItem;
-    });
+    const items = querySnapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          content: data.content,
+          date: data.date?.toDate() || new Date(),
+          imageUrl: data.imageUrl,
+          imageUrls: data.imageUrls || [],
+          videoUrls: data.videoUrls || [],
+          linkUrl: data.linkUrl,
+          linkText: data.linkText,
+          isActive: data.isActive ?? true,
+          priority: data.priority || 0,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as NewsItem;
+      })
+      .filter(item => item.isActive); // Filter active items
+
+    // Sort in memory by date descending
+    items.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    return items;
   } catch (error) {
     console.error('Error getting active news:', error);
     return [];
@@ -94,31 +102,38 @@ export const getNewsForMonth = async (year: number, month: number): Promise<News
     const startOfMonth = new Date(year, month, 1);
     const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
 
-    const q = query(
-      newsCollection,
-      where('isActive', '==', true),
-      where('date', '>=', Timestamp.fromDate(startOfMonth)),
-      where('date', '<=', Timestamp.fromDate(endOfMonth)),
-      orderBy('date', 'asc')
-    );
-    const querySnapshot = await getDocs(q);
+    // Simple query without orderBy to avoid index requirement
+    const querySnapshot = await getDocs(newsCollection);
 
-    return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        title: data.title,
-        content: data.content,
-        date: data.date?.toDate() || new Date(),
-        imageUrl: data.imageUrl,
-        linkUrl: data.linkUrl,
-        linkText: data.linkText,
-        isActive: data.isActive ?? true,
-        priority: data.priority || 0,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-      } as NewsItem;
-    });
+    const items = querySnapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          content: data.content,
+          date: data.date?.toDate() || new Date(),
+          imageUrl: data.imageUrl,
+          imageUrls: data.imageUrls || [],
+          videoUrls: data.videoUrls || [],
+          linkUrl: data.linkUrl,
+          linkText: data.linkText,
+          isActive: data.isActive ?? true,
+          priority: data.priority || 0,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as NewsItem;
+      })
+      .filter(item => {
+        if (!item.isActive) return false;
+        const itemDate = item.date;
+        return itemDate >= startOfMonth && itemDate <= endOfMonth;
+      });
+
+    // Sort by date ascending
+    items.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    return items;
   } catch (error) {
     console.error('Error getting news for month:', error);
     return [];
