@@ -69,6 +69,27 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
     let sectionItems: string[] = [];
     let googleMapsLinks: { name: string; url: string }[] = [];
 
+    // Helper to check if URL is a Google Maps link
+    const isGoogleMapsUrl = (url: string) => {
+      return url.includes('maps.google') ||
+             url.includes('goo.gl/maps') ||
+             url.includes('maps.app.goo') ||
+             url.includes('google.com/maps');
+    };
+
+    // Pre-scan body for any Google Maps URLs that might be inline
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    let match;
+    while ((match = urlRegex.exec(body)) !== null) {
+      const url = match[1];
+      if (isGoogleMapsUrl(url)) {
+        // Check if not already in the list
+        if (!googleMapsLinks.some(link => link.url === url)) {
+          googleMapsLinks.push({ name: 'Отвори во Google Maps', url });
+        }
+      }
+    }
+
     const flushSection = () => {
       if (currentSection && currentSection !== 'GOOGLE_MAPS' && currentSection !== 'LINK_SECTION') {
         // Determine icon based on section content
@@ -134,10 +155,17 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
         // Format: "Location Name: https://..."
         const urlMatch = trimmedLine.match(/^(.+?):\s*(https?:\/\/[^\s]+)/);
         if (urlMatch) {
-          googleMapsLinks.push({ name: urlMatch[1].trim(), url: urlMatch[2] });
+          const url = urlMatch[2];
+          // Only add if not already in list
+          if (!googleMapsLinks.some(link => link.url === url)) {
+            googleMapsLinks.push({ name: urlMatch[1].trim(), url });
+          }
         } else if (trimmedLine.match(/https?:\/\//)) {
-          // Just a URL without label
-          googleMapsLinks.push({ name: 'Отвори карта', url: trimmedLine });
+          // Just a URL without label - only add if not already in list
+          const url = trimmedLine.match(/(https?:\/\/[^\s]+)/)?.[1];
+          if (url && !googleMapsLinks.some(link => link.url === url)) {
+            googleMapsLinks.push({ name: 'Отвори карта', url });
+          }
         }
         return;
       }
@@ -203,9 +231,7 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
     // Render links as buttons
     if (googleMapsLinks.length > 0) {
       // Check if any links are Google Maps
-      const hasGoogleMaps = googleMapsLinks.some(link =>
-        link.url.includes('maps.google') || link.url.includes('goo.gl/maps') || link.url.includes('maps.app.goo')
-      );
+      const hasGoogleMaps = googleMapsLinks.some(link => isGoogleMapsUrl(link.url));
 
       elements.push(
         <View key="maps-section" style={styles.mapsSection}>
@@ -220,7 +246,7 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
             </RNText>
           </View>
           {googleMapsLinks.map((link, idx) => {
-            const isMapLink = link.url.includes('maps.google') || link.url.includes('goo.gl/maps') || link.url.includes('maps.app.goo');
+            const isMapLink = isGoogleMapsUrl(link.url);
             return (
               <TouchableOpacity
                 key={idx}
@@ -228,7 +254,7 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
                 onPress={() => Linking.openURL(link.url)}
               >
                 <MaterialCommunityIcons
-                  name={isMapLink ? "map-marker" : "open-in-new"}
+                  name={isMapLink ? "google-maps" : "open-in-new"}
                   size={18}
                   color="#fff"
                 />
