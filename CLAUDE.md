@@ -9,7 +9,6 @@ SV Naum Calendar is a React Native mobile application built with Expo SDK 54 for
 **App Name**: `Св. Наум Охридски • Триенген`
 **Package**: `com.svnaum.calendar`
 **EAS Project ID**: `ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb`
-**Version**: 2.0.0
 
 ## Development Commands
 
@@ -25,9 +24,6 @@ npm run android
 npm run ios
 npm run web
 
-# Build for web (Vercel deployment)
-npm run vercel-build
-
 # TypeScript check (run before commits)
 npx tsc --noEmit
 ```
@@ -42,18 +38,22 @@ npx eas-cli build --platform ios --profile preview
 # Production build (App Store / Play Store)
 npx eas-cli build --platform ios --profile production
 npx eas-cli build --platform android --profile production
+
+# Force fresh build (if caching issues)
+npx eas-cli build --platform ios --profile production --clear-cache
 ```
 
-### Local Native Builds
+### App Store Submission
 
 ```bash
-# Generate native projects
-npx expo prebuild
+# Submit latest iOS build to App Store Connect/TestFlight
+npx eas-cli submit --platform ios --latest
 
-# Run locally
-npx expo run:ios
-npx expo run:android
+# Submit latest Android build to Play Store
+npx eas-cli submit --platform android --latest
 ```
+
+**Important**: Before each submission, increment `buildNumber` (iOS) and `versionCode` (Android) in `app.json`. The `eas.json` uses `"appVersionSource": "local"` so build numbers come from app.json.
 
 ## Architecture
 
@@ -73,7 +73,7 @@ The app uses a root stack navigator with bottom tabs:
 - Admin panel is NOT visible in tabs (security measure)
 - Access: Tap the church header ("Св. Наум Охридски • Триенген, CH") **5 times within 3 seconds**
 - Opens as modal overlay with Firebase authentication
-- Admin session persists for 10 minutes of inactivity
+- Session options: 10 minutes default, 7 days with "keep logged in"
 
 ### Core Services
 
@@ -85,53 +85,50 @@ The app uses a root stack navigator with bottom tabs:
 - Stores push tokens in Firebase Firestore (`pushTokens` collection)
 - Admin push notifications go to ALL users regardless of reminder settings
 
+**ParkingService** (`src/services/ParkingService.ts`)
+- Manages parking locations and rules
+- Sends parking notifications with Google Maps links
+- Stores data in Firestore: `parkingLocations`, `parkingRules`, `parkingSettings`
+
 **ChurchCalendarService** (`src/services/ChurchCalendarService.ts`)
 - Contains `CHURCH_EVENTS` array (87 events for 2026)
 - Service types: `LITURGY`, `EVENING_SERVICE`, `CHURCH_OPEN`, `PICNIC`
 
-**DenoviImageService** (`src/services/DenoviImageService.ts`)
-- Fetches saint images from `https://denovi.mk/synaxarion/[month]/[day]-020.jpg`
-- Falls back to service-type icons on failure
-
 **ValidationService** (`src/services/ValidationService.ts`)
 - Input sanitization (XSS prevention, HTML stripping)
-- URL validation (whitelist: `denovi.mk` only)
-- Rate limiting for abuse prevention
-
-**NewsService** (`src/services/NewsService.ts`)
-- Firestore CRUD for news items
-- Supports image galleries and video attachments
+- URL validation for external links
+- Document ID validation to prevent path traversal
 
 **Firebase** (`src/firebase.js`)
-- Firestore collections: `pushTokens`, `customEvents`, `announcements`, `news`, `notificationHistory`
+- Firestore collections: `pushTokens`, `customEvents`, `announcements`, `news`, `notificationHistory`, `parkingLocations`, `parkingRules`
 - Email/password authentication for admin access
+- Auth persistence via AsyncStorage
 
 ### Authentication
 
 **useAuth Hook** (`src/hooks/useAuth.ts`)
 - Firebase email/password authentication
-- 10-minute session timeout for admin
-- Stores last activity timestamp in AsyncStorage
+- Session timeout: 10 minutes default, 7 days with "keep logged in"
+- Username without @ gets `@svnaumcalendar.firebaseapp.com` suffix
 
 ### Key Directories
-- `src/screens/` - Main app screens (CalendarScreen, NewsScreen, NotificationSettingsScreen)
+- `src/screens/` - Main app screens
 - `src/admin/screens/` - Admin dashboard and management screens
 - `src/services/` - Business logic services
 - `src/navigation/` - React Navigation configuration
-- `src/hooks/` - Custom React hooks (useAuth, useNotificationSettings)
-- `src/constants/` - Theme (`#831B26` primary), config, languages
+- `src/hooks/` - Custom React hooks
+- `src/constants/` - Theme, config, languages
 
 ### Theme Colors
 - Primary: `#831B26` (burgundy)
 - Service types: `LITURGY` (#8B1A1A), `EVENING_SERVICE` (#2C4A6E), `CHURCH_OPEN` (#8B5A2B), `PICNIC` (#CD853F)
 - Card backgrounds: `#FFFDF8` (cream)
-- Gold accents: `#D4AF37`
 
 ## Configuration Files
 
-- `app.json` - Expo configuration, iOS encryption exemption (`ITSAppUsesNonExemptEncryption: false`)
-- `eas.json` - Build profiles (preview: APK/internal, production: AAB/App Store)
-- `metro.config.js` - Simplified default Expo config
+- `app.json` - Expo configuration, build numbers, iOS encryption exemption
+- `eas.json` - Build profiles, `appVersionSource: local` means build numbers from app.json
+- `metro.config.js` - Default Expo metro config
 
 ## Build Profiles
 
@@ -140,27 +137,22 @@ The app uses a root stack navigator with bottom tabs:
 | preview | APK | Internal distribution | Testing |
 | production | AAB | App Store | Store release |
 
+## Firebase Notes
+
+- Firebase API key is in `src/firebase.js` - this is public by design for client apps
+- Security comes from Firebase Security Rules, not the API key
+- Admin users are managed in Firebase Console → Authentication → Users
+- API key restrictions in Google Cloud Console may break Firebase Auth - use with caution
+
 ## Known Issues
-
-### EAS Build iOS Credentials
-iOS builds require interactive mode for Apple credentials. Run in terminal:
-```bash
-npx eas-cli build --platform ios --profile production
-```
-
-### Android SDK Setup
-Create `android/local.properties` with SDK path:
-```
-sdk.dir=/path/to/Android/Sdk
-```
-
-### Image Assets
-All image files (icon.png, splash.png, adaptive-icon.png) must be valid before running `expo prebuild`.
 
 ### Simulator Limitations
 - Push notifications don't work in iOS Simulator
-- Use the test button in Поставки tab (dev mode only) to test notification detail screen
+- Test on physical device via TestFlight for notification testing
+
+### EAS Build Caching
+If build numbers don't update, use `--clear-cache` flag.
 
 ## Language
 
-The app uses Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian. The `LanguageContext` provides internationalization infrastructure.
+The app uses Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian.
