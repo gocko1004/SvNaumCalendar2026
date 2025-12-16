@@ -13,6 +13,7 @@ import {
   Linking,
   ActivityIndicator,
   Platform,
+  PanResponder,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants/theme';
@@ -29,7 +30,8 @@ import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_HEIGHT * 0.75;
+const SHEET_MIN_HEIGHT = SCREEN_HEIGHT * 0.5;
+const SHEET_MAX_HEIGHT = SCREEN_HEIGHT * 0.92;
 
 interface EventDetailSheetProps {
   visible: boolean;
@@ -56,41 +58,98 @@ export const EventDetailSheet: React.FC<EventDetailSheetProps> = ({
   event,
   onClose,
 }) => {
-  const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const sheetHeight = useRef(new Animated.Value(SHEET_MIN_HEIGHT)).current;
+  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > 10;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy < 0) {
+          // Dragging up - expand
+          const newHeight = Math.min(SHEET_MAX_HEIGHT, SHEET_MIN_HEIGHT - gestureState.dy);
+          sheetHeight.setValue(newHeight);
+        } else if (gestureState.dy > 0 && isExpanded) {
+          // Dragging down from expanded state
+          const newHeight = Math.max(SHEET_MIN_HEIGHT, SHEET_MAX_HEIGHT - gestureState.dy);
+          sheetHeight.setValue(newHeight);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy < -50) {
+          // Expand to full
+          Animated.spring(sheetHeight, {
+            toValue: SHEET_MAX_HEIGHT,
+            useNativeDriver: false,
+            tension: 65,
+            friction: 11,
+          }).start();
+          setIsExpanded(true);
+        } else if (gestureState.dy > 100) {
+          // Close the sheet
+          handleClose();
+        } else if (gestureState.dy > 50 && isExpanded) {
+          // Collapse back
+          Animated.spring(sheetHeight, {
+            toValue: SHEET_MIN_HEIGHT,
+            useNativeDriver: false,
+            tension: 65,
+            friction: 11,
+          }).start();
+          setIsExpanded(false);
+        } else {
+          // Snap back to current state
+          Animated.spring(sheetHeight, {
+            toValue: isExpanded ? SHEET_MAX_HEIGHT : SHEET_MIN_HEIGHT,
+            useNativeDriver: false,
+            tension: 65,
+            friction: 11,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     if (visible && event) {
+      // Reset to initial state
+      sheetHeight.setValue(SHEET_MIN_HEIGHT);
+      setIsExpanded(false);
       // Load event details
       loadEventDetails();
       // Animate in
       Animated.parallel([
-        Animated.spring(slideAnim, {
+        Animated.spring(translateY, {
           toValue: 0,
-          useNativeDriver: true,
+          useNativeDriver: false,
           tension: 65,
           friction: 11,
         }),
         Animated.timing(backdropAnim, {
           toValue: 1,
           duration: 300,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start();
     } else {
       // Animate out
       Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: SHEET_HEIGHT,
+        Animated.timing(translateY, {
+          toValue: SCREEN_HEIGHT,
           duration: 250,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(backdropAnim, {
           toValue: 0,
           duration: 250,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start();
     }
@@ -107,15 +166,15 @@ export const EventDetailSheet: React.FC<EventDetailSheetProps> = ({
 
   const handleClose = () => {
     Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: SHEET_HEIGHT,
+      Animated.timing(translateY, {
+        toValue: SCREEN_HEIGHT,
         duration: 250,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(backdropAnim, {
         toValue: 0,
         duration: 250,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start(() => {
       onClose();
@@ -257,13 +316,17 @@ export const EventDetailSheet: React.FC<EventDetailSheetProps> = ({
           style={[
             styles.sheetContainer,
             {
-              transform: [{ translateY: slideAnim }],
+              height: sheetHeight,
+              transform: [{ translateY }],
             },
           ]}
         >
           {/* Drag Handle */}
-          <View style={styles.dragHandleContainer}>
+          <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
             <View style={styles.dragHandle} />
+            <Text style={styles.dragHint}>
+              {isExpanded ? 'Повлечи надолу за помало' : 'Повлечи нагоре за повеќе'}
+            </Text>
           </View>
 
           {/* Close Button */}
@@ -389,8 +452,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: SHEET_HEIGHT,
-    minHeight: SHEET_HEIGHT * 0.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
@@ -400,13 +461,18 @@ const styles = StyleSheet.create({
   dragHandleContainer: {
     alignItems: 'center',
     paddingTop: 12,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   dragHandle: {
     width: 40,
     height: 5,
     backgroundColor: '#DDD',
     borderRadius: 3,
+  },
+  dragHint: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 6,
   },
   closeButton: {
     position: 'absolute',
@@ -515,11 +581,14 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   fieldContainer: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.PRIMARY,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   fieldHeader: {
     flexDirection: 'row',
@@ -594,12 +663,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   descriptionContainer: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#D4AF37',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   footer: {
     flexDirection: 'row',

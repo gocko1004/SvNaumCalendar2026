@@ -111,35 +111,52 @@ export const NewsDetailScreen: React.FC<NewsDetailScreenProps> = ({ route, navig
           {allImages.length > 0 && (
             <View style={styles.imageSection}>
               <Text style={styles.sectionTitle}>
-                <MaterialCommunityIcons name="image-multiple" size={18} color={COLORS.PRIMARY} />
+                <MaterialCommunityIcons name={allImages.length === 1 ? "image" : "image-multiple"} size={18} color={COLORS.PRIMARY} />
                 {'  '}Слики ({allImages.length})
               </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.imageScrollContent}
-              >
-                {allImages.map((imageUrl, index) => (
-                  <TouchableOpacity
-                    key={`img-${index}`}
-                    onPress={() => openImageGallery(index)}
-                    activeOpacity={0.9}
-                    style={styles.imageTouchable}
-                  >
-                    <Image
-                      source={{ uri: imageUrl }}
-                      style={[
-                        styles.thumbnailImage,
-                        allImages.length === 1 && styles.singleImage,
-                      ]}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.imageOverlay}>
-                      <MaterialCommunityIcons name="magnify-plus" size={24} color="#fff" />
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              {allImages.length === 1 ? (
+                // Single image - full width display
+                <TouchableOpacity
+                  onPress={() => openImageGallery(0)}
+                  activeOpacity={0.9}
+                  style={styles.singleImageContainer}
+                >
+                  <Image
+                    source={{ uri: allImages[0] }}
+                    style={styles.singleImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.singleImageOverlay}>
+                    <MaterialCommunityIcons name="magnify-plus" size={28} color="#fff" />
+                    <Text style={styles.tapToExpandText}>Притисни за зголемување</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                // Multiple images - horizontal scroll
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.imageScrollContent}
+                >
+                  {allImages.map((imageUrl, index) => (
+                    <TouchableOpacity
+                      key={`img-${index}`}
+                      onPress={() => openImageGallery(index)}
+                      activeOpacity={0.9}
+                      style={styles.imageTouchable}
+                    >
+                      <Image
+                        source={{ uri: imageUrl }}
+                        style={styles.thumbnailImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.imageOverlay}>
+                        <MaterialCommunityIcons name="magnify-plus" size={24} color="#fff" />
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
             </View>
           )}
 
@@ -306,9 +323,39 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 12,
   },
+  singleImageContainer: {
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
   singleImage: {
-    width: SCREEN_WIDTH - 64,
-    height: 220,
+    width: '100%',
+    height: 280,
+    borderRadius: 16,
+  },
+  singleImageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tapToExpandText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
   },
   imageOverlay: {
     position: 'absolute',
