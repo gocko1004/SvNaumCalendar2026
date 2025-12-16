@@ -4,10 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SV Naum Calendar is a React Native mobile application built with Expo SDK 51 for St. Naum Ohridski Church in Triengen, Switzerland. The app provides a 2026 church calendar with push notifications.
+SV Naum Calendar is a React Native mobile application built with Expo SDK 54 for St. Naum Ohridski Church in Triengen, Switzerland. The app provides a 2026 church calendar with push notifications.
 
+**App Name**: `Св. Наум Охридски • Триенген`
 **Package**: `com.svnaum.calendar`
 **EAS Project ID**: `ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb`
+**Version**: 2.0.0
 
 ## Development Commands
 
@@ -71,6 +73,7 @@ The app uses a root stack navigator with bottom tabs:
 - Admin panel is NOT visible in tabs (security measure)
 - Access: Tap the church header ("Св. Наум Охридски • Триенген, CH") **5 times within 3 seconds**
 - Opens as modal overlay with Firebase authentication
+- Admin session persists for 10 minutes of inactivity
 
 ### Core Services
 
@@ -80,6 +83,7 @@ The app uses a root stack navigator with bottom tabs:
 - Reminder types: 1 week, 1 day, 1 hour before events
 - Android channels: `church-events`, `urgent-updates`
 - Stores push tokens in Firebase Firestore (`pushTokens` collection)
+- Admin push notifications go to ALL users regardless of reminder settings
 
 **ChurchCalendarService** (`src/services/ChurchCalendarService.ts`)
 - Contains `CHURCH_EVENTS` array (87 events for 2026)
@@ -102,11 +106,19 @@ The app uses a root stack navigator with bottom tabs:
 - Firestore collections: `pushTokens`, `customEvents`, `announcements`, `news`, `notificationHistory`
 - Email/password authentication for admin access
 
+### Authentication
+
+**useAuth Hook** (`src/hooks/useAuth.ts`)
+- Firebase email/password authentication
+- 10-minute session timeout for admin
+- Stores last activity timestamp in AsyncStorage
+
 ### Key Directories
 - `src/screens/` - Main app screens (CalendarScreen, NewsScreen, NotificationSettingsScreen)
 - `src/admin/screens/` - Admin dashboard and management screens
 - `src/services/` - Business logic services
 - `src/navigation/` - React Navigation configuration
+- `src/hooks/` - Custom React hooks (useAuth, useNotificationSettings)
 - `src/constants/` - Theme (`#831B26` primary), config, languages
 
 ### Theme Colors
@@ -144,6 +156,10 @@ sdk.dir=/path/to/Android/Sdk
 
 ### Image Assets
 All image files (icon.png, splash.png, adaptive-icon.png) must be valid before running `expo prebuild`.
+
+### Simulator Limitations
+- Push notifications don't work in iOS Simulator
+- Use the test button in Поставки tab (dev mode only) to test notification detail screen
 
 ## Language
 

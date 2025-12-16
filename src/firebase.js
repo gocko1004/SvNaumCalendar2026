@@ -1,8 +1,7 @@
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getReactNativePersistence, initializeAuth } from 'firebase/auth'; // Still needed for persistence config if we use modular mix
+import { getReactNativePersistence, initializeAuth, getAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase client configuration
@@ -23,36 +22,39 @@ let auth;
 let initError = null;
 
 try {
-  // Use Compat Check
-  if (!firebase.apps.length) {
-    app = firebase.initializeApp(firebaseConfig);
+  // Initialize Firebase App (modular SDK)
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
   } else {
-    app = firebase.app();
+    app = getApp();
   }
 
-  // Use Compat Auth
-  // This guarantees 'auth' component is registered
-  auth = firebase.auth();
-
-  // Configure Persistence explicitly for React Native
-  // We use the modular method to set persistence on the compat instance (it works interop)
-  // Or we use compat method:
-  // auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); // This usually defaults to AsyncStorage in RN Compat
-
-  // However, to be extra safe and use our provided AsyncStorage:
-  // properly we should assign the persistence.
-  // But compat in RN usually auto-detects if @react-native-async-storage/async-storage is installed.
+  // Initialize Auth with React Native persistence using AsyncStorage
+  // This ensures auth state persists across app restarts and navigation
+  try {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+  } catch (authError) {
+    // Auth might already be initialized, get existing instance
+    if (authError.code === 'auth/already-initialized') {
+      auth = getAuth(app);
+    } else {
+      throw authError;
+    }
+  }
 
   if (isDevelopment) {
-    console.log('Firebase (Compat) Initialized');
+    console.log('Firebase Initialized with AsyncStorage persistence');
   }
 
 } catch (error) {
-  console.error('Firebase Compat Init Failed:', error);
+  console.error('Firebase Init Failed:', error);
   initError = error;
   // Try to salvage app for other services
   try {
-    app = firebase.app();
+    app = getApp();
+    auth = getAuth(app);
   } catch (e) { /* ignore */ }
 }
 
