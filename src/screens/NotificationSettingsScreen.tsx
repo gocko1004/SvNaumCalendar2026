@@ -1,13 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { List, Switch, Title, ActivityIndicator, Snackbar, Divider } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationService from '../services/NotificationService';
 import { COLORS } from '../constants/theme';
+import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 
+// Test notification data for simulator testing
+const TEST_PARKING_NOTIFICATION = {
+  title: 'Паркинг Информации',
+  body: `Драги браќа и сестри, ве молиме внимавајте на паркирањето за денешниот настан.
+
+📍 Паркинг локации:
+• Во црковен двор - Триенген (53 места) (Ве молиме паркирајте соодветно обележаните линии на паркинг плацот)
+• Vo industriska Zina - Et (2 места) (4t)
+
+⚠️ Правила за паркирање:
+• Не паркирајте на тревник
+• Оставете простор за излез
+• Следете ги знаците
+
+🗺️ Google Maps:
+Црковен двор: https://maps.google.com/maps?q=47.2,8.1`,
+  receivedAt: new Date().toISOString(),
+};
+
 export const NotificationSettingsScreen = () => {
+  const navigation = useNavigation<any>();
   const [settings, setSettings] = useState({
     enabled: true,
     weekBefore: false,
@@ -113,6 +135,20 @@ export const NotificationSettingsScreen = () => {
         />
       </List.Section>
 
+      {/* Test button for simulator - remove in production */}
+      {__DEV__ && (
+        <View style={styles.testSection}>
+          <Text style={styles.testLabel}>🧪 Тест (само за развој)</Text>
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={() => navigation.navigate('NotificationDetail', TEST_PARKING_NOTIFICATION)}
+          >
+            <MaterialCommunityIcons name="bell-ring" size={20} color="#fff" />
+            <Text style={styles.testButtonText}>Тестирај известување</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -141,5 +177,35 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     backgroundColor: COLORS.PRIMARY,
+  },
+  testSection: {
+    marginTop: 30,
+    marginHorizontal: 16,
+    padding: 16,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFB74D',
+  },
+  testLabel: {
+    fontSize: 14,
+    color: '#E65100',
+    marginBottom: 12,
+    fontWeight: '600',
+  },
+  testButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF9800',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  testButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 }); 

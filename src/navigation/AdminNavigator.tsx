@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider } from 'react-native-paper';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { AdminStackParamList } from './types';
 import {
   AdminLoginScreen,
@@ -22,7 +23,16 @@ const AdminStack = createNativeStackNavigator<AdminStackParamList>();
 export const AdminNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Determine initial route based on auth state
+  // Show loading while checking auth state
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+      </View>
+    );
+  }
+
+  // Determine initial route based on auth state (now reliable since loading is complete)
   const initialRoute = isAuthenticated ? "AdminDashboard" : "AdminLogin";
 
   return (
@@ -97,4 +107,13 @@ export const AdminNavigator = () => {
     </AdminStack.Navigator>
     </PaperProvider>
   );
-}; 
+};
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F0',
+  },
+}); 

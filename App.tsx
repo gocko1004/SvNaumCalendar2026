@@ -10,9 +10,9 @@ export default function App() {
     // Initialize notifications in background - don't block app loading
     const initializeApp = async () => {
       try {
-        // Initialize notification service using static methods
-        await NotificationService.configure();
-        await NotificationService.scheduleYearEvents();
+        // Initialize notification service using smart logic (checks if already scheduled)
+        await NotificationService.initializeService();
+        // await NotificationService.scheduleYearEvents(); // <-- REMOVED: This was causing spam on every launch
       } catch (error) {
         console.warn('Error initializing app services:', error);
       }
