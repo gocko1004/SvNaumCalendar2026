@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl, SectionList } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl, SectionList, Vibration } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Card, Title, Searchbar, Surface, Button, Dialog, Portal, FAB } from 'react-native-paper';
 import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
@@ -15,6 +15,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import SocialMediaService from '../services/SocialMediaService';
 import { Linking } from 'react-native';
 import { EventDetailSheet } from '../components/EventDetailSheet';
+import { useAuth } from '../hooks/useAuth';
 
 const SERVICE_TYPE_COLORS = {
   LITURGY: '#8B1A1A',          // Deep burgundy red
@@ -363,9 +364,12 @@ export const CalendarScreen = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [visibleItems, setVisibleItems] = useState<string[]>([]);
 
-  // Hidden admin access - tap header 5 times within 3 seconds
+  // Hidden admin access - tap header 5 times within 3 seconds OR long press 2 sec if logged in
   const [adminTapCount, setAdminTapCount] = useState(0);
   const adminTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const handleHeaderTap = useCallback(() => {
     // Clear previous timeout
@@ -387,6 +391,27 @@ export const CalendarScreen = () => {
       }, 3000);
     }
   }, [adminTapCount, navigation]);
+
+  // Long press handlers for quick admin access (only when logged in)
+  const handleHeaderPressIn = useCallback(() => {
+    if (isAuthenticated) {
+      setIsLongPressing(true);
+      longPressTimeoutRef.current = setTimeout(() => {
+        // Vibrate to indicate success
+        Vibration.vibrate(50);
+        setIsLongPressing(false);
+        navigation.navigate('AdminPanel');
+      }, 2000); // 2 seconds
+    }
+  }, [isAuthenticated, navigation]);
+
+  const handleHeaderPressOut = useCallback(() => {
+    setIsLongPressing(false);
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  }, []);
 
   const sectionListRef = useRef<SectionList>(null);
   const monthPositions = useRef<Record<number, number>>({});
@@ -863,12 +888,15 @@ export const CalendarScreen = () => {
           }
           ListHeaderComponent={
             <>
-              {/* Church Branding Header - Hidden admin access: tap 5 times */}
+              {/* Church Branding Header - Hidden admin access: tap 5 times OR hold 2 sec if logged in */}
               <TouchableOpacity
-                activeOpacity={1}
+                activeOpacity={0.9}
                 onPress={handleHeaderTap}
+                onPressIn={handleHeaderPressIn}
+                onPressOut={handleHeaderPressOut}
+                delayLongPress={2000}
               >
-                <View style={styles.brandingHeader}>
+                <View style={[styles.brandingHeader, isLongPressing && styles.brandingHeaderPressed]}>
                   <View style={styles.brandingSolid}>
                     <View style={styles.brandingContent}>
                       <View style={styles.brandingTitleRow}>
@@ -877,6 +905,12 @@ export const CalendarScreen = () => {
                         <Text style={styles.brandingLocation}>Триенген, CH</Text>
                       </View>
                       <Text style={styles.brandingSubtitle}>Годишен План 2026</Text>
+                      {isLongPressing && (
+                        <View style={styles.longPressIndicator}>
+                          <ActivityIndicator size="small" color="#fff" />
+                          <Text style={styles.longPressText}>Отварање админ...</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                 </View>
@@ -1080,6 +1114,22 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
+  },
+  brandingHeaderPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  longPressIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingVertical: 4,
+  },
+  longPressText: {
+    color: '#fff',
+    fontSize: 12,
+    marginLeft: 8,
+    fontWeight: '500',
   },
   brandingGradient: {
     paddingVertical: 16,

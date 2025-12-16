@@ -7,9 +7,10 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ScrollView
+  ScrollView,
+  TouchableOpacity
 } from 'react-native';
-import { TextInput, Button, Title, Text } from 'react-native-paper';
+import { TextInput, Button, Title, Text, Checkbox } from 'react-native-paper';
 import { useAuth } from '../../hooks/useAuth';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
@@ -24,6 +25,7 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
@@ -63,7 +65,7 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
 
     setIsLoading(true);
     try {
-      const result = await login(trimmedUsername, trimmedPassword);
+      const result = await login(trimmedUsername, trimmedPassword, keepLoggedIn);
       setIsLoading(false);
       if (result.success) {
         navigation.replace('AdminDashboard');
@@ -130,6 +132,19 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
             <Text style={styles.errorText}>{error}</Text>
           ) : null}
 
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => setKeepLoggedIn(!keepLoggedIn)}
+            activeOpacity={0.7}
+          >
+            <Checkbox
+              status={keepLoggedIn ? 'checked' : 'unchecked'}
+              onPress={() => setKeepLoggedIn(!keepLoggedIn)}
+              color={COLORS.PRIMARY}
+            />
+            <Text style={styles.checkboxLabel}>Задржи ме најавен (7 дена)</Text>
+          </TouchableOpacity>
+
           <Button
             mode="contained"
             onPress={onLoginPress}
@@ -182,5 +197,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontSize: 14,
     fontWeight: '500',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#555',
+    marginLeft: 4,
   },
 }); 

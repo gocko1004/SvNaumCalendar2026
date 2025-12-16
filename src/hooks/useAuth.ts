@@ -8,8 +8,10 @@ const firebaseModule = require('../firebase');
 const auth: Auth | null = firebaseModule.auth;
 const initError: Error | null = firebaseModule.initError;
 
-const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes default
+const EXTENDED_SESSION_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const LAST_ACTIVITY_KEY = '@admin_last_activity';
+const KEEP_LOGGED_IN_KEY = '@admin_keep_logged_in';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,7 +37,13 @@ export const useAuth = () => {
         return false;
       }
 
-      if (Date.now() - lastActivityTime > SESSION_TIMEOUT_MS) {
+      // Check if "keep me logged in" is enabled
+      const keepLoggedIn = await AsyncStorage.getItem(KEEP_LOGGED_IN_KEY);
+      const timeout = keepLoggedIn === 'true' ? EXTENDED_SESSION_TIMEOUT_MS : SESSION_TIMEOUT_MS;
+
+      if (Date.now() - lastActivityTime > timeout) {
+        // Clear keep logged in on expiry
+        await AsyncStorage.removeItem(KEEP_LOGGED_IN_KEY);
         return true;
       }
       return false;
@@ -74,7 +82,7 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, [updateLastActivity, checkSessionExpiry]);
 
-  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (username: string, password: string, keepLoggedIn: boolean = false): Promise<{ success: boolean; error?: string }> => {
     try {
       if (!auth) {
         const errorDetail = initError ? (initError as any).message || JSON.stringify(initError) : 'Unknown Error';
@@ -98,6 +106,8 @@ export const useAuth = () => {
         setIsAuthenticated(true);
         setUser(userCredential.user);
         await updateLastActivity();
+        // Store keep logged in preference
+        await AsyncStorage.setItem(KEEP_LOGGED_IN_KEY, keepLoggedIn ? 'true' : 'false');
         return { success: true };
       }
       return { success: false, error: 'Невалидно корисничко име или лозинка' };
@@ -134,6 +144,7 @@ export const useAuth = () => {
       if (!auth) return;
       await firebaseSignOut(auth);
       await AsyncStorage.removeItem(LAST_ACTIVITY_KEY);
+      await AsyncStorage.removeItem(KEEP_LOGGED_IN_KEY);
       setIsAuthenticated(false);
       setUser(null);
     } catch (error) {
