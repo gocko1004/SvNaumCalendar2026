@@ -14,6 +14,7 @@ import { mk } from 'date-fns/locale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import SocialMediaService from '../services/SocialMediaService';
 import { Linking } from 'react-native';
+import { EventDetailSheet } from '../components/EventDetailSheet';
 
 const SERVICE_TYPE_COLORS = {
   LITURGY: '#8B1A1A',          // Deep burgundy red
@@ -21,6 +22,31 @@ const SERVICE_TYPE_COLORS = {
   CHURCH_OPEN: '#8B5A2B',      // Warm burnt sienna - orange/brown mix
   PICNIC: '#CD853F'            // Peru/tan gold
 } as const;
+
+// Animated icon component with fade in/out
+const AnimatedIcon = ({ visible, color }: { visible: boolean; color: string }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: visible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [visible, fadeAnim]);
+
+  return (
+    <Animated.View style={[styles.moreButtonCircleContainer, { opacity: fadeAnim }]}>
+      <View style={[styles.moreButtonCircle, { backgroundColor: color }]}>
+        <MaterialCommunityIcons
+          name="book-open-page-variant-outline"
+          size={16}
+          color="#fff"
+        />
+      </View>
+    </Animated.View>
+  );
+};
 
 const SERVICE_TYPE_ICONS = {
   LITURGY: 'church' as const,
@@ -332,6 +358,10 @@ export const CalendarScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showTodayButton, setShowTodayButton] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
+  const [showEventDetail, setShowEventDetail] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [visibleItems, setVisibleItems] = useState<string[]>([]);
 
   // Hidden admin access - tap header 5 times within 3 seconds
   const [adminTapCount, setAdminTapCount] = useState(0);
@@ -361,6 +391,30 @@ export const CalendarScreen = () => {
   const sectionListRef = useRef<SectionList>(null);
   const monthPositions = useRef<Record<number, number>>({});
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Track visible items for showing icons - only middle 2 cards
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    const validItems = viewableItems
+      .filter((item: any) => item.isViewable && item.item && item.item.date);
+
+    // Get only the middle 2 items
+    let middleItems: string[] = [];
+    if (validItems.length <= 2) {
+      middleItems = validItems.map((item: any) => item.item.date.toISOString() + item.item.serviceType);
+    } else {
+      // Find the middle 2
+      const midIndex = Math.floor(validItems.length / 2);
+      const startIndex = midIndex - 1;
+      middleItems = validItems
+        .slice(startIndex, startIndex + 2)
+        .map((item: any) => item.item.date.toISOString() + item.item.serviceType);
+    }
+    setVisibleItems(middleItems);
+  }).current;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 30,
+  }).current;
 
   useEffect(() => {
     // Brief splash screen - just 800ms for branding
@@ -520,6 +574,11 @@ export const CalendarScreen = () => {
     const scrollPosition = event.nativeEvent.contentOffset.y;
     setShowTodayButton(scrollPosition > 300);
 
+    // Show icons once user starts scrolling
+    if (scrollPosition > 50 && !hasScrolled) {
+      setHasScrolled(true);
+    }
+
     // Update selected month based on scroll position
     const positions = Object.entries(monthPositions.current);
     for (let i = positions.length - 1; i >= 0; i--) {
@@ -529,7 +588,7 @@ export const CalendarScreen = () => {
         break;
       }
     }
-  }, []);
+  }, [hasScrolled]);
 
 
 
@@ -686,7 +745,7 @@ export const CalendarScreen = () => {
         <SectionList
           ref={sectionListRef}
           sections={sections}
-          keyExtractor={(item, index) => item.date.toISOString() + index}
+          keyExtractor={(item, index) => (item?.date?.toISOString() || 'item') + index}
           renderSectionHeader={({ section: { title, monthIndex } }) => (
             <View
               style={styles.monthSection}
@@ -711,6 +770,13 @@ export const CalendarScreen = () => {
           )}
           renderItem={({ item: event, index }) => (
             <View style={styles.eventList}>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => {
+                  setSelectedEvent(event);
+                  setShowEventDetail(true);
+                }}
+              >
               <Card
                 style={styles.eventCardIntegrated}
               >
@@ -768,12 +834,23 @@ export const CalendarScreen = () => {
                     <EventImage event={event} />
                   </View>
                 </View>
+
+                {/* Circular More Button - Fades in/out for middle 2 cards */}
+                {hasScrolled && (
+                  <AnimatedIcon
+                    visible={visibleItems.includes(event.date.toISOString() + event.serviceType)}
+                    color={SERVICE_TYPE_COLORS[event.serviceType as ServiceType]}
+                  />
+                )}
               </Card>
+              </TouchableOpacity>
             </View>
           )}
           stickySectionHeadersEnabled={false}
           scrollEventThrottle={16}
           onScroll={handleScroll}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -951,6 +1028,16 @@ export const CalendarScreen = () => {
             </Dialog.Actions>
           </Dialog>
         </Portal>
+
+        {/* Event Detail Bottom Sheet */}
+        <EventDetailSheet
+          visible={showEventDetail}
+          event={selectedEvent}
+          onClose={() => {
+            setShowEventDetail(false);
+            setSelectedEvent(null);
+          }}
+        />
       </View>
     </SafeAreaView>
   );
@@ -1129,6 +1216,12 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: 'hidden',
   },
+  eventCardPressed: {
+    transform: [{ scale: 0.98 }],
+    shadowOpacity: 0.25,
+    borderColor: '#831B26',
+    borderWidth: 1,
+  },
   integratedCardRow: {
     flexDirection: 'row',
     height: 160,
@@ -1202,6 +1295,26 @@ const styles = StyleSheet.create({
     height: 160,
     backgroundColor: '#F5F5F0',
     overflow: 'hidden',
+  },
+  moreButtonCircleContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 19, // Centered under 70px date section: (70 - 32) / 2
+    zIndex: 10,
+  },
+  moreButtonCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   // New Modern Card Layout Styles
   cardImageSection: {

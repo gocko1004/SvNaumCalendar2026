@@ -27,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getImageForEvent } from '../../services/LocalImageService';
 import { sanitizeChurchEvent, rateLimiter } from '../../services/ValidationService';
+import { EventDetailsEditor } from '../components/EventDetailsEditor';
 
 const CALENDAR_STORAGE_KEY = '@church_calendar';
 
@@ -57,6 +58,8 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [editedEvent, setEditedEvent] = useState<Partial<ChurchEvent>>({});
   const [serviceTypeMenuVisible, setServiceTypeMenuVisible] = useState(false);
+  const [detailsEditorVisible, setDetailsEditorVisible] = useState(false);
+  const [eventForDetails, setEventForDetails] = useState<ChurchEvent | null>(null);
 
   useEffect(() => {
     loadCalendar();
@@ -267,6 +270,15 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
                       )}
                     </View>
                     <View style={styles.actions}>
+                      <IconButton
+                        icon="text-box-plus-outline"
+                        size={20}
+                        iconColor={COLORS.PRIMARY}
+                        onPress={() => {
+                          setEventForDetails(event);
+                          setDetailsEditorVisible(true);
+                        }}
+                      />
                       <IconButton
                         icon="pencil"
                         size={20}
@@ -490,6 +502,19 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* Event Details Editor Modal */}
+      <EventDetailsEditor
+        visible={detailsEditorVisible}
+        event={eventForDetails}
+        onClose={() => {
+          setDetailsEditorVisible(false);
+          setEventForDetails(null);
+        }}
+        onSave={() => {
+          // Refresh could be added here if needed
+        }}
+      />
     </View>
   );
 };

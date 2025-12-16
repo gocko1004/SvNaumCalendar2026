@@ -51,14 +51,18 @@ export const sanitizeUrl = (url: string): string | null => {
       return null;
     }
     
-    // Additional check: only allow denovi.mk or trusted domains
-    const allowedDomains = ['denovi.mk'];
+    // Additional check: only allow trusted domains
+    const allowedDomains = [
+      'denovi.mk',
+      'firebasestorage.googleapis.com',  // Firebase Storage
+      'storage.googleapis.com',           // Google Cloud Storage
+    ];
     const hostname = urlObj.hostname.toLowerCase();
-    
-    const isAllowed = allowedDomains.some(domain => 
+
+    const isAllowed = allowedDomains.some(domain =>
       hostname === domain || hostname.endsWith('.' + domain)
     );
-    
+
     if (!isAllowed) {
       console.warn(`URL from untrusted domain blocked: ${hostname}`);
       return null;
