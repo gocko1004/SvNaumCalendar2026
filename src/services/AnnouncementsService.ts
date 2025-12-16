@@ -6,6 +6,7 @@
 
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import { sanitizeString, sanitizeNotificationContent, sanitizeExternalUrl } from './ValidationService';
 
 // Announcement types for different styling
 export type AnnouncementType = 'INFO' | 'URGENT' | 'EVENT' | 'REMINDER';
@@ -66,21 +67,29 @@ const firestoreToAnnouncement = (docData: any, docId: string): Announcement => {
 };
 
 /**
- * Convert Announcement to Firestore document
+ * Validate announcement type
+ */
+const validateAnnouncementType = (type: any): AnnouncementType => {
+  const validTypes: AnnouncementType[] = ['INFO', 'URGENT', 'EVENT', 'REMINDER'];
+  return validTypes.includes(type) ? type : 'INFO';
+};
+
+/**
+ * Convert Announcement to Firestore document with sanitization
  */
 const announcementToFirestore = (announcement: Partial<Announcement>) => {
   return {
-    title: announcement.title || '',
-    message: announcement.message || '',
-    type: announcement.type || 'INFO',
+    title: sanitizeString(announcement.title || '', 200),
+    message: sanitizeNotificationContent(announcement.message || '', 2000),
+    type: validateAnnouncementType(announcement.type),
     startDate: announcement.startDate ? Timestamp.fromDate(announcement.startDate) : Timestamp.now(),
     endDate: announcement.endDate ? Timestamp.fromDate(announcement.endDate) : Timestamp.now(),
-    imageUrl: announcement.imageUrl || '',
-    linkUrl: announcement.linkUrl || '',
-    linkText: announcement.linkText || '',
-    priority: announcement.priority || 1,
+    imageUrl: announcement.imageUrl ? sanitizeExternalUrl(announcement.imageUrl) || '' : '',
+    linkUrl: announcement.linkUrl ? sanitizeExternalUrl(announcement.linkUrl) || '' : '',
+    linkText: sanitizeString(announcement.linkText || '', 100),
+    priority: Math.min(Math.max(1, announcement.priority || 1), 5), // Limit priority 1-5
     createdAt: announcement.createdAt ? Timestamp.fromDate(announcement.createdAt) : Timestamp.now(),
-    createdBy: announcement.createdBy || '',
+    createdBy: sanitizeString(announcement.createdBy || '', 100),
     isActive: announcement.isActive !== false,
   };
 };
@@ -178,15 +187,26 @@ export const addAnnouncement = async (announcement: Partial<Announcement>): Prom
 };
 
 /**
+ * Validate document ID format
+ */
+const validateDocumentId = (id: string): boolean => {
+  return Boolean(id && typeof id === 'string' && !id.includes('/') && !id.includes('..'));
+};
+
+/**
  * Update an existing announcement in Firestore
  */
 export const updateAnnouncement = async (announcementId: string, announcement: Partial<Announcement>): Promise<boolean> => {
   try {
+    if (!validateDocumentId(announcementId)) {
+      console.error('Invalid announcement ID format');
+      return false;
+    }
     const announcementRef = doc(db, ANNOUNCEMENTS_COLLECTION, announcementId);
     await updateDoc(announcementRef, announcementToFirestore(announcement));
     return true;
   } catch (error) {
-    console.error('Error updating announcement in Firestore:', error);
+    console.error('Error updating announcement');
     return false;
   }
 };
@@ -196,11 +216,15 @@ export const updateAnnouncement = async (announcementId: string, announcement: P
  */
 export const deleteAnnouncement = async (announcementId: string): Promise<boolean> => {
   try {
+    if (!validateDocumentId(announcementId)) {
+      console.error('Invalid announcement ID format');
+      return false;
+    }
     const announcementRef = doc(db, ANNOUNCEMENTS_COLLECTION, announcementId);
     await deleteDoc(announcementRef);
     return true;
   } catch (error) {
-    console.error('Error deleting announcement from Firestore:', error);
+    console.error('Error deleting announcement');
     return false;
   }
 };
@@ -210,11 +234,15 @@ export const deleteAnnouncement = async (announcementId: string): Promise<boolea
  */
 export const toggleAnnouncementActive = async (announcementId: string, isActive: boolean): Promise<boolean> => {
   try {
+    if (!validateDocumentId(announcementId)) {
+      console.error('Invalid announcement ID format');
+      return false;
+    }
     const announcementRef = doc(db, ANNOUNCEMENTS_COLLECTION, announcementId);
-    await updateDoc(announcementRef, { isActive });
+    await updateDoc(announcementRef, { isActive: Boolean(isActive) });
     return true;
   } catch (error) {
-    console.error('Error toggling announcement status:', error);
+    console.error('Error toggling announcement status');
     return false;
   }
 };

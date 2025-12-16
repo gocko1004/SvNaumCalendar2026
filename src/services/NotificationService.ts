@@ -403,11 +403,13 @@ class NotificationService {
       }
 
       // Send push notifications via Expo Push Notification API
+      // Include fullBody in data as backup in case body gets truncated
       const messages = uniqueTokens.map(token => ({
         to: token,
         sound: 'default',
         title,
         body: message,
+        data: { fullBody: message },
         priority: urgent ? 'high' : 'normal',
         channelId: urgent ? 'urgent-updates' : 'church-events',
       }));

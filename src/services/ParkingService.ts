@@ -366,7 +366,7 @@ export const sendParkingNotification = async (data: ParkingNotificationData): Pr
 
     // Add rules
     if (data.includeRules && rules.length > 0) {
-      fullMessage += '\n\n⚠️ Правила:';
+      fullMessage += '\n\n⚠️ Правила за Паркирање:';
       rules.forEach(rule => {
         fullMessage += `\n• ${rule.text}`;
       });

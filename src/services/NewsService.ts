@@ -2,6 +2,7 @@ import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy,
 import { db } from '../firebase';
 import NotificationService from './NotificationService';
 import { logSentNotification } from './NotificationHistoryService';
+import { sanitizeString, sanitizeNotificationContent, sanitizeExternalUrl } from './ValidationService';
 
 // News item type
 export interface NewsItem {
@@ -146,17 +147,28 @@ export const addNews = async (
   sendNotification: boolean = true
 ): Promise<string> => {
   try {
+    // Sanitize all input before storing
+    const sanitizedTitle = sanitizeString(news.title, 200);
+    const sanitizedContent = sanitizeNotificationContent(news.content, 5000);
+    const sanitizedLinkUrl = news.linkUrl ? sanitizeExternalUrl(news.linkUrl) : null;
+    const sanitizedLinkText = news.linkText ? sanitizeString(news.linkText, 100) : null;
+
+    // Validate required fields
+    if (!sanitizedTitle) {
+      throw new Error('Title is required');
+    }
+
     const docRef = await addDoc(newsCollection, {
-      title: news.title,
-      content: news.content,
+      title: sanitizedTitle,
+      content: sanitizedContent,
       date: Timestamp.fromDate(news.date),
       imageUrl: news.imageUrl || null,
       imageUrls: news.imageUrls || [],
       videoUrls: news.videoUrls || [],
-      linkUrl: news.linkUrl || null,
-      linkText: news.linkText || null,
+      linkUrl: sanitizedLinkUrl,
+      linkText: sanitizedLinkText,
       isActive: news.isActive ?? true,
-      priority: news.priority || 0,
+      priority: Math.min(Math.max(0, news.priority || 0), 10), // Limit priority 0-10
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -202,25 +214,31 @@ export const addNews = async (
 // Update news item
 export const updateNews = async (id: string, news: Partial<NewsItem>): Promise<void> => {
   try {
+    // Validate document ID format to prevent path traversal
+    if (!id || typeof id !== 'string' || id.includes('/') || id.includes('..')) {
+      throw new Error('Invalid document ID');
+    }
+
     const docRef = doc(newsCollection, id);
     const updateData: any = {
       updatedAt: Timestamp.now(),
     };
 
-    if (news.title !== undefined) updateData.title = news.title;
-    if (news.content !== undefined) updateData.content = news.content;
+    // Sanitize all input before updating
+    if (news.title !== undefined) updateData.title = sanitizeString(news.title, 200);
+    if (news.content !== undefined) updateData.content = sanitizeNotificationContent(news.content, 5000);
     if (news.date !== undefined) updateData.date = Timestamp.fromDate(news.date);
     if (news.imageUrl !== undefined) updateData.imageUrl = news.imageUrl || null;
     if (news.imageUrls !== undefined) updateData.imageUrls = news.imageUrls;
     if (news.videoUrls !== undefined) updateData.videoUrls = news.videoUrls;
-    if (news.linkUrl !== undefined) updateData.linkUrl = news.linkUrl || null;
-    if (news.linkText !== undefined) updateData.linkText = news.linkText || null;
+    if (news.linkUrl !== undefined) updateData.linkUrl = news.linkUrl ? sanitizeExternalUrl(news.linkUrl) : null;
+    if (news.linkText !== undefined) updateData.linkText = news.linkText ? sanitizeString(news.linkText, 100) : null;
     if (news.isActive !== undefined) updateData.isActive = news.isActive;
-    if (news.priority !== undefined) updateData.priority = news.priority;
+    if (news.priority !== undefined) updateData.priority = Math.min(Math.max(0, news.priority), 10);
 
     await updateDoc(docRef, updateData);
   } catch (error) {
-    console.error('Error updating news:', error);
+    console.error('Error updating news');
     throw error;
   }
 };
@@ -228,9 +246,13 @@ export const updateNews = async (id: string, news: Partial<NewsItem>): Promise<v
 // Delete news item
 export const deleteNews = async (id: string): Promise<void> => {
   try {
+    // Validate document ID format to prevent path traversal
+    if (!id || typeof id !== 'string' || id.includes('/') || id.includes('..')) {
+      throw new Error('Invalid document ID');
+    }
     await deleteDoc(doc(newsCollection, id));
   } catch (error) {
-    console.error('Error deleting news:', error);
+    console.error('Error deleting news');
     throw error;
   }
 };
@@ -238,12 +260,16 @@ export const deleteNews = async (id: string): Promise<void> => {
 // Toggle news active status
 export const toggleNewsActive = async (id: string, isActive: boolean): Promise<void> => {
   try {
+    // Validate document ID format to prevent path traversal
+    if (!id || typeof id !== 'string' || id.includes('/') || id.includes('..')) {
+      throw new Error('Invalid document ID');
+    }
     await updateDoc(doc(newsCollection, id), {
-      isActive,
+      isActive: Boolean(isActive),
       updatedAt: Timestamp.now(),
     });
   } catch (error) {
-    console.error('Error toggling news status:', error);
+    console.error('Error toggling news status');
     throw error;
   }
 };

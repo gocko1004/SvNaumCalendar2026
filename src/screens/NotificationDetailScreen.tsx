@@ -62,7 +62,9 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
 
   // Parse body to detect sections (locations, rules, Google Maps links, etc.)
   const renderFormattedBody = () => {
-    const lines = body.split('\n');
+    // Handle different line ending styles and clean up the body
+    const cleanBody = body.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const lines = cleanBody.split('\n');
     const elements: React.ReactNode[] = [];
     let currentSection: string | null = null;
     let currentSectionEmoji: string | null = null;
@@ -77,43 +79,63 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
              url.includes('google.com/maps');
     };
 
-    // Pre-scan body for any Google Maps URLs that might be inline
+    // Pre-scan body for any Google Maps URLs that might be inline (but NOT in a dedicated section)
+    // We'll add these later only if not already found in a named section
+    const inlineGoogleMapsUrls: string[] = [];
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     let match;
-    while ((match = urlRegex.exec(body)) !== null) {
+    while ((match = urlRegex.exec(cleanBody)) !== null) {
       const url = match[1];
       if (isGoogleMapsUrl(url)) {
-        // Check if not already in the list
-        if (!googleMapsLinks.some(link => link.url === url)) {
-          googleMapsLinks.push({ name: 'Отвори во Google Maps', url });
-        }
+        inlineGoogleMapsUrls.push(url);
       }
     }
 
     const flushSection = () => {
       if (currentSection && currentSection !== 'GOOGLE_MAPS' && currentSection !== 'LINK_SECTION') {
-        // Determine icon based on section content
+        // Determine icon and colors based on section content
         let iconName: any = 'information';
-        if (currentSection.toLowerCase().includes('локаци') || currentSectionEmoji === '📍') {
+        let iconColor = COLORS.PRIMARY;
+        let sectionStyle = styles.section;
+        let headerStyle = styles.sectionHeader;
+        let titleStyle = styles.sectionTitle;
+        let bulletStyle = styles.bulletPoint;
+
+        const isLocationSection = currentSection.toLowerCase().includes('локаци') ||
+                                  currentSection.toLowerCase().includes('паркинг') ||
+                                  currentSectionEmoji === '📍';
+        const isRulesSection = currentSection.toLowerCase().includes('правила') || currentSectionEmoji === '⚠️';
+
+        if (isLocationSection) {
           iconName = 'map-marker';
-        } else if (currentSection.toLowerCase().includes('правила') || currentSectionEmoji === '⚠️') {
+          iconColor = '#1a73e8';
+          sectionStyle = styles.locationSection;
+          headerStyle = styles.locationSectionHeader;
+          titleStyle = styles.locationSectionTitle;
+          bulletStyle = styles.locationBulletPoint;
+        } else if (isRulesSection) {
           iconName = 'alert-circle';
+          iconColor = '#E65100';
+          sectionStyle = styles.rulesSection;
+          headerStyle = styles.rulesSectionHeader;
+          titleStyle = styles.rulesSectionTitle;
+          bulletStyle = styles.rulesBulletPoint;
         }
 
         elements.push(
-          <View key={`section-${elements.length}`} style={styles.section}>
-            <View style={styles.sectionHeader}>
+          <View key={`section-${elements.length}`} style={sectionStyle}>
+            <View style={headerStyle}>
               <MaterialCommunityIcons
                 name={iconName}
-                size={20}
-                color={COLORS.PRIMARY}
+                size={22}
+                color={iconColor}
               />
-              <RNText style={styles.sectionTitle}>{currentSection}</RNText>
+              <RNText style={titleStyle}>{currentSection}</RNText>
             </View>
             {sectionItems.length > 0 ? (
               sectionItems.map((item, idx) => (
                 <View key={idx} style={styles.sectionItem}>
-                  <View style={styles.bulletPoint} />
+                  <View style={bulletStyle} />
                   <RNText style={styles.sectionItemText}>{item.replace(/^[•\-]\s*/, '')}</RNText>
                 </View>
               ))
@@ -184,20 +206,41 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
       }
 
       // Check if it's a section header (starts with or contains emoji like 📍 or ⚠️)
-      const isLocationHeader = trimmedLine.includes('📍') && (trimmedLine.includes('локаци') || trimmedLine.endsWith(':'));
-      const isRulesHeader = trimmedLine.includes('⚠️') && (trimmedLine.includes('Правила') || trimmedLine.includes('правила') || trimmedLine.endsWith(':'));
+      // More robust detection - check for emoji followed by text that looks like a header
+      // Handle both emoji with and without variation selector
+      const hasWarningEmoji = trimmedLine.includes('⚠️') || trimmedLine.includes('⚠') ||
+                               trimmedLine.charCodeAt(0) === 0x26A0;
+      const hasLocationEmoji = trimmedLine.includes('📍') || trimmedLine.charCodeAt(0) === 0x1F4CD;
 
-      if (isLocationHeader || isRulesHeader) {
+      // Check for keywords in various forms (case insensitive for Cyrillic)
+      const lowerLine = trimmedLine.toLowerCase();
+      const hasRulesKeyword = lowerLine.includes('правила') || lowerLine.includes('правило') || lowerLine.includes('упатства');
+      const hasLocationKeyword = lowerLine.includes('локаци') || lowerLine.includes('паркинг') || lowerLine.includes('место') || lowerLine.includes('адреса');
+      const endsWithColon = trimmedLine.endsWith(':');
+
+      // Also check if line STARTS with an emoji that indicates a section (more lenient)
+      const startsWithSectionEmoji = /^[📍⚠️🗺️⚠]/.test(trimmedLine) ||
+                                     trimmedLine.charCodeAt(0) === 0x26A0 ||
+                                     trimmedLine.charCodeAt(0) === 0x1F4CD;
+
+      const isLocationHeader = hasLocationEmoji && (hasLocationKeyword || endsWithColon);
+      const isRulesHeader = hasWarningEmoji && (hasRulesKeyword || endsWithColon);
+
+      // Fallback: if line starts with section emoji and ends with colon, treat as header
+      const isFallbackHeader = startsWithSectionEmoji && endsWithColon;
+
+      if (isLocationHeader || isRulesHeader || isFallbackHeader) {
         flushSection();
         // Extract emoji for icon determination
-        currentSectionEmoji = isLocationHeader ? '📍' : '⚠️';
-        // Clean up the section title - remove emojis and trailing colon
+        currentSectionEmoji = hasLocationEmoji ? '📍' : '⚠️';
+        // Clean up the section title - remove emojis (including variation selectors) and trailing colon
         currentSection = trimmedLine
-          .replace(/[📍⚠️🗺️]/g, '')
+          .replace(/[\u{1F4CD}\u{26A0}\u{FE0F}\u{1F5FA}📍⚠️🗺️⚠]/gu, '')
           .replace(/:$/, '')
           .trim() + ':';
-      } else if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('—')) {
-        // Bullet points belong to current section
+      } else if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('—') ||
+                 trimmedLine.startsWith('·') || /^[\u2022\u2023\u2043\u2219]/.test(trimmedLine)) {
+        // Bullet points belong to current section (handle various bullet characters)
         if (currentSection && currentSection !== 'GOOGLE_MAPS' && currentSection !== 'LINK_SECTION') {
           sectionItems.push(trimmedLine);
         } else {
@@ -205,7 +248,7 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
           elements.push(
             <View key={`bullet-${index}`} style={styles.sectionItem}>
               <View style={styles.bulletPoint} />
-              <RNText style={styles.sectionItemText}>{trimmedLine.replace(/^[•\-—]\s*/, '')}</RNText>
+              <RNText style={styles.sectionItemText}>{trimmedLine.replace(/^[•\-—·\u2022\u2023\u2043\u2219]\s*/, '')}</RNText>
             </View>
           );
         }
@@ -227,6 +270,13 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
     });
 
     flushSection();
+
+    // Add any inline Google Maps URLs that weren't found in a named section
+    inlineGoogleMapsUrls.forEach(url => {
+      if (!googleMapsLinks.some(link => link.url === url)) {
+        googleMapsLinks.push({ name: 'Отвори во Google Maps', url });
+      }
+    });
 
     // Render links as buttons
     if (googleMapsLinks.length > 0) {
@@ -341,9 +391,9 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingTop: 50,
-    paddingBottom: 30,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 35,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   backButton: {
     flexDirection: 'row',
@@ -355,7 +405,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     marginLeft: 8,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   headerContent: {
     alignItems: 'center',
@@ -363,38 +413,46 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   dateText: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
+    color: '#fff',
     marginLeft: 6,
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
-    marginTop: -12,
+    marginTop: -16,
   },
   scrollContent: {
     padding: 16,
@@ -403,127 +461,205 @@ const styles = StyleSheet.create({
   },
   contentCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
   },
   bodyText: {
     fontSize: 16,
-    color: '#333',
-    lineHeight: 26,
-    marginBottom: 12,
+    color: '#1a1a1a',
+    lineHeight: 28,
+    marginBottom: 16,
+    fontWeight: '400',
   },
   section: {
-    marginVertical: 12,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    marginVertical: 14,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
   },
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
     color: COLORS.PRIMARY,
-    marginLeft: 8,
+    marginLeft: 10,
+    letterSpacing: 0.3,
   },
   sectionItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
     paddingLeft: 4,
   },
   bulletPoint: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: COLORS.PRIMARY,
-    marginTop: 8,
-    marginRight: 12,
+    marginTop: 7,
+    marginRight: 14,
   },
   sectionItemText: {
     flex: 1,
-    fontSize: 14,
-    color: '#444',
-    lineHeight: 22,
+    fontSize: 15,
+    color: '#2a2a2a',
+    lineHeight: 24,
+    fontWeight: '400',
   },
   linkText: {
     color: '#4285F4',
     textDecorationLine: 'underline',
+    fontWeight: '500',
   },
   mapsSection: {
-    marginVertical: 12,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#4285F4',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
+    marginVertical: 14,
+    backgroundColor: '#F0F7FF',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#D4E4F7',
   },
   mapsSectionTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#4285F4',
-    marginLeft: 8,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1a73e8',
+    marginLeft: 10,
   },
   mapsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4285F4',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    marginTop: 10,
+    backgroundColor: '#1a73e8',
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    marginTop: 12,
+    shadowColor: '#1a73e8',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   mapsButtonText: {
     flex: 1,
     color: '#fff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    marginLeft: 10,
+    marginLeft: 12,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.PRIMARY,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginTop: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    marginTop: 24,
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   actionButtonText: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 12,
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
-    marginTop: 16,
+    paddingVertical: 24,
+    marginTop: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginHorizontal: 4,
   },
   infoText: {
-    fontSize: 13,
-    color: '#888',
-    marginLeft: 8,
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
     fontWeight: '500',
+  },
+  // Location section styles (blue theme)
+  locationSection: {
+    marginVertical: 14,
+    backgroundColor: '#EBF5FF',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: '#B3D4FC',
+  },
+  locationSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#B3D4FC',
+  },
+  locationSectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1a73e8',
+    marginLeft: 10,
+    letterSpacing: 0.3,
+  },
+  locationBulletPoint: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#1a73e8',
+    marginTop: 7,
+    marginRight: 14,
+  },
+  // Rules section styles (orange/warning theme)
+  rulesSection: {
+    marginVertical: 14,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: '#FFCC80',
+  },
+  rulesSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFCC80',
+  },
+  rulesSectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#E65100',
+    marginLeft: 10,
+    letterSpacing: 0.3,
+  },
+  rulesBulletPoint: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E65100',
+    marginTop: 7,
+    marginRight: 14,
   },
 });
 

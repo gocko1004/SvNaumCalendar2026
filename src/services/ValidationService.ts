@@ -56,6 +56,12 @@ export const sanitizeUrl = (url: string): string | null => {
       'denovi.mk',
       'firebasestorage.googleapis.com',  // Firebase Storage
       'storage.googleapis.com',           // Google Cloud Storage
+      'maps.google.com',                  // Google Maps
+      'goo.gl',                           // Google short URLs
+      'maps.app.goo.gl',                  // Google Maps app links
+      'google.com',                       // Google (for maps)
+      'mpc-triengen.ch',                  // Church website
+      'svnaumcalendar.firebaseapp.com',   // Firebase app
     ];
     const hostname = urlObj.hostname.toLowerCase();
 
@@ -64,7 +70,8 @@ export const sanitizeUrl = (url: string): string | null => {
     );
 
     if (!isAllowed) {
-      console.warn(`URL from untrusted domain blocked: ${hostname}`);
+      // Log without exposing full URL for security
+      console.warn(`URL from untrusted domain blocked`);
       return null;
     }
     
@@ -73,6 +80,61 @@ export const sanitizeUrl = (url: string): string | null => {
     // Invalid URL format
     return null;
   }
+};
+
+/**
+ * Validates a URL for external links (less restrictive, allows any https URL)
+ * @param url The URL to validate
+ * @returns Sanitized URL or null if invalid
+ */
+export const sanitizeExternalUrl = (url: string): string | null => {
+  if (!url || typeof url !== 'string') return null;
+
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  try {
+    const urlObj = new URL(trimmed);
+
+    // Only allow http and https protocols
+    if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+      return null;
+    }
+
+    // Block javascript: and data: URLs that might be encoded
+    const href = urlObj.href.toLowerCase();
+    if (href.includes('javascript:') || href.includes('data:')) {
+      return null;
+    }
+
+    return urlObj.toString();
+  } catch (error) {
+    return null;
+  }
+};
+
+/**
+ * Sanitizes notification/announcement content
+ * @param content The content to sanitize
+ * @param maxLength Maximum allowed length
+ * @returns Sanitized content
+ */
+export const sanitizeNotificationContent = (content: string, maxLength: number = 2000): string => {
+  if (!content || typeof content !== 'string') return '';
+
+  let sanitized = content.trim();
+
+  // Limit length
+  sanitized = sanitized.substring(0, maxLength);
+
+  // Remove potential script injection attempts
+  sanitized = sanitized.replace(/javascript:/gi, '');
+  sanitized = sanitized.replace(/on\w+\s*=/gi, '');
+
+  // Remove null bytes
+  sanitized = sanitized.replace(/\0/g, '');
+
+  return sanitized;
 };
 
 /**

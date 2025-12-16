@@ -128,11 +128,14 @@ export const AppNavigator = () => {
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const { title, body, data } = response.notification.request.content;
 
+      // Use fullBody from data if available (in case body was truncated)
+      const fullBody = (data as any)?.fullBody || body || '';
+
       // Navigate to NotificationDetail screen
       if (navigationRef.current?.isReady()) {
         navigationRef.current.navigate('NotificationDetail', {
           title: title || 'Известување',
-          body: body || '',
+          body: fullBody,
           data: data || {},
           receivedAt: new Date().toISOString(),
         });
@@ -143,12 +146,14 @@ export const AppNavigator = () => {
     Notifications.getLastNotificationResponseAsync().then(response => {
       if (response) {
         const { title, body, data } = response.notification.request.content;
+        // Use fullBody from data if available (in case body was truncated)
+        const fullBody = (data as any)?.fullBody || body || '';
         // Small delay to ensure navigation is ready
         setTimeout(() => {
           if (navigationRef.current?.isReady()) {
             navigationRef.current.navigate('NotificationDetail', {
               title: title || 'Известување',
-              body: body || '',
+              body: fullBody,
               data: data || {},
               receivedAt: new Date().toISOString(),
             });
