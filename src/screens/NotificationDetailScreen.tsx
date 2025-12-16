@@ -65,31 +65,45 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
     const lines = body.split('\n');
     const elements: React.ReactNode[] = [];
     let currentSection: string | null = null;
+    let currentSectionEmoji: string | null = null;
     let sectionItems: string[] = [];
     let googleMapsLinks: { name: string; url: string }[] = [];
 
     const flushSection = () => {
-      if (currentSection && sectionItems.length > 0) {
+      if (currentSection && currentSection !== 'GOOGLE_MAPS' && currentSection !== 'LINK_SECTION') {
+        // Determine icon based on section content
+        let iconName: any = 'information';
+        if (currentSection.toLowerCase().includes('локаци') || currentSectionEmoji === '📍') {
+          iconName = 'map-marker';
+        } else if (currentSection.toLowerCase().includes('правила') || currentSectionEmoji === '⚠️') {
+          iconName = 'alert-circle';
+        }
+
         elements.push(
           <View key={`section-${elements.length}`} style={styles.section}>
             <View style={styles.sectionHeader}>
               <MaterialCommunityIcons
-                name={currentSection.includes('локаци') ? 'map-marker' : currentSection.includes('Правила') ? 'alert-circle' : 'information'}
+                name={iconName}
                 size={20}
                 color={COLORS.PRIMARY}
               />
               <RNText style={styles.sectionTitle}>{currentSection}</RNText>
             </View>
-            {sectionItems.map((item, idx) => (
-              <View key={idx} style={styles.sectionItem}>
-                <View style={styles.bulletPoint} />
-                <RNText style={styles.sectionItemText}>{item.replace(/^[•\-]\s*/, '')}</RNText>
-              </View>
-            ))}
+            {sectionItems.length > 0 ? (
+              sectionItems.map((item, idx) => (
+                <View key={idx} style={styles.sectionItem}>
+                  <View style={styles.bulletPoint} />
+                  <RNText style={styles.sectionItemText}>{item.replace(/^[•\-]\s*/, '')}</RNText>
+                </View>
+              ))
+            ) : (
+              <RNText style={styles.sectionItemText}>Нема дополнителни информации</RNText>
+            )}
           </View>
         );
         sectionItems = [];
         currentSection = null;
+        currentSectionEmoji = null;
       }
     };
 
@@ -141,13 +155,34 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
         return;
       }
 
-      // Check if it's a section header (contains emoji + text ending with :)
-      if ((trimmedLine.includes('📍') || trimmedLine.includes('⚠️')) && trimmedLine.endsWith(':')) {
+      // Check if it's a section header (starts with or contains emoji like 📍 or ⚠️)
+      const isLocationHeader = trimmedLine.includes('📍') && (trimmedLine.includes('локаци') || trimmedLine.endsWith(':'));
+      const isRulesHeader = trimmedLine.includes('⚠️') && (trimmedLine.includes('Правила') || trimmedLine.includes('правила') || trimmedLine.endsWith(':'));
+
+      if (isLocationHeader || isRulesHeader) {
         flushSection();
-        currentSection = trimmedLine.replace(/[📍⚠️🗺️]/g, '').trim();
-      } else if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-')) {
-        sectionItems.push(trimmedLine);
+        // Extract emoji for icon determination
+        currentSectionEmoji = isLocationHeader ? '📍' : '⚠️';
+        // Clean up the section title - remove emojis and trailing colon
+        currentSection = trimmedLine
+          .replace(/[📍⚠️🗺️]/g, '')
+          .replace(/:$/, '')
+          .trim() + ':';
+      } else if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('—')) {
+        // Bullet points belong to current section
+        if (currentSection && currentSection !== 'GOOGLE_MAPS' && currentSection !== 'LINK_SECTION') {
+          sectionItems.push(trimmedLine);
+        } else {
+          // Standalone bullet point outside a section
+          elements.push(
+            <View key={`bullet-${index}`} style={styles.sectionItem}>
+              <View style={styles.bulletPoint} />
+              <RNText style={styles.sectionItemText}>{trimmedLine.replace(/^[•\-—]\s*/, '')}</RNText>
+            </View>
+          );
+        }
       } else if (currentSection && currentSection !== 'GOOGLE_MAPS' && currentSection !== 'LINK_SECTION') {
+        // Non-bullet text in a section - treat as item
         sectionItems.push(trimmedLine);
       } else {
         // Regular text paragraph - check for URLs
@@ -358,11 +393,14 @@ const styles = StyleSheet.create({
   },
   section: {
     marginVertical: 12,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.PRIMARY,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -401,11 +439,14 @@ const styles = StyleSheet.create({
   },
   mapsSection: {
     marginVertical: 12,
-    backgroundColor: '#E8F0FE',
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
-    borderLeftWidth: 3,
-    borderLeftColor: '#4285F4',
+    shadowColor: '#4285F4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
   mapsSectionTitle: {
     fontSize: 15,
