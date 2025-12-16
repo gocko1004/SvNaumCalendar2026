@@ -24,8 +24,7 @@ Notifications.setNotificationHandler({
 
 class NotificationService {
   constructor() {
-    // Don't call async methods in constructor
-    this.initializeService();
+    // Constructor kept empty to avoid side effects
   }
 
   initializeService = async () => {
@@ -76,7 +75,7 @@ class NotificationService {
   checkAndScheduleNextYear = async () => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    
+
     // If we're in December, schedule next year's events
     if (now.getMonth() === 11) {
       const events = this.generateNextYearEvents(currentYear + 1);
@@ -332,6 +331,17 @@ class NotificationService {
   }) => {
     const { title, message, date, identifier, urgent } = reminder;
 
+    // Calculate seconds until notification
+    const secondsUntilNotification = Math.floor((date.getTime() - Date.now()) / 1000);
+
+    // Don't schedule if less than 60 seconds in the future
+    if (secondsUntilNotification < 60) {
+      console.log(`Skipping notification "${title}" - scheduled time is too soon or in the past`);
+      return;
+    }
+
+    const channelId = urgent ? 'urgent-updates' : 'church-events';
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -340,8 +350,9 @@ class NotificationService {
         priority: urgent ? Notifications.AndroidNotificationPriority.MAX : Notifications.AndroidNotificationPriority.DEFAULT,
       },
       trigger: {
-        date,
-        channelId: urgent ? 'urgent-updates' : 'church-events',
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: date,
+        channelId: Platform.OS === 'android' ? channelId : undefined,
       },
       identifier,
     });
