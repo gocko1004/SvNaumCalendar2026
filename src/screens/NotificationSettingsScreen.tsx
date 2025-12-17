@@ -189,6 +189,7 @@ export const NotificationSettingsScreen = () => {
             Известувањата за паркинг и специјални настани се испраќаат директно од црквата и не зависат од овие поставки.
           </RNText>
         </View>
+
       </ScrollView>
 
       <Snackbar

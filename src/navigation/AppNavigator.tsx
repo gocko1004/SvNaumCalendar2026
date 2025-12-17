@@ -121,17 +121,27 @@ export const AppNavigator = () => {
   useEffect(() => {
     // Listen for incoming notifications while app is foregrounded
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
+      // Notification received in foreground - handled by notification handler
     });
 
     // Handle notification tap (when user taps on notification)
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const { title, body, data } = response.notification.request.content;
+      const notificationData = data as any;
 
       // Use fullBody from data if available (in case body was truncated)
-      const fullBody = (data as any)?.fullBody || body || '';
+      const fullBody = notificationData?.fullBody || body || '';
 
-      // Navigate to NotificationDetail screen
+      // Check if this is a news notification with news data
+      if (notificationData?.news && navigationRef.current?.isReady()) {
+        // Navigate directly to NewsDetail
+        navigationRef.current.navigate('NewsDetail', {
+          news: notificationData.news,
+        });
+        return;
+      }
+
+      // For other notifications, navigate to NotificationDetail screen
       if (navigationRef.current?.isReady()) {
         navigationRef.current.navigate('NotificationDetail', {
           title: title || 'Известување',
@@ -146,11 +156,20 @@ export const AppNavigator = () => {
     Notifications.getLastNotificationResponseAsync().then(response => {
       if (response) {
         const { title, body, data } = response.notification.request.content;
+        const notificationData = data as any;
         // Use fullBody from data if available (in case body was truncated)
-        const fullBody = (data as any)?.fullBody || body || '';
+        const fullBody = notificationData?.fullBody || body || '';
         // Small delay to ensure navigation is ready
         setTimeout(() => {
           if (navigationRef.current?.isReady()) {
+            // Check if this is a news notification with news data
+            if (notificationData?.news) {
+              navigationRef.current.navigate('NewsDetail', {
+                news: notificationData.news,
+              });
+              return;
+            }
+            // For other notifications
             navigationRef.current.navigate('NotificationDetail', {
               title: title || 'Известување',
               body: fullBody,

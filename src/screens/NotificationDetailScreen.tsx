@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text as RNText, Linking } from 'react-native';
+import React, { useRef } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text as RNText, Linking, Animated } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { COLORS } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,6 +22,26 @@ type NotificationDetailScreenProps = NativeStackScreenProps<RootStackParamList, 
 
 export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> = ({ route, navigation }) => {
   const { title, body, data, receivedAt } = route.params;
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Animate icon visibility based on scroll
+  const iconOpacity = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const iconHeight = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [72, 0],
+    extrapolate: 'clamp',
+  });
+
+  const iconMargin = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [12, 0],
+    extrapolate: 'clamp',
+  });
 
   const formattedDate = receivedAt
     ? format(new Date(receivedAt), 'dd MMMM yyyy, HH:mm', { locale: mk })
@@ -322,23 +342,31 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
 
   return (
     <View style={styles.container}>
-      {/* Header with gradient */}
+      {/* Header */}
       <LinearGradient
         colors={[COLORS.PRIMARY, '#A52A2A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.headerGradient}
       >
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-          <RNText style={styles.backText}>Назад</RNText>
-        </TouchableOpacity>
+        {/* Fixed Top Bar with Back Button */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+            <RNText style={styles.backText}>Назад</RNText>
+          </TouchableOpacity>
+        </View>
 
-        <View style={styles.headerContent}>
+        {/* Collapsible Icon */}
+        <Animated.View style={[styles.iconContainer, { height: iconHeight, marginBottom: iconMargin, opacity: iconOpacity }]}>
           <View style={styles.iconCircle}>
             <MaterialCommunityIcons name="bell-ring" size={32} color={COLORS.PRIMARY} />
           </View>
-          <RNText style={styles.headerTitle}>{title}</RNText>
+        </Animated.View>
+
+        {/* Title and Date - Always Visible */}
+        <View style={styles.headerContent}>
+          <RNText style={styles.headerTitle} numberOfLines={2}>{title}</RNText>
           <View style={styles.dateContainer}>
             <MaterialCommunityIcons name="clock-outline" size={14} color="rgba(255,255,255,0.8)" />
             <RNText style={styles.dateText}>{formattedDate}</RNText>
@@ -346,40 +374,53 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
         </View>
       </LinearGradient>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <Animated.ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
         {/* Main content card */}
         <View style={styles.contentCard}>
           {renderFormattedBody()}
+        </View>
 
+        {/* Action Buttons */}
+        <View style={styles.actionButtonsContainer}>
           {data?.eventId && (
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate('MainTabs')}
             >
-              <MaterialCommunityIcons name="calendar" size={20} color="#fff" />
-              <RNText style={styles.actionButtonText}>Погледни во календар</RNText>
+              <MaterialCommunityIcons name="calendar" size={22} color="#fff" />
+              <RNText style={styles.actionButtonText}>Отвори Календар</RNText>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#fff" />
             </TouchableOpacity>
           )}
 
-          {data?.newsId && (
+          {(data?.newsId || data?.type === 'news' || title.toLowerCase().includes('новост')) && (
             <TouchableOpacity
-              style={styles.actionButton}
+              style={[styles.actionButton, styles.newsActionButton]}
               onPress={() => navigation.navigate('MainTabs')}
             >
-              <MaterialCommunityIcons name="newspaper" size={20} color="#fff" />
-              <RNText style={styles.actionButtonText}>Погледни во новости</RNText>
+              <MaterialCommunityIcons name="newspaper-variant" size={22} color="#fff" />
+              <RNText style={styles.actionButtonText}>Отвори Новости</RNText>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#fff" />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Info footer */}
         <View style={styles.infoBox}>
-          <MaterialCommunityIcons name="church" size={20} color={COLORS.PRIMARY} />
+          <MaterialCommunityIcons name="church" size={22} color={COLORS.PRIMARY} />
           <RNText style={styles.infoText}>
-            Св. Наум Охридски • Триенген, Швајцарија
+            Св. Наум Охридски • Триенген
           </RNText>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 };
@@ -391,14 +432,24 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingTop: 50,
-    paddingBottom: 35,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   backText: {
@@ -407,10 +458,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '600',
   },
-  headerContent: {
+  iconContainer: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   iconCircle: {
     width: 72,
@@ -419,19 +470,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
+    borderWidth: 3,
+    borderColor: '#D4AF37',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  headerContent: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     textShadowColor: 'rgba(0,0,0,0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -442,21 +498,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 16,
   },
   dateText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#fff',
     marginLeft: 6,
     fontWeight: '500',
   },
   scrollView: {
     flex: 1,
-    marginTop: -16,
   },
   scrollContent: {
-    padding: 16,
-    paddingTop: 0,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     paddingBottom: 40,
   },
   contentCard: {
@@ -478,22 +533,25 @@ const styles = StyleSheet.create({
   },
   section: {
     marginVertical: 14,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-    paddingBottom: 12,
+    marginBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
+    borderBottomColor: '#eee',
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     color: COLORS.PRIMARY,
     marginLeft: 10,
@@ -502,23 +560,32 @@ const styles = StyleSheet.create({
   sectionItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    paddingLeft: 4,
+    marginBottom: 14,
+    paddingLeft: 6,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 10,
+    paddingRight: 12,
   },
   bulletPoint: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: COLORS.PRIMARY,
-    marginTop: 7,
+    marginTop: 6,
     marginRight: 14,
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   sectionItemText: {
     flex: 1,
     fontSize: 15,
     color: '#2a2a2a',
     lineHeight: 24,
-    fontWeight: '400',
+    fontWeight: '500',
   },
   linkText: {
     color: '#4285F4',
@@ -527,11 +594,14 @@ const styles = StyleSheet.create({
   },
   mapsSection: {
     marginVertical: 14,
-    backgroundColor: '#F0F7FF',
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 18,
-    borderWidth: 1,
-    borderColor: '#D4E4F7',
+    shadowColor: '#1a73e8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   mapsSectionTitle: {
     fontSize: 17,
@@ -560,22 +630,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
   },
+  actionButtonsContainer: {
+    marginTop: 16,
+    gap: 12,
+  },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: COLORS.PRIMARY,
     paddingVertical: 16,
-    paddingHorizontal: 28,
+    paddingHorizontal: 20,
     borderRadius: 14,
-    marginTop: 24,
     shadowColor: COLORS.PRIMARY,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
+  newsActionButton: {
+    backgroundColor: '#2C4A6E',
+    shadowColor: '#2C4A6E',
+  },
   actionButtonText: {
+    flex: 1,
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
@@ -585,81 +662,105 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 24,
+    paddingVertical: 20,
     marginTop: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#FFFDF8',
+    borderRadius: 16,
     marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.PRIMARY,
     marginLeft: 10,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   // Location section styles (blue theme)
   locationSection: {
     marginVertical: 14,
-    backgroundColor: '#EBF5FF',
+    backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#B3D4FC',
+    padding: 20,
+    shadowColor: '#1a73e8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   locationSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-    paddingBottom: 12,
+    marginBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#B3D4FC',
+    borderBottomColor: '#e3f2fd',
   },
   locationSectionTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1a73e8',
     marginLeft: 10,
     letterSpacing: 0.3,
   },
   locationBulletPoint: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#1a73e8',
-    marginTop: 7,
+    marginTop: 6,
     marginRight: 14,
+    shadowColor: '#1a73e8',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   // Rules section styles (orange/warning theme)
   rulesSection: {
     marginVertical: 14,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#FFCC80',
+    padding: 20,
+    shadowColor: '#E65100',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   rulesSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-    paddingBottom: 12,
+    marginBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#FFCC80',
+    borderBottomColor: '#fff3e0',
   },
   rulesSectionTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
     color: '#E65100',
     marginLeft: 10,
     letterSpacing: 0.3,
   },
   rulesBulletPoint: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#E65100',
-    marginTop: 7,
+    marginTop: 6,
     marginRight: 14,
+    shadowColor: '#E65100',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
 

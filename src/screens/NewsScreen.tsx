@@ -10,7 +10,7 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import { Card, Title, Chip } from 'react-native-paper';
+import { Card, Title } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
@@ -40,6 +40,43 @@ const NewsCard = ({ news, onPress }: NewsCardProps) => {
   const videos = news.videoUrls || [];
   const hasMedia = allImages.length > 0 || videos.length > 0;
 
+  // Get time badge info based on when news was created
+  const getTimeBadge = (): { text: string; color: string } | null => {
+    const now = new Date();
+    const createdDate = new Date(news.createdAt || news.date);
+
+    // Reset times to start of day for accurate day comparison
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const createdDateStart = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+
+    const daysDiff = Math.floor((todayStart.getTime() - createdDateStart.getTime()) / (1000 * 60 * 60 * 24));
+    const monthsDiff = Math.floor(daysDiff / 30);
+
+    // Future or today = new
+    if (daysDiff <= 0) {
+      return { text: 'Ново', color: '#4CAF50' }; // Green - today or future
+    } else if (daysDiff === 1) {
+      return { text: 'Вчера', color: '#FF9800' }; // Orange - yesterday
+    } else if (daysDiff >= 2 && daysDiff <= 6) {
+      return { text: `пред ${daysDiff} дена`, color: '#9E9E9E' }; // Gray - 2-6 days
+    } else if (daysDiff >= 7 && daysDiff < 14) {
+      return { text: 'пред 1 недела', color: '#9E9E9E' }; // 1 week
+    } else if (daysDiff >= 14 && daysDiff < 21) {
+      return { text: 'пред 2 недели', color: '#9E9E9E' }; // 2 weeks
+    } else if (daysDiff >= 21 && daysDiff < 30) {
+      return { text: 'пред 3 недели', color: '#9E9E9E' }; // 3 weeks
+    } else if (monthsDiff === 1) {
+      return { text: 'пред 1 месец', color: '#BDBDBD' }; // 1 month
+    } else if (monthsDiff === 2) {
+      return { text: 'пред 2 месеци', color: '#BDBDBD' }; // 2 months
+    } else if (monthsDiff >= 3 && monthsDiff < 12) {
+      return { text: `пред ${monthsDiff} месеци`, color: '#BDBDBD' }; // 3-11 months
+    }
+    return null; // More than a year - no badge (calendar changes yearly)
+  };
+
+  const timeBadge = getTimeBadge();
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <Card style={styles.newsCard}>
@@ -49,11 +86,13 @@ const NewsCard = ({ news, onPress }: NewsCardProps) => {
               <MaterialCommunityIcons name={NEWS_ICON as any} size={24} color={NEWS_COLOR} />
             </View>
             <View style={styles.newsContent}>
-              <View style={styles.newsTitleRow}>
+              <View style={styles.titleRow}>
                 <Text style={styles.newsTitle}>{news.title}</Text>
-                <Chip style={styles.newsChip} textStyle={{ color: NEWS_COLOR, fontSize: 10 }}>
-                  Новост
-                </Chip>
+                {timeBadge && (
+                  <View style={[styles.timeBadge, { backgroundColor: timeBadge.color }]}>
+                    <Text style={styles.timeBadgeText}>{timeBadge.text}</Text>
+                  </View>
+                )}
               </View>
               <Text style={styles.newsMessage} numberOfLines={3}>{news.content}</Text>
               <Text style={styles.newsDate}>
@@ -277,22 +316,29 @@ const styles = StyleSheet.create({
   newsContent: {
     flex: 1,
   },
-  newsTitleRow: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 6,
   },
   newsTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
-    flex: 1,
     color: COLORS.PRIMARY,
+    flex: 1,
   },
-  newsChip: {
-    height: 20,
+  timeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
     marginLeft: 8,
-    backgroundColor: NEWS_COLOR + '15',
+  },
+  timeBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   newsMessage: {
     fontSize: 13,

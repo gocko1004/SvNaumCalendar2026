@@ -3,11 +3,11 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { format, addMinutes, addDays, isBefore, addYears, isAfter } from 'date-fns';
+import { addMinutes, isBefore, addYears, isAfter } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
 import { db } from '../firebase';
-import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const LAST_SCHEDULE_CHECK = '@last_schedule_check';
@@ -380,9 +380,10 @@ class NotificationService {
     title: string;
     message: string;
     urgent?: boolean;
+    data?: Record<string, any>;
   }): Promise<{ success: boolean; sentCount: number; error?: string }> => {
     try {
-      const { title, message, urgent = true } = notification;
+      const { title, message, urgent = true, data: customData = {} } = notification;
 
       // Get all push tokens from Firestore
       const tokensRef = collection(db, 'pushTokens');
@@ -409,7 +410,7 @@ class NotificationService {
         sound: 'default',
         title,
         body: message,
-        data: { fullBody: message },
+        data: { fullBody: message, ...customData },
         priority: urgent ? 'high' : 'normal',
         channelId: urgent ? 'urgent-updates' : 'church-events',
       }));

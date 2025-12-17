@@ -181,6 +181,185 @@ export const EventDetailSheet: React.FC<EventDetailSheetProps> = ({
     });
   };
 
+  // Group fields by related categories for smart display
+  const groupFields = (fields: EventCustomField[]) => {
+    const groups: { type: string; fields: EventCustomField[] }[] = [];
+
+    // Group: Saint Info (image + biography)
+    const imageFields = fields.filter(f => f.type === 'image');
+    const biographyFields = fields.filter(f => f.type === 'biography');
+    if (imageFields.length > 0 || biographyFields.length > 0) {
+      groups.push({ type: 'saint-info', fields: [...imageFields, ...biographyFields] });
+    }
+
+    // Group: Location
+    const locationFields = fields.filter(f => f.type === 'location');
+    if (locationFields.length > 0) {
+      groups.push({ type: 'location', fields: locationFields });
+    }
+
+    // Group: Media (video)
+    const videoFields = fields.filter(f => f.type === 'video');
+    if (videoFields.length > 0) {
+      groups.push({ type: 'media', fields: videoFields });
+    }
+
+    // Group: Service Info (guest, readings, notes)
+    const serviceInfoFields = fields.filter(f =>
+      f.type === 'guest' || f.type === 'readings' || f.type === 'note'
+    );
+    if (serviceInfoFields.length > 0) {
+      groups.push({ type: 'service-info', fields: serviceInfoFields });
+    }
+
+    return groups;
+  };
+
+  const renderGroupedFields = () => {
+    if (!eventDetails || eventDetails.customFields.length === 0) return null;
+
+    const sortedFields = [...eventDetails.customFields].sort((a, b) => a.order - b.order);
+    const groups = groupFields(sortedFields);
+
+    return groups.map((group, groupIndex) => {
+      if (group.type === 'saint-info') {
+        return renderSaintInfoGroup(group.fields, groupIndex);
+      } else if (group.type === 'location') {
+        return renderLocationGroup(group.fields, groupIndex);
+      } else if (group.type === 'media') {
+        return renderMediaGroup(group.fields, groupIndex);
+      } else if (group.type === 'service-info') {
+        return renderServiceInfoGroup(group.fields, groupIndex);
+      }
+      return null;
+    });
+  };
+
+  const renderSaintInfoGroup = (fields: EventCustomField[], index: number) => {
+    const imageField = fields.find(f => f.type === 'image');
+    const bioField = fields.find(f => f.type === 'biography');
+
+    return (
+      <View key={`saint-info-${index}`} style={styles.saintInfoCard}>
+        {/* Image */}
+        {imageField && imageField.content && (
+          <Image
+            source={{ uri: imageField.content }}
+            style={styles.saintImage}
+            resizeMode="cover"
+          />
+        )}
+
+        {/* Biography text in same card */}
+        {bioField && bioField.content && (
+          <View style={styles.biographySection}>
+            {bioField.label && (
+              <Text style={styles.biographyLabel}>{bioField.label}</Text>
+            )}
+            <Text style={styles.biographyText}>{bioField.content}</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderLocationGroup = (fields: EventCustomField[], index: number) => {
+    return (
+      <View key={`location-${index}`} style={[styles.groupContainer, styles.locationGroupContainer]}>
+        <View style={[styles.groupHeader, { backgroundColor: '#1a73e8' + '15' }]}>
+          <MaterialCommunityIcons name="map-marker" size={22} color="#1a73e8" />
+          <Text style={[styles.groupTitle, { color: '#1a73e8' }]}>Локација</Text>
+        </View>
+
+        {fields.map((field, idx) => {
+          const isGoogleMapsLink = field.content.includes('maps.google') ||
+                                   field.content.includes('goo.gl/maps') ||
+                                   field.content.startsWith('http');
+
+          return (
+            <View key={field.id}>
+              {idx > 0 && <View style={styles.groupDivider} />}
+              <TouchableOpacity
+                onPress={() => {
+                  if (isGoogleMapsLink) {
+                    Linking.openURL(field.content);
+                  }
+                }}
+                disabled={!isGoogleMapsLink}
+                style={styles.locationItem}
+              >
+                <Text style={styles.locationText}>{field.content}</Text>
+                {isGoogleMapsLink && (
+                  <View style={styles.mapButton}>
+                    <MaterialCommunityIcons name="navigation" size={16} color="#fff" />
+                    <Text style={styles.mapButtonText}>Насоки</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
+  const renderMediaGroup = (fields: EventCustomField[], index: number) => {
+    return (
+      <View key={`media-${index}`} style={[styles.groupContainer, styles.mediaGroupContainer]}>
+        <View style={[styles.groupHeader, { backgroundColor: '#FF0000' + '15' }]}>
+          <MaterialCommunityIcons name="video" size={22} color="#FF0000" />
+          <Text style={[styles.groupTitle, { color: '#CC0000' }]}>Видео</Text>
+        </View>
+
+        {fields.map((field, idx) => (
+          <View key={field.id}>
+            {idx > 0 && <View style={styles.groupDivider} />}
+            <TouchableOpacity
+              style={styles.videoItem}
+              onPress={() => Linking.openURL(field.content)}
+            >
+              <MaterialCommunityIcons name="play-circle" size={28} color="#FF0000" />
+              <Text style={styles.videoItemText}>{field.label || 'Отвори видео'}</Text>
+              <MaterialCommunityIcons name="chevron-right" size={22} color="#666" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderServiceInfoGroup = (fields: EventCustomField[], index: number) => {
+    return (
+      <View key={`service-info-${index}`} style={styles.groupContainer}>
+        <View style={[styles.groupHeader, { backgroundColor: '#2C4A6E' + '15' }]}>
+          <MaterialCommunityIcons name="information" size={22} color="#2C4A6E" />
+          <Text style={[styles.groupTitle, { color: '#2C4A6E' }]}>Информации</Text>
+        </View>
+
+        {fields.map((field, idx) => {
+          const config = FIELD_TYPE_CONFIG[field.type];
+          return (
+            <View key={field.id}>
+              {idx > 0 && <View style={styles.groupDivider} />}
+              <View style={styles.serviceInfoItem}>
+                <View style={styles.serviceInfoLabel}>
+                  <MaterialCommunityIcons
+                    name={config.icon as any}
+                    size={18}
+                    color="#2C4A6E"
+                  />
+                  <Text style={styles.serviceInfoLabelText}>{field.label || config.label}</Text>
+                </View>
+                <Text style={styles.serviceInfoContent}>{field.content}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
+  // Keep the old renderField for backward compatibility, but we won't use it in the main flow
   const renderField = (field: EventCustomField) => {
     const config = FIELD_TYPE_CONFIG[field.type];
 
@@ -388,12 +567,10 @@ export const EventDetailSheet: React.FC<EventDetailSheetProps> = ({
               </View>
             )}
 
-            {/* Custom Fields */}
+            {/* Custom Fields - Smart Grouped */}
             {!isLoading && hasCustomContent && (
               <View style={styles.fieldsContainer}>
-                {eventDetails.customFields
-                  .sort((a, b) => a.order - b.order)
-                  .map(renderField)}
+                {renderGroupedFields()}
               </View>
             )}
 
@@ -449,7 +626,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   sheetContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F0',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     shadowColor: '#000',
@@ -686,6 +863,127 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     marginLeft: 6,
+  },
+  // Saint Info Styles (unified card with image and biography)
+  saintInfoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saintImage: {
+    width: '100%',
+    height: 240,
+    backgroundColor: '#f5f5f5',
+  },
+  biographySection: {
+    padding: 16,
+  },
+  biographyLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.PRIMARY,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  biographyText: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 26,
+  },
+  // Smart Grouped Fields Styles
+  groupContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    marginBottom: 16,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  groupTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.PRIMARY,
+    marginLeft: 10,
+  },
+  groupDivider: {
+    height: 1,
+    backgroundColor: '#EAEAEA',
+    marginHorizontal: 16,
+    marginVertical: 12,
+  },
+  // Location Group
+  locationGroupContainer: {
+    borderColor: '#B3D4FC',
+    borderWidth: 1,
+  },
+  locationItem: {
+    padding: 16,
+    paddingTop: 8,
+  },
+  locationText: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 24,
+    marginBottom: 12,
+  },
+  // Media Group
+  mediaGroupContainer: {
+    borderColor: '#FFD4D4',
+    borderWidth: 1,
+  },
+  videoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    paddingVertical: 14,
+  },
+  videoItemText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#333',
+    marginLeft: 12,
+  },
+  // Service Info Group
+  serviceInfoItem: {
+    padding: 16,
+    paddingTop: 8,
+  },
+  serviceInfoLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  serviceInfoLabelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2C4A6E',
+    marginLeft: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  serviceInfoContent: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 24,
   },
 });
 

@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import NotificationService from './NotificationService';
 import { logSentNotification } from './NotificationHistoryService';
@@ -179,10 +179,28 @@ export const addNews = async (
         const hasMedia = (news.imageUrls?.length || 0) > 0 || (news.videoUrls?.length || 0) > 0;
         const mediaText = hasMedia ? ' 📸' : '';
 
+        // Create news object for notification data (so user can navigate directly to news)
+        const newsForNotification: NewsItem = {
+          id: docRef.id,
+          title: news.title,
+          content: news.content,
+          date: news.date,
+          imageUrl: news.imageUrl,
+          imageUrls: news.imageUrls || [],
+          videoUrls: news.videoUrls || [],
+          linkUrl: sanitizedLinkUrl || undefined,
+          linkText: sanitizedLinkText || undefined,
+          isActive: news.isActive ?? true,
+          priority: news.priority || 0,
+          createdAt: news.date,
+          updatedAt: news.date,
+        };
+
         const result = await NotificationService.sendPushNotificationToAllUsers({
           title: `Нова објава: ${news.title}`,
           message: news.content.substring(0, 100) + (news.content.length > 100 ? '...' : '') + mediaText,
           urgent: false,
+          data: { news: newsForNotification, type: 'news', newsId: docRef.id },
         });
 
         // Log to notification history
