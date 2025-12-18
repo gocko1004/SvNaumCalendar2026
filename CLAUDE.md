@@ -8,7 +8,7 @@ SV Naum Calendar is a React Native mobile application built with Expo SDK 54 for
 
 **App Name**: `Св. Наум Охридски • Триенген`
 **Package**: `com.svnaum.calendar`
-**Version**: 2.0.0 (build 10)
+**Version**: 2.0.0 (build 13)
 **EAS Project ID**: `ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb`
 
 ## Development Commands
@@ -164,6 +164,24 @@ The app uses a root stack navigator with bottom tabs:
 ### EAS Build Caching
 If build numbers don't update, use `--clear-cache` flag.
 
+### Play Store Signing Key
+- EAS uses a different keystore than the original Play Store upload
+- Automatic `eas submit --platform android` fails due to signing key mismatch
+- **Manual upload required**: Download AAB from EAS build artifacts and upload via Play Console
+- Play Console path: Release → Production → Create new release → Upload AAB
+- To fix: Either upload original keystore to EAS (`eas credentials`) or request upload key reset in Play Console
+
+### iOS App Store Submission
+- `eas submit --platform ios --latest` works with Apple credentials
+- Build appears in App Store Connect with "Processing" status (5-30 min)
+- After processing: available for TestFlight or App Store Review
+
 ## Language
 
 The app uses Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian.
+
+## Claude Code Guidelines
+
+- **ALWAYS ask before running EAS builds** - builds cost money and use limited credits
+- Run `npx tsc --noEmit` before builds to check for TypeScript errors
+- Test on simulator before building for production
