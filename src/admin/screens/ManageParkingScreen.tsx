@@ -6,10 +6,10 @@ import {
   Alert,
   TouchableOpacity,
   Modal,
-  SafeAreaView,
   Keyboard,
   Linking,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Title,
   Card,
@@ -49,6 +49,7 @@ type ManageParkingScreenProps = {
 };
 
 export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [locations, setLocations] = useState<ParkingLocation[]>([]);
   const [rules, setRules] = useState<ParkingRule[]>([]);
   const [settings, setSettings] = useState<ParkingSettings | null>(null);
@@ -438,7 +439,7 @@ export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ naviga
         onRequestClose={() => setLocationModalVisible(false)}
         presentationStyle="pageSheet"
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
           <View style={styles.modalHeader}>
             <Title style={styles.modalTitle}>
               {editingLocation ? 'Уреди Локација' : 'Нова Локација'}
@@ -492,7 +493,7 @@ export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ naviga
               Зачувај
             </Button>
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
 
       {/* Rule Modal */}
@@ -502,7 +503,7 @@ export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ naviga
         onRequestClose={() => setRuleModalVisible(false)}
         presentationStyle="pageSheet"
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
           <View style={styles.modalHeader}>
             <Title style={styles.modalTitle}>
               {editingRule ? 'Уреди Правило' : 'Ново Правило'}
@@ -527,7 +528,7 @@ export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ naviga
               Зачувај
             </Button>
           </View>
-        </SafeAreaView>
+        </View>
       </Modal>
 
       {/* Notification Modal */}
@@ -537,7 +538,7 @@ export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ naviga
         onRequestClose={() => setNotificationModalVisible(false)}
         presentationStyle="pageSheet"
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
           <View style={styles.modalHeader}>
             <Title style={styles.modalTitle}>Испрати Паркинг Нотификација</Title>
             <TouchableOpacity onPress={() => { Keyboard.dismiss(); setNotificationModalVisible(false); }}>
@@ -618,7 +619,7 @@ export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ naviga
 
             <View style={{ height: 40 }} />
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
     </View>
   );

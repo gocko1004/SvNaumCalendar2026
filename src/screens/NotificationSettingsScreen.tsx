@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text as RNText, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Switch, ActivityIndicator, Snackbar } from 'react-native-paper';
 import NotificationService from '../services/NotificationService';
 import { COLORS } from '../constants/theme';
@@ -7,6 +8,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export const NotificationSettingsScreen = () => {
+  const insets = useSafeAreaInsets();
   const [settings, setSettings] = useState({
     enabled: true,
     weekBefore: false,
@@ -101,7 +103,7 @@ export const NotificationSettingsScreen = () => {
         colors={[COLORS.PRIMARY, '#A52A2A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}
+        style={[styles.header, { paddingTop: insets.top + 20 }]}
       >
         <View style={styles.headerContent}>
           <View style={styles.iconCircle}>
@@ -214,7 +216,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    paddingTop: 60,
     paddingBottom: 30,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,

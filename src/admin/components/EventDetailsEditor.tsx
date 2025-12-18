@@ -11,6 +11,7 @@ import {
   Modal,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { ChurchEvent, getServiceTypeLabel } from '../../services/ChurchCalendarService';
@@ -55,6 +56,7 @@ export const EventDetailsEditor: React.FC<EventDetailsEditorProps> = ({
   onClose,
   onSave,
 }) => {
+  const insets = useSafeAreaInsets();
   const [fields, setFields] = useState<EventCustomField[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -357,7 +359,7 @@ export const EventDetailsEditor: React.FC<EventDetailsEditorProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>

@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text as RNText, Linking, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { COLORS } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ type NotificationDetailScreenProps = NativeStackScreenProps<RootStackParamList, 
 
 export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> = ({ route, navigation }) => {
   const { title, body, data, receivedAt } = route.params;
+  const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // Animate icon visibility based on scroll
@@ -347,7 +349,7 @@ export const NotificationDetailScreen: React.FC<NotificationDetailScreenProps> =
         colors={[COLORS.PRIMARY, '#A52A2A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
+        style={[styles.headerGradient, { paddingTop: insets.top + 10 }]}
       >
         {/* Fixed Top Bar with Back Button */}
         <View style={styles.topBar}>
@@ -431,7 +433,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F0',
   },
   headerGradient: {
-    paddingTop: 50,
     paddingBottom: 16,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,

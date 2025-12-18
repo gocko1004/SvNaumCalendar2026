@@ -11,8 +11,8 @@ import {
   Keyboard,
   TextInput as NativeTextInput,
   Modal,
-  SafeAreaView
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Title,
   Card,
@@ -59,6 +59,7 @@ type ManageNewsScreenProps = {
 };
 
 export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -506,13 +507,13 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
       />
 
       {/* Add/Edit Modal */}
-      <Modal 
-        visible={dialogVisible} 
-        animationType="slide" 
+      <Modal
+        visible={dialogVisible}
+        animationType="slide"
         onRequestClose={() => { if (!uploading) { setDialogVisible(false); }}}
         presentationStyle="pageSheet"
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
           <View style={styles.modalHeader}>
             <Title style={styles.dialogTitle}>
               {editingNews ? 'Измени новост' : 'Додади новост'}
@@ -679,7 +680,7 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
               <View style={{ height: 50 }} />
             </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
     </View>
   );

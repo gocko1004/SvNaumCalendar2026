@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl, SectionList, Vibration } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, Text, RefreshControl, SectionList, Vibration } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Card, Title, Searchbar, Surface, Button, Dialog, Portal, FAB } from 'react-native-paper';
 import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
@@ -344,6 +345,7 @@ const AnnouncementCard = ({ announcement, onPress }: { announcement: Announcemen
 
 export const CalendarScreen = () => {
   const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({
     Triodion_400Regular,
   });
@@ -758,7 +760,7 @@ export const CalendarScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.mainContainer}>
         <Image
           source={require('../../assets/images/background_app.jpg')}
@@ -1073,7 +1075,7 @@ export const CalendarScreen = () => {
           }}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

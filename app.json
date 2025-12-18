@@ -13,7 +13,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.svnaum.calendar",
-      "buildNumber": "10",
+      "buildNumber": "13",
       "supportsTablet": true,
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "We send notifications about church services and important events.",
@@ -26,11 +26,16 @@
       }
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "package": "com.svnaum.calendar",
-      "versionCode": 10,
+      "versionCode": 13,
       "adaptiveIcon": {
         "foregroundImage": "./assets/iconnew.png",
         "backgroundColor": "#831B26"
+      },
+      "statusBar": {
+        "translucent": true,
+        "backgroundColor": "transparent"
       },
       "permissions": [
         "android.permission.INTERNET",
@@ -58,6 +63,14 @@
         {
           "photosPermission": "Дозволете пристап до галеријата за прикачување слики.",
           "cameraPermission": "Дозволете пристап до камерата за снимање фотографии."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/iconnew.png",
+          "color": "#831B26",
+          "defaultChannel": "church-events"
         }
       ]
     ]

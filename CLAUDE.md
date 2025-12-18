@@ -8,6 +8,7 @@ SV Naum Calendar is a React Native mobile application built with Expo SDK 54 for
 
 **App Name**: `Св. Наум Охридски • Триенген`
 **Package**: `com.svnaum.calendar`
+**Version**: 2.0.0 (build 10)
 **EAS Project ID**: `ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb`
 
 ## Development Commands
@@ -149,6 +150,16 @@ The app uses a root stack navigator with bottom tabs:
 ### Simulator Limitations
 - Push notifications don't work in iOS Simulator
 - Test on physical device via TestFlight for notification testing
+
+### Android Status Bar
+- App uses `SafeAreaProvider` from `react-native-safe-area-context` at root level
+- Screens use `useSafeAreaInsets()` hook for proper status bar handling
+- `app.json` has `android.statusBar.translucent: true` for edge-to-edge design
+
+### Android Emulator on Mac
+- Use correct Android Studio version: **Intel Macs need "Mac (Intel)"**, Apple Silicon needs ARM version
+- API 36 emulators can be slow on Intel Macs - consider using API 33-34 or real device
+- Android SDK location: `~/Library/Android/sdk/`
 
 ### EAS Build Caching
 If build numbers don't update, use `--clear-cache` flag.

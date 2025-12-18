@@ -11,9 +11,9 @@ import {
   Keyboard,
   Image,
   Modal,
-  SafeAreaView,
-  TouchableOpacity
+  TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Title,
   Card,
@@ -58,6 +58,7 @@ const ANNOUNCEMENT_TYPES: { value: AnnouncementType; label: string }[] = [
 ];
 
 export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(false);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
@@ -382,7 +383,7 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
         onRequestClose={() => { dismissKeyboard(); setEditDialogVisible(false); setShowStartDatePicker(false); setShowEndDatePicker(false); }}
         presentationStyle="pageSheet"
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{ flex: 1 }}
@@ -557,7 +558,7 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
               <View style={{ height: 50 }} />
             </ScrollView>
           </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
       </Modal>
 
       {/* Android Date Pickers */}

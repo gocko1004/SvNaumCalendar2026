@@ -35,6 +35,8 @@ local.properties
 !debug.keystore
 *.apk
 *.aab
+*.jks
+*.pem
 assets/android/app/debug/
 assets/android/app/release/
 

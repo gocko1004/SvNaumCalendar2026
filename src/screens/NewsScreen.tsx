@@ -8,8 +8,8 @@ import {
   Text,
   RefreshControl,
   Dimensions,
-  SafeAreaView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, Title } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -147,6 +147,7 @@ const NewsCard = ({ news, onPress }: NewsCardProps) => {
 
 export const NewsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -177,7 +178,7 @@ export const NewsScreen = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <View style={styles.container}>
         <Image
           source={require('../../assets/images/background_app.jpg')}
@@ -230,7 +231,7 @@ export const NewsScreen = () => {
           </View>
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
-  SafeAreaView,
   Modal,
   FlatList,
   Linking,
   Animated,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { format } from 'date-fns';
@@ -35,6 +35,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const NewsDetailScreen: React.FC<NewsDetailScreenProps> = ({ route, navigation }) => {
   const { news } = route.params;
+  const insets = useSafeAreaInsets();
   const [expandedImageIndex, setExpandedImageIndex] = useState<number | null>(null);
   const [videoStatus, setVideoStatus] = useState<{ [key: number]: AVPlaybackStatus }>({});
   const videoRefs = useRef<{ [key: number]: Video | null }>({});
@@ -101,9 +102,9 @@ export const NewsDetailScreen: React.FC<NewsDetailScreenProps> = ({ route, navig
         colors={[COLORS.PRIMARY, '#A52A2A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
+        style={[styles.headerGradient, { paddingTop: insets.top }]}
       >
-        <SafeAreaView>
+        <View>
           {/* Fixed Top Bar with Back Button */}
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -129,7 +130,7 @@ export const NewsDetailScreen: React.FC<NewsDetailScreenProps> = ({ route, navig
               </Text>
             </View>
           </View>
-        </SafeAreaView>
+        </View>
       </LinearGradient>
 
       <Animated.ScrollView
