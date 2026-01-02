@@ -200,6 +200,11 @@ class NotificationService {
 
     if (Platform.OS === 'android') {
       console.log('PUSH: Creating Android notification channels...');
+
+      // Delete channels first to ensure fresh creation (helpful for debugging importance/sound issues)
+      await Notifications.deleteNotificationChannelAsync('church-events');
+      await Notifications.deleteNotificationChannelAsync('urgent-updates');
+
       await Notifications.setNotificationChannelAsync('church-events', {
         name: 'Church Events',
         description: 'Church calendar events and reminders',
