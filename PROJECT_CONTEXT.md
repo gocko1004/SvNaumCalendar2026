@@ -13,6 +13,18 @@ Church calendar app for St. Naum Ohridski Church in Triengen, Switzerland.
 - **Owner**: gocko1004
 - **EAS Project ID**: ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb
 
+## Recent Critical Events (Dec 21, 2025)
+
+### 🔑 Android Upload Key Reset (Critical)
+**Issue**: Original upload keystore password was lost.
+**Action taken**:
+1. Cancelled pending reset request from Dec 19.
+2. Generated NEW upload key: `upload-key.jks`.
+3. Submitted NEW reset request to Google Play Console.
+4. Updated EAS credentials to use new key.
+**Status**: **WAITING** for Google 48h approval (approx Dec 23).
+**See**: `ANDROID_KEY_RESET_LOG.md` for passwords and details.
+
 ## Recent Issues Fixed (Dec 4, 2025)
 
 ### Critical Metro Bundler Error Fixed
@@ -174,10 +186,10 @@ FACEBOOK_ACCESS_TOKEN=<optional>
 - [ ] Android APK installs and runs
 
 ## Next Steps
-1. Build on Mac with Xcode
-2. Test on physical iPhone
-3. Fix any remaining issues
-4. Prepare for App Store submission
+1. **WAIT for Android Key Reset** (Dec 23, 2025).
+2. Run `eas submit -p android` (Only after Dec 23).
+3. Build on Mac with Xcode (for iOS testing).
+4. Prepare for App Store submission (iOS) and Play Store (Android).
 
 ## Git Configuration
 ```bash
