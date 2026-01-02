@@ -31,7 +31,6 @@ try {
   }
 
   // Initialize services using compat
-  // Initialize services using compat
   auth = firebase.auth();
   db = firebase.firestore();
   storage = firebase.storage();
@@ -41,3 +40,4 @@ try {
 }
 
 export { app, auth, db, storage, firebaseConfig };
+

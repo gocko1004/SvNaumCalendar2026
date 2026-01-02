@@ -7,19 +7,23 @@ import { addMinutes, isBefore, addYears, isAfter } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
 import { db } from '../firebase';
-import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const LAST_SCHEDULE_CHECK = '@last_schedule_check';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    console.log('PUSH-RECEIVE: Notification received!');
+    console.log('PUSH-RECEIVE: Title:', notification.request.content.title);
+    console.log('PUSH-RECEIVE: Body:', notification.request.content.body);
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    };
+  },
 });
 
 class NotificationService {
@@ -190,7 +194,12 @@ class NotificationService {
   };
 
   configure = async () => {
+    console.log('PUSH: configure() starting...');
+    console.log('PUSH: Platform:', Platform.OS);
+    console.log('PUSH: Device.isDevice:', Device.isDevice);
+
     if (Platform.OS === 'android') {
+      console.log('PUSH: Creating Android notification channels...');
       await Notifications.setNotificationChannelAsync('church-events', {
         name: 'Church Events',
         description: 'Church calendar events and reminders',
@@ -206,53 +215,85 @@ class NotificationService {
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#FF0000',
       });
+      console.log('PUSH: Android notification channels created');
     }
 
     if (Device.isDevice) {
+      console.log('PUSH: Running on physical device, checking permissions...');
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      console.log('PUSH: Existing permission status:', existingStatus);
       let finalStatus = existingStatus;
       if (existingStatus !== 'granted') {
+        console.log('PUSH: Requesting permissions...');
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
+        console.log('PUSH: New permission status:', finalStatus);
       }
       if (finalStatus !== 'granted') {
+        console.log('PUSH: Permissions NOT granted, cannot register for push notifications');
         return;
       }
 
+      console.log('PUSH: Permissions granted, registering for push notifications...');
       // Register device for push notifications
       await this.registerDeviceForPushNotifications();
+    } else {
+      console.log('PUSH: NOT running on physical device - skipping push registration');
     }
   };
 
   registerDeviceForPushNotifications = async () => {
     try {
+      console.log('PUSH: Starting device registration for push notifications...');
+
       // Get Expo push token
       // Use the project ID from app.json
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      console.log('PUSH: Project ID:', projectId);
 
       if (!projectId) {
+        console.error('PUSH: EAS project ID not found in app.json configuration');
         throw new Error('EAS project ID not found in app.json configuration');
       }
 
+      console.log('PUSH: Requesting Expo push token...');
       const token = await Notifications.getExpoPushTokenAsync({
         projectId,
       });
+      console.log('PUSH: Got push token:', token.data);
 
       // Store token in Firestore using token hash as document ID to prevent duplicates
       // This ensures each unique push token only has one entry
-      const tokensRef = collection(db, 'pushTokens');
       const tokenId = this.hashToken(token.data);
+      console.log('PUSH: Storing token in Firestore with ID:', tokenId);
 
-      await setDoc(doc(tokensRef, tokenId), {
+      await db.collection('pushTokens').doc(tokenId).set({
         token: token.data,
         platform: Platform.OS,
         createdAt: new Date(),
         updatedAt: new Date(),
       }, { merge: true });
 
+      // Verify the token was stored
+      const verifyDoc = await db.collection('pushTokens').doc(tokenId).get();
+      if (verifyDoc.exists) {
+        console.log('PUSH: Token VERIFIED in Firestore! Platform:', verifyDoc.data()?.platform);
+      } else {
+        console.error('PUSH: Token write FAILED - document does not exist after write!');
+      }
+
+      // Count total tokens in Firestore
+      const allTokensSnapshot = await db.collection('pushTokens').get();
+      console.log('PUSH: Total tokens in pushTokens collection:', allTokensSnapshot.size);
+      allTokensSnapshot.docs.forEach((doc, index) => {
+        const data = doc.data();
+        console.log(`PUSH: Token ${index + 1}: platform=${data.platform}, id=${doc.id.substring(0, 10)}...`);
+      });
+
+      console.log('PUSH: Token successfully registered in Firestore!');
       return token.data;
     } catch (error) {
-      console.error('Error registering push token:', error);
+      console.error('PUSH: Error registering push token:', error);
       return null;
     }
   };
@@ -364,16 +405,31 @@ class NotificationService {
     date?: Date;
     urgent?: boolean;
   }) => {
-    const { title, message, date = new Date(), urgent = true } = notification;
+    const { title, message, date, urgent = true } = notification;
 
-    // Send local notification immediately
-    await this.scheduleNotification({
-      title,
-      message,
-      date,
-      urgent,
-      identifier: `custom-${Date.now()}`,
-    });
+    // If no date provided or date is now/past, send immediately
+    if (!date || date.getTime() <= Date.now() + 60000) {
+      // Use null trigger for immediate display
+      const channelId = urgent ? 'urgent-updates' : 'church-events';
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body: message,
+          sound: true,
+          priority: urgent ? Notifications.AndroidNotificationPriority.MAX : Notifications.AndroidNotificationPriority.DEFAULT,
+        },
+        trigger: Platform.OS === 'android' ? { channelId } : null,
+      });
+    } else {
+      // Schedule for future
+      await this.scheduleNotification({
+        title,
+        message,
+        date,
+        urgent,
+        identifier: `custom-${Date.now()}`,
+      });
+    }
   };
 
   sendPushNotificationToAllUsers = async (notification: {
@@ -386,15 +442,14 @@ class NotificationService {
       const { title, message, urgent = true, data: customData = {} } = notification;
 
       // Get all push tokens from Firestore
-      const tokensRef = collection(db, 'pushTokens');
-      const tokensSnapshot = await getDocs(tokensRef);
+      const tokensSnapshot = await db.collection('pushTokens').get();
 
       if (tokensSnapshot.empty) {
         return { success: false, sentCount: 0, error: 'No devices registered for push notifications' };
       }
 
       // IMPORTANT: Deduplicate tokens to prevent sending multiple notifications to same device
-      const allTokens = tokensSnapshot.docs.map(doc => doc.data().token).filter(Boolean);
+      const allTokens = tokensSnapshot.docs.map((docSnap: any) => docSnap.data().token).filter(Boolean);
       const uniqueTokens = [...new Set(allTokens)];
 
       console.log(`Found ${allTokens.length} tokens, ${uniqueTokens.length} unique`);
