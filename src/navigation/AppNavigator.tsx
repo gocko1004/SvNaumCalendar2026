@@ -121,9 +121,7 @@ export const AppNavigator = () => {
   useEffect(() => {
     // Listen for incoming notifications while app is foregrounded
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('PUSH-LISTENER: Foreground notification received!');
-      console.log('PUSH-LISTENER: Title:', notification.request.content.title);
-      console.log('PUSH-LISTENER: Body:', notification.request.content.body);
+      // Log or handle foreground notification if needed
       // Notification received in foreground - handled by notification handler
     });
 

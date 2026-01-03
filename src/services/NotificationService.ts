@@ -13,9 +13,7 @@ const LAST_SCHEDULE_CHECK = '@last_schedule_check';
 
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
-    console.log('PUSH-RECEIVE: Notification received!');
-    console.log('PUSH-RECEIVE: Title:', notification.request.content.title);
-    console.log('PUSH-RECEIVE: Body:', notification.request.content.body);
+
     return {
       shouldShowAlert: true,
       shouldPlaySound: true,
@@ -194,14 +192,8 @@ class NotificationService {
   };
 
   configure = async () => {
-    console.log('PUSH: configure() starting...');
-    console.log('PUSH: Platform:', Platform.OS);
-    console.log('PUSH: Device.isDevice:', Device.isDevice);
-
     if (Platform.OS === 'android') {
-      console.log('PUSH: Creating Android notification channels...');
-
-      // Delete channels first to ensure fresh creation (helpful for debugging importance/sound issues)
+      // Delete channels first to ensure fresh creation
       await Notifications.deleteNotificationChannelAsync('church-events');
       await Notifications.deleteNotificationChannelAsync('urgent-updates');
 
@@ -220,57 +212,43 @@ class NotificationService {
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#FF0000',
       });
-      console.log('PUSH: Android notification channels created');
     }
 
     if (Device.isDevice) {
-      console.log('PUSH: Running on physical device, checking permissions...');
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      console.log('PUSH: Existing permission status:', existingStatus);
       let finalStatus = existingStatus;
       if (existingStatus !== 'granted') {
-        console.log('PUSH: Requesting permissions...');
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
-        console.log('PUSH: New permission status:', finalStatus);
       }
       if (finalStatus !== 'granted') {
-        console.log('PUSH: Permissions NOT granted, cannot register for push notifications');
+        // alert('Failed to get push token for push notification!');
         return;
       }
-
-      console.log('PUSH: Permissions granted, registering for push notifications...');
       // Register device for push notifications
       await this.registerDeviceForPushNotifications();
     } else {
-      console.log('PUSH: NOT running on physical device - skipping push registration');
+      // alert('Must use physical device for Push Notifications');
     }
   };
 
   registerDeviceForPushNotifications = async () => {
     try {
-      console.log('PUSH: Starting device registration for push notifications...');
-
       // Get Expo push token
       // Use the project ID from app.json
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      console.log('PUSH: Project ID:', projectId);
 
       if (!projectId) {
-        console.error('PUSH: EAS project ID not found in app.json configuration');
         throw new Error('EAS project ID not found in app.json configuration');
       }
 
-      console.log('PUSH: Requesting Expo push token...');
       const token = await Notifications.getExpoPushTokenAsync({
         projectId,
       });
-      console.log('PUSH: Got push token:', token.data);
 
       // Store token in Firestore using token hash as document ID to prevent duplicates
       // This ensures each unique push token only has one entry
       const tokenId = this.hashToken(token.data);
-      console.log('PUSH: Storing token in Firestore with ID:', tokenId);
 
       await db.collection('pushTokens').doc(tokenId).set({
         token: token.data,
@@ -281,21 +259,10 @@ class NotificationService {
 
       // Verify the token was stored
       const verifyDoc = await db.collection('pushTokens').doc(tokenId).get();
-      if (verifyDoc.exists) {
-        console.log('PUSH: Token VERIFIED in Firestore! Platform:', verifyDoc.data()?.platform);
-      } else {
+      if (!verifyDoc.exists) {
         console.error('PUSH: Token write FAILED - document does not exist after write!');
       }
 
-      // Count total tokens in Firestore
-      const allTokensSnapshot = await db.collection('pushTokens').get();
-      console.log('PUSH: Total tokens in pushTokens collection:', allTokensSnapshot.size);
-      allTokensSnapshot.docs.forEach((doc, index) => {
-        const data = doc.data();
-        console.log(`PUSH: Token ${index + 1}: platform=${data.platform}, id=${doc.id.substring(0, 10)}...`);
-      });
-
-      console.log('PUSH: Token successfully registered in Firestore!');
       return token.data;
     } catch (error) {
       console.error('PUSH: Error registering push token:', error);
@@ -457,8 +424,6 @@ class NotificationService {
       const allTokens = tokensSnapshot.docs.map((docSnap: any) => docSnap.data().token).filter(Boolean);
       const uniqueTokens = [...new Set(allTokens)];
 
-      console.log(`Found ${allTokens.length} tokens, ${uniqueTokens.length} unique`);
-
       if (uniqueTokens.length === 0) {
         return { success: false, sentCount: 0, error: 'No valid push tokens found' };
       }
@@ -492,7 +457,15 @@ class NotificationService {
       }
 
       const result = await response.json();
+
       const successCount = result.data?.filter((r: any) => r.status === 'ok').length || 0;
+
+      // Log failures details
+      result.data?.forEach((r: any, index: number) => {
+        if (r.status === 'error') {
+          console.error(`PUSH: Failure for token ${uniqueTokens[index]}: ${r.message} (${r.details?.error})`);
+        }
+      });
 
       return { success: true, sentCount: successCount };
     } catch (error: any) {

@@ -134,9 +134,9 @@ export const ManageParkingScreen: React.FC<ManageParkingScreenProps> = ({ naviga
     const locationData = {
       name: locName.trim(),
       address: locAddress.trim(),
-      capacity: locCapacity ? parseInt(locCapacity) : undefined,
-      note: locNote.trim() || undefined,
-      googleMapsUrl: locMapsUrl.trim() || undefined,
+      capacity: locCapacity ? parseInt(locCapacity) : null,
+      note: locNote.trim() || null,
+      googleMapsUrl: locMapsUrl.trim() || null,
       isActive: true,
       order: editingLocation?.order ?? locations.length,
     };

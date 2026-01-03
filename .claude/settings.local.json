@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/mnt/c/Users/Admin/AppData/Local/Android/Sdk/platform-tools/adb.exe shell pm list packages:*)",
+      "Bash(/mnt/c/Users/Admin/AppData/Local/Android/Sdk/platform-tools/adb.exe shell am start -n com.svnaum.calendar/.MainActivity)",
+      "Bash(/mnt/c/Users/Admin/AppData/Local/Android/Sdk/platform-tools/adb.exe logcat:*)",
+      "Bash(/mnt/c/Users/Admin/AppData/Local/Android/Sdk/platform-tools/adb.exe shell am force-stop com.svnaum.calendar)",
+      "Bash(/mnt/c/Users/Admin/AppData/Local/Android/Sdk/platform-tools/adb.exe shell screencap -p)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

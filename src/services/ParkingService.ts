@@ -9,9 +9,9 @@ export interface ParkingLocation {
   id: string;
   name: string;
   address: string;
-  capacity?: number;
-  note?: string;
-  googleMapsUrl?: string;
+  capacity?: number | null;
+  note?: string | null;
+  googleMapsUrl?: string | null;
   isActive: boolean;
   order: number;
 }
@@ -116,7 +116,23 @@ export const addParkingLocation = async (location: Omit<ParkingLocation, 'id'>):
 export const updateParkingLocation = async (id: string, updates: Partial<ParkingLocation>): Promise<boolean> => {
   try {
     const locationRef = doc(db, 'parkingLocations', id);
-    await updateDoc(locationRef, updates);
+    try {
+      await updateDoc(locationRef, updates);
+    } catch (firebaseError: any) {
+      // If document doesn't exist (e.g. local_ ID), try to sync it from local storage
+      if (firebaseError.code === 'not-found' || id.startsWith('local_')) {
+        const locations = await getAllParkingLocations(); // Gets from Async if properly implemented or mixed
+        const existing = locations.find(l => l.id === id);
+        if (existing) {
+          const fullData = { ...existing, ...updates };
+          await setDoc(locationRef, fullData);
+        } else {
+          throw firebaseError; // Item truly gone
+        }
+      } else {
+        throw firebaseError;
+      }
+    }
 
     // Update AsyncStorage backup
     const locations = await getAllParkingLocations();
@@ -358,7 +374,7 @@ export const sendParkingNotification = async (data: ParkingNotificationData): Pr
       fullMessage += '\n\n📍 Паркинг локации:';
       selectedLocations.forEach(loc => {
         fullMessage += `\n• ${loc.name}`;
-        if (loc.address) fullMessage += ` - ${loc.address}`;
+        if (loc.address) fullMessage += `\n• ${loc.address}`;
         if (loc.capacity) fullMessage += ` (${loc.capacity} места)`;
         if (loc.note) fullMessage += ` (${loc.note})`;
       });

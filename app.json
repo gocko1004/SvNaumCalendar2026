@@ -13,7 +13,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.svnaum.calendar",
-      "buildNumber": "14",
+      "buildNumber": "16",
       "supportsTablet": true,
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "We send notifications about church services and important events.",
@@ -28,7 +28,7 @@
     "android": {
       "googleServicesFile": "./google-services.json",
       "package": "com.svnaum.calendar",
-      "versionCode": 13,
+      "versionCode": 16,
       "adaptiveIcon": {
         "foregroundImage": "./assets/iconnew.png",
         "backgroundColor": "#831B26"

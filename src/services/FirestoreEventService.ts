@@ -63,7 +63,7 @@ export const getAllEvents = async (): Promise<ChurchEvent[]> => {
     // Sort in memory instead of in Firestore query
     events.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    console.log('Loaded', events.length, 'events from Firestore');
+
     return events;
   } catch (error) {
     console.error('Error fetching events from Firestore:', error);
@@ -119,7 +119,7 @@ export const deleteEvent = async (eventId: string): Promise<boolean> => {
 export const mergeEvents = (hardcodedEvents: ChurchEvent[], firestoreEvents: ChurchEvent[]): ChurchEvent[] => {
   // Create a map of Firestore events by date (for quick lookup)
   const firestoreMap = new Map<string, ChurchEvent[]>();
-  
+
   firestoreEvents.forEach(event => {
     const dateKey = event.date.toISOString().split('T')[0];
     if (!firestoreMap.has(dateKey)) {
@@ -127,17 +127,17 @@ export const mergeEvents = (hardcodedEvents: ChurchEvent[], firestoreEvents: Chu
     }
     firestoreMap.get(dateKey)!.push(event);
   });
-  
+
   // Combine: Start with hardcoded, then add Firestore events
   const allEvents = [...hardcodedEvents];
-  
+
   firestoreEvents.forEach(event => {
     allEvents.push(event);
   });
-  
+
   // Sort by date
   allEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
-  
+
   return allEvents;
 };
 

@@ -79,3 +79,5 @@ coverage/
 *.swp
 *.swo
 *~
+
+fcm.json

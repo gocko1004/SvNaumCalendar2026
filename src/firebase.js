@@ -45,7 +45,7 @@ try {
   }
 
   if (isDevelopment) {
-    console.log('Firebase Initialized with AsyncStorage persistence');
+
   }
 
 } catch (error) {
