@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Dimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import {
     Text,
     ActivityIndicator,
@@ -11,6 +11,7 @@ import {
     NotificationRecord,
     getRecentNotificationHistory,
     setLastSeenTimestamp,
+    deleteNotificationRecord,
     NOTIFICATION_CATEGORY_ICONS
 } from '../services/NotificationHistoryService';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
@@ -102,6 +103,27 @@ export const UserNotificationHistoryScreen: React.FC<UserNotificationHistoryScre
         }
     };
 
+    const handleDeleteNotification = (notification: NotificationRecord) => {
+        Alert.alert(
+            'Избриши известување',
+            'Дали сте сигурни дека сакате да го избришете ова известување?',
+            [
+                { text: 'Откажи', style: 'cancel' },
+                {
+                    text: 'Избриши',
+                    style: 'destructive',
+                    onPress: async () => {
+                        if (notification.id) {
+                            await deleteNotificationRecord(notification.id);
+                            // Remove from local state
+                            setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const renderNotificationCard = (notification: NotificationRecord, index: number) => {
         const categoryIcon = NOTIFICATION_CATEGORY_ICONS[notification.category];
         const categoryInfo = getCategoryInfo(notification.category);
@@ -155,7 +177,7 @@ export const UserNotificationHistoryScreen: React.FC<UserNotificationHistoryScre
                             {notification.body}
                         </Text>
 
-                        {/* Bottom row: Relative time + Arrow */}
+                        {/* Bottom row: Relative time + Actions */}
                         <View style={styles.bottomRow}>
                             <View style={styles.relativeTimeContainer}>
                                 <MaterialCommunityIcons name="clock-outline" size={14} color="#999" />
@@ -164,9 +186,22 @@ export const UserNotificationHistoryScreen: React.FC<UserNotificationHistoryScre
                                 </Text>
                             </View>
 
-                            <View style={styles.readMoreContainer}>
-                                <Text style={styles.readMoreText}>Прочитај</Text>
-                                <MaterialCommunityIcons name="arrow-right" size={16} color={COLORS.PRIMARY} />
+                            <View style={styles.actionsContainer}>
+                                <TouchableOpacity
+                                    onPress={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteNotification(notification);
+                                    }}
+                                    style={styles.deleteButton}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                >
+                                    <MaterialCommunityIcons name="trash-can-outline" size={18} color="#999" />
+                                </TouchableOpacity>
+
+                                <View style={styles.readMoreContainer}>
+                                    <Text style={styles.readMoreText}>Прочитај</Text>
+                                    <MaterialCommunityIcons name="arrow-right" size={16} color={COLORS.PRIMARY} />
+                                </View>
                             </View>
                         </View>
                     </View>
@@ -414,6 +449,14 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#999',
         marginLeft: 5,
+    },
+    actionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    deleteButton: {
+        padding: 6,
+        marginRight: 12,
     },
     readMoreContainer: {
         flexDirection: 'row',
