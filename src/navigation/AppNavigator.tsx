@@ -12,6 +12,7 @@ import { NewsScreen } from '../screens/NewsScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { NotificationDetailScreen } from '../screens/NotificationDetailScreen';
 import { NewsDetailScreen } from '../screens/NewsDetailScreen';
+import { UserNotificationHistoryScreen } from '../screens/UserNotificationHistoryScreen';
 import { AdminNavigator } from './AdminNavigator';
 import { COLORS } from '../constants/theme';
 import { NewsItem } from '../services/NewsService';
@@ -29,6 +30,7 @@ export type RootStackParamList = {
   NewsDetail: {
     news: NewsItem;
   };
+  UserNotificationHistory: undefined;
 };
 
 const Tab = createBottomTabNavigator();
@@ -97,6 +99,17 @@ const MainTabs = () => {
           title: 'Новости',
           tabBarIcon: ({ color, size }) => (
             <Icon name="newspaper-variant" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Notifications"
+        component={UserNotificationHistoryScreen}
+        options={{
+          headerShown: false,
+          title: 'Известувања',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="bell" size={size} color={color} />
           ),
         }}
       />
@@ -213,6 +226,14 @@ export const AppNavigator = () => {
         <RootStack.Screen
           name="NewsDetail"
           component={NewsDetailScreen}
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
+        <RootStack.Screen
+          name="UserNotificationHistory"
+          component={UserNotificationHistoryScreen}
           options={{
             presentation: 'card',
             animation: 'slide_from_right',

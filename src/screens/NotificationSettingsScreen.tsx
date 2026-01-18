@@ -7,7 +7,12 @@ import { COLORS } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+
 export const NotificationSettingsScreen = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const [settings, setSettings] = useState({
     enabled: true,
@@ -136,6 +141,22 @@ export const NotificationSettingsScreen = () => {
             />
           </View>
         </View>
+
+        {/* Notification History Card */}
+        <TouchableOpacity
+          style={styles.historyCard}
+          onPress={() => navigation.navigate('UserNotificationHistory')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.historyIconContainer}>
+            <MaterialCommunityIcons name="history" size={24} color="#FFF" />
+          </View>
+          <View style={styles.historyTextContainer}>
+            <RNText style={styles.historyTitle}>Историја на Известувања</RNText>
+            <RNText style={styles.historySubtitle}>Преглед на сите претходни известувања</RNText>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={24} color="#CCC" />
+        </TouchableOpacity>
 
         {/* Timing Settings */}
         <View style={styles.sectionCard}>
@@ -400,5 +421,40 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     backgroundColor: COLORS.PRIMARY,
+  },
+  historyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  historyIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: COLORS.PRIMARY,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  historyTextContainer: {
+    flex: 1,
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  historySubtitle: {
+    fontSize: 13,
+    color: '#666',
   },
 }); 
