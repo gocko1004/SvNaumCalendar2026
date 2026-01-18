@@ -8,7 +8,7 @@ SV Naum Calendar is a React Native mobile application built with Expo SDK 54 for
 
 **App Name**: `Св. Наум Охридски • Триенген`
 **Package**: `com.svnaum.calendar`
-**Version**: 2.0.0 (build 13)
+**Version**: 2.0.1 (build 19)
 **EAS Project ID**: `ca6379d4-2b7a-4ea3-8aba-3a23414ae7cb`
 
 ## Development Commands
@@ -54,7 +54,13 @@ npx eas-cli submit --platform ios --latest
 npx eas-cli submit --platform android --latest
 ```
 
-**Important**: Before each submission, increment `buildNumber` (iOS) and `versionCode` (Android) in `app.json`. The `eas.json` uses `"appVersionSource": "local"` so build numbers come from app.json.
+**Important**: Before each submission, increment build numbers in **BOTH** locations:
+1. `app.json` - `ios.buildNumber` and `android.versionCode`
+2. **Native iOS files** (since `ios/` directory exists):
+   - `ios/SvNaumOhridskiTriengen/Info.plist` - `CFBundleVersion` and `CFBundleShortVersionString`
+   - `ios/SvNaumOhridskiTriengen.xcodeproj/project.pbxproj` - `CURRENT_PROJECT_VERSION`
+
+**CRITICAL**: When `ios/` directory exists, EAS ignores `app.json` build numbers and uses native values!
 
 ## Architecture
 
@@ -68,6 +74,7 @@ The app uses a root stack navigator with bottom tabs:
 **Visible Bottom Tabs:**
 - **Календар** - Main church calendar with events (`CalendarScreen`)
 - **Новости** - News and announcements (`NewsScreen`)
+- **Известувања** - Notification history with badge count (`UserNotificationHistoryScreen`)
 - **Поставки** - Notification preferences (`NotificationSettingsScreen`)
 
 **Hidden Admin Access:**
@@ -85,6 +92,15 @@ The app uses a root stack navigator with bottom tabs:
 - Android channels: `church-events`, `urgent-updates`
 - Stores push tokens in Firebase Firestore (`pushTokens` collection)
 - Admin push notifications go to ALL users regardless of reminder settings
+- **Expo has 100 message batch limit** - notifications are chunked into batches of 50
+
+**NotificationHistoryService** (`src/services/NotificationHistoryService.ts`)
+- Stores sent notifications in Firestore (`notificationHistory` collection)
+- 30-day retention with auto-cleanup
+- Badge count system using AsyncStorage for "last seen" timestamp
+- Users can delete individual notifications
+- Stores `fullBody` for complete notification text in detail view
+- Stores `data` for navigation (e.g., news object for direct NewsDetail navigation)
 
 **ParkingService** (`src/services/ParkingService.ts`)
 - Manages parking locations and rules
@@ -144,6 +160,15 @@ The app uses a root stack navigator with bottom tabs:
 - Security comes from Firebase Security Rules, not the API key
 - Admin users are managed in Firebase Console → Authentication → Users
 - API key restrictions in Google Cloud Console may break Firebase Auth - use with caution
+
+### Firebase Security Rules
+The `notificationHistory` collection requires **public read** access for users to see their notification history:
+```javascript
+match /notificationHistory/{document=**} {
+  allow read: if true;  // Users can read
+  allow write: if request.auth != null;  // Only admins can write
+}
+```
 
 ## Known Issues
 
