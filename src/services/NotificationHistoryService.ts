@@ -6,6 +6,9 @@
 
 import { collection, addDoc, deleteDoc, doc, getDocs, query, orderBy, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const LAST_SEEN_KEY = '@notification_last_seen';
 
 // Notification status
 export type NotificationStatus = 'SENT' | 'FAILED' | 'PARTIAL';
@@ -17,6 +20,7 @@ export interface NotificationRecord {
   id?: string;
   title: string;
   body: string;
+  fullBody?: string; // Full body text (body may be truncated for push notification)
   category: NotificationCategory;
   sentAt: Date;
   expiresAt: Date; // 30 days from sentAt
@@ -28,6 +32,7 @@ export interface NotificationRecord {
   eventId?: string; // Related event if applicable
   isAutomated: boolean;
   errors?: string[];
+  data?: any; // Custom data for navigation (e.g., news object)
 }
 
 const NOTIFICATION_HISTORY_COLLECTION = 'notificationHistory';
@@ -59,6 +64,7 @@ const firestoreToNotificationRecord = (docData: any, docId: string): Notificatio
     id: docId,
     title: docData.title || '',
     body: docData.body || '',
+    fullBody: docData.fullBody || undefined,
     category: docData.category || 'INFO',
     sentAt: docData.sentAt?.toDate() || new Date(),
     expiresAt: docData.expiresAt?.toDate() || new Date(),
@@ -70,6 +76,7 @@ const firestoreToNotificationRecord = (docData: any, docId: string): Notificatio
     eventId: docData.eventId || undefined,
     isAutomated: docData.isAutomated || false,
     errors: docData.errors || [],
+    data: docData.data || null,
   };
 };
 
@@ -84,6 +91,7 @@ const notificationRecordToFirestore = (record: Partial<NotificationRecord>) => {
   return {
     title: record.title || '',
     body: record.body || '',
+    fullBody: record.fullBody || '',
     category: record.category || 'INFO',
     sentAt: Timestamp.fromDate(sentAt),
     expiresAt: Timestamp.fromDate(expiresAt),
@@ -95,6 +103,7 @@ const notificationRecordToFirestore = (record: Partial<NotificationRecord>) => {
     eventId: record.eventId || '',
     isAutomated: record.isAutomated || false,
     errors: record.errors || [],
+    data: record.data || null,
   };
 };
 
@@ -263,15 +272,18 @@ export const logSentNotification = async (
   sentBy?: string,
   eventId?: string,
   isAutomated: boolean = false,
-  errors: string[] = []
+  errors: string[] = [],
+  fullBody?: string,
+  data?: any
 ): Promise<string | null> => {
   const status: NotificationStatus =
     failureCount === 0 ? 'SENT' :
-    successCount === 0 ? 'FAILED' : 'PARTIAL';
+      successCount === 0 ? 'FAILED' : 'PARTIAL';
 
   return addNotificationRecord({
     title,
     body,
+    fullBody: fullBody || body, // Use fullBody if provided, otherwise use body
     category,
     sentAt: new Date(),
     status,
@@ -282,5 +294,55 @@ export const logSentNotification = async (
     eventId,
     isAutomated,
     errors,
+    data,
   });
+};
+
+/**
+ * Get the timestamp when user last viewed notifications
+ */
+export const getLastSeenTimestamp = async (): Promise<Date | null> => {
+  try {
+    const timestamp = await AsyncStorage.getItem(LAST_SEEN_KEY);
+    return timestamp ? new Date(timestamp) : null;
+  } catch (error) {
+    console.error('Error getting last seen timestamp:', error);
+    return null;
+  }
+};
+
+/**
+ * Update the timestamp when user views notifications
+ */
+export const setLastSeenTimestamp = async (): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
+  } catch (error) {
+    console.error('Error setting last seen timestamp:', error);
+  }
+};
+
+/**
+ * Get count of unseen notifications (for badge)
+ */
+export const getUnseenNotificationCount = async (): Promise<number> => {
+  try {
+    const lastSeen = await getLastSeenTimestamp();
+    const records = await getRecentNotificationHistory();
+
+    // Filter out failed notifications (users don't see those)
+    const visibleRecords = records.filter(r => r.status !== 'FAILED');
+
+    if (!lastSeen) {
+      // If user never viewed, show count of all recent notifications
+      return visibleRecords.length;
+    }
+
+    // Count notifications newer than last seen
+    const unseenCount = visibleRecords.filter(r => r.sentAt > lastSeen).length;
+    return unseenCount;
+  } catch (error) {
+    console.error('Error getting unseen notification count:', error);
+    return 0;
+  }
 };

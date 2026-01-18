@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback, createContext, useContext } from 'react';
 import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { Dimensions } from 'react-native';
+import { Dimensions, AppState, AppStateStatus } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
 // Screens
@@ -16,6 +16,13 @@ import { UserNotificationHistoryScreen } from '../screens/UserNotificationHistor
 import { AdminNavigator } from './AdminNavigator';
 import { COLORS } from '../constants/theme';
 import { NewsItem } from '../services/NewsService';
+import { getUnseenNotificationCount } from '../services/NotificationHistoryService';
+
+// Context for badge refresh
+type BadgeContextType = {
+  refreshBadge: () => void;
+};
+export const BadgeContext = createContext<BadgeContextType>({ refreshBadge: () => {} });
 
 // Navigation types
 export type RootStackParamList = {
@@ -43,11 +50,43 @@ const MainTabs = () => {
   const screenWidth = Dimensions.get('window').width;
   const isSmallScreen = screenWidth < 380;
   const isVerySmallScreen = screenWidth < 340;
+  const [badgeCount, setBadgeCount] = useState<number | undefined>(undefined);
+
+  // Load badge count
+  const loadBadgeCount = useCallback(async () => {
+    try {
+      const count = await getUnseenNotificationCount();
+      setBadgeCount(count > 0 ? count : undefined);
+    } catch (error) {
+      console.error('Error loading badge count:', error);
+    }
+  }, []);
+
+  // Refresh badge (called from UserNotificationHistoryScreen)
+  const refreshBadge = useCallback(() => {
+    loadBadgeCount();
+  }, [loadBadgeCount]);
+
+  // Load badge on mount and when app comes to foreground
+  useEffect(() => {
+    loadBadgeCount();
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        loadBadgeCount();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [loadBadgeCount]);
 
   // Responsive font size for tab labels
   const tabLabelFontSize = isVerySmallScreen ? 9 : isSmallScreen ? 10 : 11;
 
   return (
+    <BadgeContext.Provider value={{ refreshBadge }}>
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: COLORS.PRIMARY,
@@ -111,6 +150,12 @@ const MainTabs = () => {
           tabBarIcon: ({ color, size }) => (
             <Icon name="bell" size={size} color={color} />
           ),
+          tabBarBadge: badgeCount,
+          tabBarBadgeStyle: {
+            backgroundColor: '#F44336',
+            fontSize: 10,
+            fontWeight: 'bold',
+          },
         }}
       />
       <Tab.Screen
@@ -124,6 +169,7 @@ const MainTabs = () => {
         }}
       />
     </Tab.Navigator>
+    </BadgeContext.Provider>
   );
 };
 

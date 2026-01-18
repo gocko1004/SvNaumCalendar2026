@@ -240,7 +240,9 @@ export const addNews = async (
           'news-auto',
           undefined,
           true, // isAutomated
-          result.error ? [result.error] : []
+          result.error ? [result.error] : [],
+          news.content, // fullBody
+          { news: newsForNotification } // data
         );
       } catch (notifError) {
         console.error('Error sending news notification:', notifError);
