@@ -180,10 +180,11 @@ export const addNews = async (
         const mediaText = hasMedia ? ' 📸' : '';
 
         // Create news object for notification data (so user can navigate directly to news)
+        // CRITICAL: Truncate content in data payload too, as it triggers the 100-char limit
         const newsForNotification: NewsItem = {
           id: docRef.id,
           title: news.title,
-          content: news.content,
+          content: news.content.substring(0, 90) + (news.content.length > 90 ? '...' : ''),
           date: news.date,
           imageUrl: news.imageUrl,
           imageUrls: news.imageUrls || [],
@@ -196,9 +197,34 @@ export const addNews = async (
           updatedAt: news.date,
         };
 
+        // Ensure title is strictly < 100 chars for Expo Push API
+        // Use grapheme-aware truncation for proper emoji handling
+        const truncateGraphemes = (str: string, maxLen: number): string => {
+          const segments = [...str]; // Handles surrogate pairs (most emojis)
+          if (segments.length <= maxLen) return str;
+          return segments.slice(0, maxLen - 1).join('') + '…';
+        };
+
+        // Prefix takes ~13 chars, leave room for title + ellipsis
+        // Be conservative: max 65 chars for title content to stay well under 100
+        const prefix = 'Нова објава: ';
+        const truncatedNewsTitle = truncateGraphemes(news.title, 65);
+        let notifTitle = `${prefix}${truncatedNewsTitle}`;
+
+        // Double-check total length (fallback for edge cases)
+        if ([...notifTitle].length > 95) {
+          notifTitle = truncateGraphemes(notifTitle, 95);
+        }
+
+        // Body can be longer than title but keep it reasonable
+        // Expo body limit is typically ~1000+ but keep it concise
+        // UPDATE: Observed strict 100 char limit in error logs. Truncating to 90 to be safe.
+        let notifBody = truncateGraphemes(news.content, 90 - mediaText.length);
+        notifBody += mediaText;
+
         const result = await NotificationService.sendPushNotificationToAllUsers({
-          title: `Нова објава: ${news.title}`,
-          message: news.content.substring(0, 100) + (news.content.length > 100 ? '...' : '') + mediaText,
+          title: notifTitle,
+          message: notifBody,
           urgent: false,
           data: { news: newsForNotification, type: 'news', newsId: docRef.id },
         });

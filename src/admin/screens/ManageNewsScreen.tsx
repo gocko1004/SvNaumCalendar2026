@@ -250,7 +250,8 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
       await loadNews();
     } catch (error) {
       console.error('Error saving news:', error);
-      Alert.alert('Грешка', 'Неуспешно зачувување');
+      const errorMessage = error instanceof Error ? error.message : 'Непозната грешка';
+      Alert.alert('Грешка', `Неуспешно зачувување: ${errorMessage}`);
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -510,7 +511,7 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
       <Modal
         visible={dialogVisible}
         animationType="slide"
-        onRequestClose={() => { if (!uploading) { setDialogVisible(false); }}}
+        onRequestClose={() => { if (!uploading) { setDialogVisible(false); } }}
         presentationStyle="pageSheet"
       >
         <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
@@ -522,10 +523,10 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
               <MaterialCommunityIcons name="close" size={24} color="#333" />
             </TouchableOpacity>
           </View>
-          
-          <ScrollView 
+
+          <ScrollView
             contentContainerStyle={styles.modalScrollContent}
-            keyboardShouldPersistTaps="handled" 
+            keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.dialogContent}>
@@ -666,16 +667,16 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
                 </View>
               )}
 
-              <Button 
-                onPress={handleSave} 
-                mode="contained" 
-                loading={uploading} 
+              <Button
+                onPress={handleSave}
+                mode="contained"
+                loading={uploading}
                 disabled={uploading}
                 style={{ marginTop: 20 }}
               >
                 {uploading ? 'Се прикачува...' : 'Зачувај'}
               </Button>
-              
+
               {/* Bottom padding for keyboard */}
               <View style={{ height: 50 }} />
             </View>

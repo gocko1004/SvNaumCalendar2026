@@ -394,17 +394,21 @@ class NotificationService {
       }
 
       // IMPORTANT: Deduplicate tokens to prevent sending multiple notifications to same device
-      const allTokens = tokensSnapshot.docs.map(doc => doc.data().token).filter(Boolean);
+      // Also filter out any suspiciously long tokens (>100 chars) which could trigger VALIDATION_ERROR
+      const allTokens = tokensSnapshot.docs
+        .map(doc => doc.data().token)
+        .filter(t => t && typeof t === 'string' && t.length < 100);
+
       const uniqueTokens = [...new Set(allTokens)];
 
-      console.log(`Found ${allTokens.length} tokens, ${uniqueTokens.length} unique`);
+      console.log(`Found ${allTokens.length} valid tokens, ${uniqueTokens.length} unique`);
 
       if (uniqueTokens.length === 0) {
         return { success: false, sentCount: 0, error: 'No valid push tokens found' };
       }
 
       // Send push notifications via Expo Push Notification API
-      // Include fullBody in data as backup in case body gets truncated
+      // Expo has a limit of 100 messages per request, so we must chunk them
       const messages = uniqueTokens.map(token => ({
         to: token,
         sound: 'default',
@@ -415,26 +419,53 @@ class NotificationService {
         channelId: urgent ? 'urgent-updates' : 'church-events',
       }));
 
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messages),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error sending push notifications:', errorText);
-        return { success: false, sentCount: 0, error: `Failed to send: ${errorText}` };
+      // Split into chunks of 50 to be safe (limit is 100)
+      const CHUNK_SIZE = 50;
+      const chunks = [];
+      for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
+        chunks.push(messages.slice(i, i + CHUNK_SIZE));
       }
 
-      const result = await response.json();
-      const successCount = result.data?.filter((r: any) => r.status === 'ok').length || 0;
+      console.log(`Sending ${messages.length} notifications in ${chunks.length} batches...`);
 
-      return { success: true, sentCount: successCount };
+      let totalSuccessCount = 0;
+      let firstError = '';
+
+      // Send each chunk separately
+      for (const chunk of chunks) {
+        try {
+          const response = await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Accept-Encoding': 'gzip, deflate',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(chunk),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error sending batch chunk:', errorText);
+            if (!firstError) firstError = errorText;
+            continue;
+          }
+
+          const result = await response.json();
+          const chunkSuccessCount = result.data?.filter((r: any) => r.status === 'ok').length || 0;
+          totalSuccessCount += chunkSuccessCount;
+
+        } catch (chunkError: any) {
+          console.error('Error sending batch chunk:', chunkError);
+          if (!firstError) firstError = chunkError.message;
+        }
+      }
+
+      if (totalSuccessCount === 0 && firstError) {
+        return { success: false, sentCount: 0, error: `Failed to send: ${firstError}` };
+      }
+
+      return { success: true, sentCount: totalSuccessCount };
     } catch (error: any) {
       console.error('Error sending push notifications to all users:', error);
       return { success: false, sentCount: 0, error: error.message || 'Unknown error' };
