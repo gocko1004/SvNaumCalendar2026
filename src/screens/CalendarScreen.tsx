@@ -1075,7 +1075,7 @@ export const CalendarScreen = () => {
                       <MaterialCommunityIcons name="cross" size={12} color="#D4AF37" />
                       <Text style={[styles.contactRoleId, { marginLeft: 4 }]}>Европска Епархија</Text>
                     </View>
-                    <Text style={[styles.contactNameHorizontal, { fontSize: 12, lineHeight: 16 }]}>
+                    <Text style={[styles.contactNameHorizontal, { fontSize: 14, lineHeight: 18 }]}>
                       Неговото Високопреосвештенство Митрополитот Европски г.{'\u00A0'}Пимен
                     </Text>
                   </View>
