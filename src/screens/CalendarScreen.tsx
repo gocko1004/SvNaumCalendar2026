@@ -804,72 +804,72 @@ export const CalendarScreen = () => {
                   setShowEventDetail(true);
                 }}
               >
-              <Card
-                style={styles.eventCardIntegrated}
-              >
-                <View style={styles.integratedCardRow}>
-                  {/* Date Section */}
-                  <View style={[
-                    styles.integratedDateSection,
-                    { backgroundColor: SERVICE_TYPE_COLORS[event.serviceType as ServiceType] }
-                  ]}>
-                    <Text style={styles.integratedDateDay}>
-                      {format(event.date, 'dd', { locale: mk })}
-                    </Text>
-                    <Text style={styles.integratedDateMonth}>
-                      {format(event.date, 'MMM', { locale: mk })}
-                    </Text>
-                  </View>
-
-                  {/* Content Section */}
-                  <View style={styles.integratedContentSection}>
-                    <Text style={styles.integratedTitle} numberOfLines={3}>
-                      {event.name}
-                    </Text>
-                    {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
-                      <Text style={styles.integratedSaintName} numberOfLines={2}>
-                        {event.saintName}
+                <Card
+                  style={styles.eventCardIntegrated}
+                >
+                  <View style={styles.integratedCardRow}>
+                    {/* Date Section */}
+                    <View style={[
+                      styles.integratedDateSection,
+                      { backgroundColor: SERVICE_TYPE_COLORS[event.serviceType as ServiceType] }
+                    ]}>
+                      <Text style={styles.integratedDateDay}>
+                        {format(event.date, 'dd', { locale: mk })}
                       </Text>
-                    )}
-                    <View style={styles.integratedInfoRow}>
-                      <MaterialCommunityIcons
-                        name={SERVICE_TYPE_ICONS[event.serviceType as ServiceType]}
-                        size={14}
-                        color={SERVICE_TYPE_COLORS[event.serviceType as ServiceType]}
-                      />
-                      <Text style={[
-                        styles.integratedEventType,
-                        { color: SERVICE_TYPE_COLORS[event.serviceType as ServiceType] }
-                      ]}>
-                        {getServiceTypeLabel(event.serviceType)}
+                      <Text style={styles.integratedDateMonth}>
+                        {format(event.date, 'MMM', { locale: mk })}
                       </Text>
                     </View>
-                    <View style={styles.integratedInfoRow}>
-                      <MaterialCommunityIcons
-                        name="clock-outline"
-                        size={14}
-                        color="#555555"
-                      />
-                      <Text style={styles.integratedTime}>
-                        {event.description || `${event.time}ч`}
+
+                    {/* Content Section */}
+                    <View style={styles.integratedContentSection}>
+                      <Text style={styles.integratedTitle} numberOfLines={3}>
+                        {event.name}
                       </Text>
+                      {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
+                        <Text style={styles.integratedSaintName} numberOfLines={2}>
+                          {event.saintName}
+                        </Text>
+                      )}
+                      <View style={styles.integratedInfoRow}>
+                        <MaterialCommunityIcons
+                          name={SERVICE_TYPE_ICONS[event.serviceType as ServiceType]}
+                          size={14}
+                          color={SERVICE_TYPE_COLORS[event.serviceType as ServiceType]}
+                        />
+                        <Text style={[
+                          styles.integratedEventType,
+                          { color: SERVICE_TYPE_COLORS[event.serviceType as ServiceType] }
+                        ]}>
+                          {getServiceTypeLabel(event.serviceType)}
+                        </Text>
+                      </View>
+                      <View style={styles.integratedInfoRow}>
+                        <MaterialCommunityIcons
+                          name="clock-outline"
+                          size={14}
+                          color="#555555"
+                        />
+                        <Text style={styles.integratedTime}>
+                          {event.description || `${event.time}ч`}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Image Section */}
+                    <View style={styles.integratedImageSection}>
+                      <EventImage event={event} />
                     </View>
                   </View>
 
-                  {/* Image Section */}
-                  <View style={styles.integratedImageSection}>
-                    <EventImage event={event} />
-                  </View>
-                </View>
-
-                {/* Circular More Button - Fades in/out for middle 2 cards */}
-                {hasScrolled && (
-                  <AnimatedIcon
-                    visible={visibleItems.includes(event.date.toISOString() + event.serviceType)}
-                    color={SERVICE_TYPE_COLORS[event.serviceType as ServiceType]}
-                  />
-                )}
-              </Card>
+                  {/* Circular More Button - Fades in/out for middle 2 cards */}
+                  {hasScrolled && (
+                    <AnimatedIcon
+                      visible={visibleItems.includes(event.date.toISOString() + event.serviceType)}
+                      color={SERVICE_TYPE_COLORS[event.serviceType as ServiceType]}
+                    />
+                  )}
+                </Card>
               </TouchableOpacity>
             </View>
           )}
@@ -1034,34 +1034,63 @@ export const CalendarScreen = () => {
           <Dialog
             visible={contactDialogVisible}
             onDismiss={() => setContactDialogVisible(false)}
-            style={styles.dialog}
+            style={styles.contactDialog}
           >
-            <Dialog.Title style={{ color: COLORS.PRIMARY, fontSize: 20, fontWeight: 'bold' }}>
-              Контакт Информации
-            </Dialog.Title>
-            <Dialog.Content>
-              <Text style={{
-                fontSize: 16,
-                lineHeight: 24,
-                marginBottom: 16,
-                color: COLORS.TEXT,
-              }}>
-                Браќа и Сестри, со Благослов на Неговото високопреосвештенство Митрополит Европски Пимен, Празниците кои според календарот паѓаат во работни денови, светите Богослужби се отслужуваат пред денот на празникот со почеток во 19.00 ч, според годишниот план за Богослужби.
-              </Text>
-              <Text style={{
-                fontSize: 16,
-                lineHeight: 24,
-                marginTop: 8,
-                fontWeight: 'bold',
-                color: COLORS.PRIMARY,
-              }}>
-                Свештеник: Протoпрезвитер о. Горан Мантароски: 078 646 83 07
-              </Text>
+            <View style={styles.contactDialogHeader}>
+              <Text style={styles.contactDialogTitle}>Контакт</Text>
+              <TouchableOpacity onPress={() => setContactDialogVisible(false)}>
+                <MaterialCommunityIcons name="close" size={24} color={COLORS.TEXT} />
+              </TouchableOpacity>
+            </View>
+
+            <Dialog.Content style={styles.contactDialogContent}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* Priest Card */}
+                <View style={styles.contactCard}>
+                  <View style={styles.contactImageContainer}>
+                    <Image
+                      source={require('../../assets/images/contact/priest_goran.jpg')}
+                      style={styles.contactImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.contactInfoContainer}>
+                    <Text style={styles.contactName}>Протопрезвитер-ставрофор Горан Мантароски</Text>
+                    <Text style={styles.contactParish}>МПЦО „Свети Наум Охридски“ Триенген, Швајцарија</Text>
+
+                    <TouchableOpacity
+                      style={styles.contactDetailRow}
+                      onPress={() => Linking.openURL('tel:+41786468307')}
+                    >
+                      <MaterialCommunityIcons name="phone" size={18} color={COLORS.PRIMARY} />
+                      <Text style={styles.contactDetailText}>+41 78 64 68307</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.contactDetailRow}
+                      onPress={() => Linking.openURL('mailto:o.goran@mpee.mk')}
+                    >
+                      <MaterialCommunityIcons name="email" size={18} color={COLORS.PRIMARY} />
+                      <Text style={styles.contactDetailText}>o.goran@mpee.mk</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Bishop Card */}
+                <View style={styles.contactCard}>
+                  <View style={styles.contactImageContainer}>
+                    <Image
+                      source={require('../../assets/images/contact/bishop_pimen.jpg')}
+                      style={styles.contactImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.contactInfoContainer}>
+                    <Text style={styles.contactName}>Неговото Високопреосвештенство Митрополитот Европски г. Пимен</Text>
+                  </View>
+                </View>
+              </ScrollView>
             </Dialog.Content>
-            <Dialog.Actions>
-              <Button onPress={() => setContactDialogVisible(false)}>Затвори</Button>
-              <Button onPress={() => Linking.openURL('tel:+38978646837')}>Повикај</Button>
-            </Dialog.Actions>
           </Dialog>
         </Portal>
 
@@ -1894,5 +1923,81 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+  },
+  // Contact Dialog Styles
+  contactDialog: {
+    backgroundColor: '#FFFDF8',
+    borderRadius: 20,
+    elevation: 5,
+    maxHeight: '80%',
+  },
+  contactDialogHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  contactDialogTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: COLORS.PRIMARY,
+  },
+  contactDialogContent: {
+    paddingHorizontal: 0,
+    paddingBottom: 20,
+  },
+  contactCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  contactImageContainer: {
+    width: '100%',
+    height: 250,
+    backgroundColor: '#f5f5f5',
+  },
+  contactImage: {
+    width: '100%',
+    height: '100%',
+  },
+  contactInfoContainer: {
+    padding: 16,
+  },
+  contactName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.TEXT,
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  contactParish: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  contactDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingVertical: 4,
+  },
+  contactDetailText: {
+    fontSize: 15,
+    color: COLORS.PRIMARY,
+    marginLeft: 10,
+    fontWeight: '600',
   },
 });

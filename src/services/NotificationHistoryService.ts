@@ -9,6 +9,7 @@ import { db } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LAST_SEEN_KEY = '@notification_last_seen';
+const HIDDEN_NOTIFICATIONS_KEY = '@svnaum_hidden_notifications_v1';
 
 // Notification status
 export type NotificationStatus = 'SENT' | 'FAILED' | 'PARTIAL';
@@ -164,6 +165,9 @@ export const addNotificationRecord = async (record: Partial<NotificationRecord>)
 /**
  * Delete a notification record from Firestore
  */
+/**
+ * Delete a notification record from Firestore
+ */
 export const deleteNotificationRecord = async (recordId: string): Promise<boolean> => {
   try {
     const recordRef = doc(db, NOTIFICATION_HISTORY_COLLECTION, recordId);
@@ -172,6 +176,57 @@ export const deleteNotificationRecord = async (recordId: string): Promise<boolea
   } catch (error) {
     console.error('Error deleting notification record from Firestore:', error);
     return false;
+  }
+};
+
+/**
+ * Hide a notification locally for the current user
+ */
+export const hideNotification = async (recordId: string): Promise<boolean> => {
+  try {
+    // Get currently hidden notifications
+    const existingStr = await AsyncStorage.getItem(HIDDEN_NOTIFICATIONS_KEY);
+    const existing: string[] = existingStr ? JSON.parse(existingStr) : [];
+
+    // Add new ID if not present
+    if (!existing.includes(recordId)) {
+      existing.push(recordId);
+      await AsyncStorage.setItem(HIDDEN_NOTIFICATIONS_KEY, JSON.stringify(existing));
+    }
+    return true;
+  } catch (error) {
+    console.error('Error hiding notification locally:', error);
+    return false;
+  }
+};
+
+/**
+ * Get list of hidden notification IDs
+ */
+export const getHiddenNotificationIds = async (): Promise<string[]> => {
+  try {
+    const existingStr = await AsyncStorage.getItem(HIDDEN_NOTIFICATIONS_KEY);
+    return existingStr ? JSON.parse(existingStr) : [];
+  } catch (error) {
+    console.error('Error getting hidden notifications:', error);
+    return [];
+  }
+};
+
+/**
+ * Get user visible notifications (filtering out hidden ones)
+ */
+export const getUserVisibleNotifications = async (): Promise<NotificationRecord[]> => {
+  try {
+    const [recentHistory, hiddenIds] = await Promise.all([
+      getRecentNotificationHistory(),
+      getHiddenNotificationIds()
+    ]);
+
+    return recentHistory.filter(record => record.id && !hiddenIds.includes(record.id));
+  } catch (error) {
+    console.error('Error getting user visible notifications:', error);
+    return [];
   }
 };
 
@@ -328,7 +383,7 @@ export const setLastSeenTimestamp = async (): Promise<void> => {
 export const getUnseenNotificationCount = async (): Promise<number> => {
   try {
     const lastSeen = await getLastSeenTimestamp();
-    const records = await getRecentNotificationHistory();
+    const records = await getUserVisibleNotifications();
 
     // Filter out failed notifications (users don't see those)
     const visibleRecords = records.filter(r => r.status !== 'FAILED');

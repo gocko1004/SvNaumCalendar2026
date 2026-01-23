@@ -210,3 +210,40 @@ The app uses Macedonian/Cyrillic text. UI labels are hardcoded in Macedonian.
 - **ALWAYS ask before running EAS builds** - builds cost money and use limited credits
 - Run `npx tsc --noEmit` before builds to check for TypeScript errors
 - Test on simulator before building for production
+
+## Website Project (mpc-triengen.ch)
+
+Embeddable widgets for the church WordPress website are in:
+`/Users/gocepetrov/Documents/SvNaumCalendar2026/mpctriengen-website/`
+
+### Hero Slider Widget (IN PROGRESS)
+
+**File:** `hero-slider-embed.html`
+
+**Purpose:** Hero slider showing upcoming events from WordPress + calendar events
+
+**Current Status:**
+- Fetches from WordPress REST API `/wp/v2/posts`
+- WordPress has **media REST API blocked** - slider fetches post page HTML to extract image
+- Calendar events show as text-only (centered)
+- WordPress posts with Featured Image show with image on left, text on right
+- 12 second slide duration, smooth horizontal transitions
+
+**WordPress Limitations:**
+- `nastani` custom post type does NOT have REST API enabled (returns 404)
+- Media REST API returns 401 "rest_forbidden"
+- Must use regular Posts and scrape og:image from post page
+
+**To add event to slider:**
+1. WordPress → Објави (Posts) → New/Edit post
+2. Title format: `DD.MM.YYYY - Event Name` (e.g., `19.01.2026 - Богојавление`)
+3. Add Featured Image (right sidebar)
+4. Publish
+
+**TODO:**
+- User needs to upload correct featured image in WordPress
+- Current featured image on test post is `19-010.jpg` (old image from 2024)
+
+### Calendar Embed Widget
+
+**File:** `calendar-embed.html` - Working, embeds the church calendar

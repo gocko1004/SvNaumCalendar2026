@@ -9,9 +9,9 @@ import { RootStackParamList, BadgeContext } from '../navigation/AppNavigator';
 import { COLORS } from '../constants/theme';
 import {
     NotificationRecord,
-    getRecentNotificationHistory,
+    getUserVisibleNotifications,
     setLastSeenTimestamp,
-    deleteNotificationRecord,
+    hideNotification,
     NOTIFICATION_CATEGORY_ICONS
 } from '../services/NotificationHistoryService';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
@@ -72,7 +72,7 @@ export const UserNotificationHistoryScreen: React.FC<UserNotificationHistoryScre
     const loadData = async () => {
         setLoading(true);
         try {
-            const historyData = await getRecentNotificationHistory();
+            const historyData = await getUserVisibleNotifications();
             const visibleNotifications = historyData.filter(n => n.status !== 'FAILED');
             setNotifications(visibleNotifications);
         } catch (error) {
@@ -114,7 +114,7 @@ export const UserNotificationHistoryScreen: React.FC<UserNotificationHistoryScre
                     style: 'destructive',
                     onPress: async () => {
                         if (notification.id) {
-                            await deleteNotificationRecord(notification.id);
+                            await hideNotification(notification.id);
                             // Remove from local state
                             setNotifications(prev => prev.filter(n => n.id !== notification.id));
                         }
