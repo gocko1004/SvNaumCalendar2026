@@ -371,6 +371,7 @@ export const CalendarScreen = () => {
   const adminTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLongPressing, setIsLongPressing] = useState(false);
+  const [showFullAddress, setShowFullAddress] = useState(false);
   const { isAuthenticated } = useAuth();
 
   const handleHeaderTap = useCallback(() => {
@@ -588,13 +589,28 @@ export const CalendarScreen = () => {
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    if (upcomingEvents.length > 0) {
+    if (upcomingEvents.length > 0 && sectionListRef.current) {
       const nextEvent = upcomingEvents[0];
       const nextEventMonth = nextEvent.date.getMonth();
-      scrollToMonth(nextEventMonth);
+
+      // Find section and item index for this event
+      const sectionIndex = sections.findIndex(s => s.monthIndex === nextEventMonth);
+      if (sectionIndex !== -1) {
+        const itemIndex = sections[sectionIndex].data.findIndex(
+          e => e.date.getTime() === nextEvent.date.getTime() && e.serviceType === nextEvent.serviceType
+        );
+
+        sectionListRef.current.scrollToLocation({
+          sectionIndex,
+          itemIndex: Math.max(0, itemIndex),
+          animated: true,
+          viewOffset: 100,
+        });
+        setSelectedMonth(nextEventMonth);
+      }
       setSelectedServiceTypes(new Set());
     }
-  }, [events, scrollToMonth]);
+  }, [events, sections]);
 
   // Handle scroll events to show/hide Today button
   const handleScroll = useCallback((event: any) => {
@@ -1043,54 +1059,109 @@ export const CalendarScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <Dialog.Content style={styles.contactDialogContent}>
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Priest Card */}
-                <View style={styles.contactCard}>
-                  <View style={styles.contactImageContainer}>
-                    <Image
-                      source={require('../../assets/images/contact/priest_goran.jpg')}
-                      style={styles.contactImage}
-                      resizeMode="cover"
-                    />
-                  </View>
-                  <View style={styles.contactInfoContainer}>
-                    <Text style={styles.contactName}>Протопрезвитер-ставрофор Горан Мантароски</Text>
-                    <Text style={styles.contactParish}>МПЦО „Свети Наум Охридски“ Триенген, Швајцарија</Text>
-
-                    <TouchableOpacity
-                      style={styles.contactDetailRow}
-                      onPress={() => Linking.openURL('tel:+41786468307')}
-                    >
-                      <MaterialCommunityIcons name="phone" size={18} color={COLORS.PRIMARY} />
-                      <Text style={styles.contactDetailText}>+41 78 64 68307</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.contactDetailRow}
-                      onPress={() => Linking.openURL('mailto:o.goran@mpee.mk')}
-                    >
-                      <MaterialCommunityIcons name="email" size={18} color={COLORS.PRIMARY} />
-                      <Text style={styles.contactDetailText}>o.goran@mpee.mk</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
+            <View style={styles.contactDialogContent}>
+              <ScrollView showsVerticalScrollIndicator={false} style={{ backgroundColor: '#FFFDF8' }}>
                 {/* Bishop Card */}
-                <View style={styles.contactCard}>
-                  <View style={styles.contactImageContainer}>
+                <View style={[styles.contactCardHorizontal, { minHeight: 140, marginBottom: 10 }]}>
+                  <View style={styles.contactImageContainerHorizontal}>
                     <Image
                       source={require('../../assets/images/contact/bishop_pimen.jpg')}
-                      style={styles.contactImage}
+                      style={styles.contactImageBishop}
                       resizeMode="cover"
                     />
                   </View>
-                  <View style={styles.contactInfoContainer}>
-                    <Text style={styles.contactName}>Неговото Високопреосвештенство Митрополитот Европски г. Пимен</Text>
+                  <View style={styles.contactInfoContainerHorizontal}>
+                    <View style={styles.contactRoleRow}>
+                      <MaterialCommunityIcons name="cross" size={12} color="#D4AF37" />
+                      <Text style={[styles.contactRoleId, { marginLeft: 4 }]}>Европска Епархија</Text>
+                    </View>
+                    <Text style={[styles.contactNameHorizontal, { fontSize: 12, lineHeight: 16 }]}>
+                      Неговото Високопреосвештенство Митрополитот Европски г.{'\u00A0'}Пимен
+                    </Text>
                   </View>
                 </View>
+
+                {/* Priest Card */}
+                <View style={[styles.contactCardHorizontal, { marginBottom: 12 }]}>
+                  <View style={styles.contactImageContainerHorizontal}>
+                    <Image
+                      source={require('../../assets/images/contact/priest_goran.jpg')}
+                      style={styles.contactImageFaceFocus}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.contactInfoContainerHorizontal}>
+                    <View style={styles.contactRoleRow}>
+                      <MaterialCommunityIcons name="account-tie" size={12} color="#D4AF37" />
+                      <Text style={[styles.contactRoleId, { marginLeft: 4 }]}>Парохиски Свештеник</Text>
+                    </View>
+                    <View style={styles.contactHeaderRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.contactNameHorizontal, { fontSize: 12, marginBottom: 2 }]}>
+                          Протопрезвитер-ставрофор Горан Мантароски
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.callButtonCompact}
+                        onPress={() => Linking.openURL('tel:+41786468307')}
+                      >
+                        <MaterialCommunityIcons name="phone" size={16} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.contactDetailsCompact}>
+                      <TouchableOpacity
+                        style={styles.contactDetailRowCompact}
+                        onPress={() => Linking.openURL('tel:+41786468307')}
+                      >
+                        <MaterialCommunityIcons name="phone" size={12} color={COLORS.PRIMARY} />
+                        <Text style={styles.contactDetailTextCompact}>+41 78 646 83 07</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.contactDetailRowCompact}
+                        onPress={() => Linking.openURL('mailto:o.goran@mpee.mk')}
+                      >
+                        <MaterialCommunityIcons name="email" size={12} color={COLORS.PRIMARY} />
+                        <Text style={styles.contactDetailTextCompact}>o.goran@mpee.mk</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* German Address Section with Read More */}
+                    <View style={styles.addressSectionCompact}>
+                      <TouchableOpacity
+                        style={styles.readMoreButtonCompact}
+                        onPress={() => setShowFullAddress(!showFullAddress)}
+                      >
+                        <Text style={styles.readMoreButtonTextCompact}>
+                          {showFullAddress ? 'Сокриј ја адресата на црквата' : 'Прикажи ја адресата на црквата'}
+                        </Text>
+                        <MaterialCommunityIcons
+                          name={showFullAddress ? "chevron-up" : "chevron-down"}
+                          size={16}
+                          color={COLORS.PRIMARY}
+                        />
+                      </TouchableOpacity>
+
+                      {showFullAddress && (
+                        <View style={styles.germanAddressContainerCompact}>
+                          <Text style={styles.germanAddressTitleCompact}>Mazedonisch orthodoxe Kirche</Text>
+                          <Text style={styles.germanAddressTextCompact}>Hl. Naum Ohrider</Text>
+                          <Text style={styles.germanAddressTextCompact}>Gieslerstrasse 12, 6234 Triengen</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Footer Parish Info */}
+                <View style={{ paddingHorizontal: 16, paddingBottom: 16, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 11, color: '#888', fontWeight: '500', textAlign: 'center', fontStyle: 'italic', lineHeight: 14 }}>
+                    МПЦО „Свети Наум Охридски“ Триенген, Швајцарија
+                  </Text>
+                </View>
               </ScrollView>
-            </Dialog.Content>
+            </View>
           </Dialog>
         </Portal>
 
@@ -1928,8 +1999,8 @@ const styles = StyleSheet.create({
   contactDialog: {
     backgroundColor: '#FFFDF8',
     borderRadius: 20,
-    elevation: 5,
-    maxHeight: '80%',
+    elevation: 0,
+    maxHeight: '85%',
   },
   contactDialogHeader: {
     flexDirection: 'row',
@@ -1938,6 +2009,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
+    borderBottomWidth: 0,
   },
   contactDialogTitle: {
     fontSize: 22,
@@ -1946,58 +2018,127 @@ const styles = StyleSheet.create({
   },
   contactDialogContent: {
     paddingHorizontal: 0,
-    paddingBottom: 20,
-  },
-  contactCard: {
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 16,
+    paddingBottom: 24,
+    backgroundColor: '#FFFDF8',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     overflow: 'hidden',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-  },
-  contactImageContainer: {
-    width: '100%',
-    height: 250,
-    backgroundColor: '#f5f5f5',
   },
   contactImage: {
     width: '100%',
     height: '100%',
   },
-  contactInfoContainer: {
-    padding: 16,
+  contactImageFaceFocus: {
+    width: '100%',
+    height: '140%', // Scale up to crop bottom/body
+    position: 'absolute',
+    top: 0, // Align top to show face
   },
-  contactName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.TEXT,
+  contactImageBishop: {
+    width: '200%',
+    height: '270%', // Zoom in more on bishop face
+    position: 'absolute',
+    top: -40,
+    right: -70, // Shift right to center Pimen
+  },
+  contactCardHorizontal: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
     marginBottom: 8,
-    lineHeight: 24,
+    borderRadius: 12,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
   },
-  contactParish: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-    fontStyle: 'italic',
-    lineHeight: 20,
+  contactImageContainerHorizontal: {
+    width: 90,
+    backgroundColor: '#f5f5f5',
+    overflow: 'hidden',
   },
-  contactDetailRow: {
+  contactInfoContainerHorizontal: {
+    flex: 1,
+    padding: 10,
+    justifyContent: 'center',
+  },
+  contactHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  callButtonCompact: {
+    backgroundColor: COLORS.PRIMARY,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+    elevation: 0,
+  },
+  contactRoleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    paddingVertical: 4,
+    marginBottom: 4,
   },
-  contactDetailText: {
-    fontSize: 15,
+  contactRoleId: {
+    fontSize: 9,
+    color: '#D4AF37',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  contactNameHorizontal: {
+    fontSize: 13,
+    fontWeight: 'bold',
     color: COLORS.PRIMARY,
-    marginLeft: 10,
+    marginBottom: 4,
+    lineHeight: 16,
+    flexWrap: 'wrap',
+  },
+  contactDetailsCompact: {
+    marginTop: 4,
+  },
+  contactDetailRowCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  contactDetailTextCompact: {
+    fontSize: 11,
+    color: COLORS.TEXT,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  addressSectionCompact: {
+    marginTop: 8,
+    paddingTop: 0,
+  },
+  readMoreButtonCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  readMoreButtonTextCompact: {
+    color: COLORS.PRIMARY,
     fontWeight: '600',
+    marginRight: 4,
+    fontSize: 10,
+  },
+  germanAddressContainerCompact: {
+    marginTop: 4,
+    padding: 6,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 6,
+  },
+  germanAddressTitleCompact: {
+    fontWeight: 'bold',
+    color: COLORS.TEXT,
+    fontSize: 10,
+    marginBottom: 1,
+  },
+  germanAddressTextCompact: {
+    color: '#666',
+    fontSize: 10,
+    lineHeight: 12,
   },
 });
