@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
 import { db } from '../firebase';
 import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
+import { getAllEvents, mergeEvents } from './FirestoreEventService';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const LAST_SCHEDULE_CHECK = '@last_schedule_check';
@@ -107,8 +108,12 @@ class NotificationService {
       const now = new Date();
       const nextYear = addYears(now, 1);
 
+      // Fetch all events (merged defaults + firestore)
+      const firestoreEvents = await getAllEvents();
+      const allEvents = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+
       // Schedule current year's remaining events
-      const currentYearEvents = CHURCH_EVENTS.filter((event: ChurchEvent) => {
+      const currentYearEvents = allEvents.filter((event: ChurchEvent) => {
         const eventDate = new Date(event.date);
         return isAfter(eventDate, now) && isBefore(eventDate, nextYear);
       });

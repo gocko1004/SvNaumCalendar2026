@@ -3,7 +3,7 @@
  * Allows admins to add, edit, and delete events that sync to all users
  */
 
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, Timestamp, setDoc as commonSetDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ChurchEvent, ServiceType } from './ChurchCalendarService';
 
@@ -117,27 +117,56 @@ export const deleteEvent = async (eventId: string): Promise<boolean> => {
  * Firestore events take precedence (can override hardcoded ones)
  */
 export const mergeEvents = (hardcodedEvents: ChurchEvent[], firestoreEvents: ChurchEvent[]): ChurchEvent[] => {
-  // Create a map of Firestore events by date (for quick lookup)
-  const firestoreMap = new Map<string, ChurchEvent[]>();
-  
-  firestoreEvents.forEach(event => {
-    const dateKey = event.date.toISOString().split('T')[0];
-    if (!firestoreMap.has(dateKey)) {
-      firestoreMap.set(dateKey, []);
+  // Create a map of events by ID
+  const eventMap = new Map<string, ChurchEvent>();
+
+  // 1. Add all hardcoded events first
+  hardcodedEvents.forEach(event => {
+    // Ensure hardcoded events have an ID (they should from ChurchCalendarService, but fallback if not)
+    // The ID generation logic in ChurchCalendarService guarantees IDs.
+    if (event.id) {
+      eventMap.set(event.id, event);
     }
-    firestoreMap.get(dateKey)!.push(event);
   });
-  
-  // Combine: Start with hardcoded, then add Firestore events
-  const allEvents = [...hardcodedEvents];
-  
+
+  // 2. Override/Add Firestore events
   firestoreEvents.forEach(event => {
-    allEvents.push(event);
+    if (event.id) {
+      eventMap.set(event.id, event);
+    }
   });
-  
+
+  // Convert map back to array and sort
+  const allEvents = Array.from(eventMap.values());
+
   // Sort by date
   allEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
-  
+
   return allEvents;
 };
+
+/**
+ * Save an event (Upsert)
+ * Validates ID and uses setDoc to either create or overwrite
+ */
+export const saveEvent = async (event: ChurchEvent): Promise<boolean> => {
+  try {
+    if (!event.id) {
+      console.error('Cannot save event without ID');
+      return false;
+    }
+
+    // Check if it's a "custom" event without a proper ID format and generate one if needed?
+    // But we expect the ID to be passed in.
+
+    const eventRef = doc(db, EVENTS_COLLECTION, event.id);
+    await commonSetDoc(eventRef, eventToFirestore(event), { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error saving event to Firestore:', error);
+    return false;
+  }
+};
+
+
 

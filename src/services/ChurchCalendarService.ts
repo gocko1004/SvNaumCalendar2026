@@ -20,56 +20,56 @@ export interface ChurchEvent {
 }
 
 // Church events for 2026
-export const CHURCH_EVENTS_2026: ChurchEvent[] = [
+export const RAW_EVENTS_2026: ChurchEvent[] = [
   // January
   {
-    date: new Date(2026, 1-1, 4),
+    date: new Date(2026, 1 - 1, 4),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Вмц. Анастасија Узорешителница'
   },
   {
-    date: new Date(2026, 1-1, 5),
+    date: new Date(2026, 1 - 1, 5),
     name: 'Свети Наум охридски',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
     description: '09:00 - 13:00'
   },
   {
-    date: new Date(2026, 1-1, 7),
+    date: new Date(2026, 1 - 1, 7),
     name: 'Рождество Христово БОЖИК',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 1-1, 7),
+    date: new Date(2026, 1 - 1, 7),
     name: 'Рождество Христово БОЖИК',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 1-1, 11),
+    date: new Date(2026, 1 - 1, 11),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Јосиф Обручник, цар Давид и Јаков'
   },
   {
-    date: new Date(2026, 1-1, 18),
+    date: new Date(2026, 1 - 1, 18),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Свмч. Теопемпт и мч. Теона'
   },
   {
-    date: new Date(2026, 1-1, 19),
+    date: new Date(2026, 1 - 1, 19),
     name: 'Голем Богојавлениски Водосвет, Богојавление',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 1-1, 25),
+    date: new Date(2026, 1 - 1, 25),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
@@ -77,14 +77,14 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   // February
   {
-    date: new Date(2026, 2-1, 1),
+    date: new Date(2026, 2 - 1, 1),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Преп. Макариј Велики'
   },
   {
-    date: new Date(2026, 2-1, 8),
+    date: new Date(2026, 2 - 1, 8),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -92,54 +92,54 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Преп. Ксенофонт и семејството'
   },
   {
-    date: new Date(2026, 2-1, 14),
+    date: new Date(2026, 2 - 1, 14),
     name: 'ЗАДУШНИЦА',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 2-1, 15),
+    date: new Date(2026, 2 - 1, 15),
     name: 'Сретение Господово',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 2-1, 22),
+    date: new Date(2026, 2 - 1, 22),
     name: 'Прочка',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   // March
   {
-    date: new Date(2026, 3-1, 1),
+    date: new Date(2026, 3 - 1, 1),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Мч. Памфил, Валент, Павле и др.'
   },
   {
-    date: new Date(2026, 3-1, 8),
+    date: new Date(2026, 3 - 1, 8),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Свмч. Поликарп, еп. Смирнски'
   },
   {
-    date: new Date(2026, 3-1, 15),
+    date: new Date(2026, 3 - 1, 15),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Поклонение на Часниот Крст'
   },
   {
-    date: new Date(2026, 3-1, 22),
+    date: new Date(2026, 3 - 1, 22),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Преп. Јован Лествичник'
   },
   {
-    date: new Date(2026, 3-1, 29),
+    date: new Date(2026, 3 - 1, 29),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -148,37 +148,37 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   // April
   {
-    date: new Date(2026, 4-1, 4),
+    date: new Date(2026, 4 - 1, 4),
     name: 'Лазарева Сабота',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 4-1, 5),
+    date: new Date(2026, 4 - 1, 5),
     name: 'ЦВЕТНИЦИ',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 4-1, 9),
+    date: new Date(2026, 4 - 1, 9),
     name: 'Велики Четврток',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 4-1, 10),
+    date: new Date(2026, 4 - 1, 10),
     name: 'Велики Петок',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 4-1, 12),
+    date: new Date(2026, 4 - 1, 12),
     name: 'Воскресение на Господ Исус Христос, Велигден',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 4-1, 13),
+    date: new Date(2026, 4 - 1, 13),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -186,7 +186,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Свмч. Ипатиј, еп. Гангрски'
   },
   {
-    date: new Date(2026, 4-1, 19),
+    date: new Date(2026, 4 - 1, 19),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -194,7 +194,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Св. Методиј, архиеп. Моравски'
   },
   {
-    date: new Date(2026, 4-1, 26),
+    date: new Date(2026, 4 - 1, 26),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
@@ -202,27 +202,27 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   // May
   {
-    date: new Date(2026, 5-1, 3),
+    date: new Date(2026, 5 - 1, 3),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Преп. Теодор Трихин'
   },
   {
-    date: new Date(2026, 5-1, 5),
+    date: new Date(2026, 5 - 1, 5),
     name: 'Св. вмч. Георгиј Победоносец',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 5-1, 6),
+    date: new Date(2026, 5 - 1, 6),
     name: 'Св. вмч. Георгиј Победоносец',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
     description: '09:00 - 13:00'
   },
   {
-    date: new Date(2026, 5-1, 10),
+    date: new Date(2026, 5 - 1, 10),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -230,7 +230,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Ап. Симеон, еп. Јерусалимски'
   },
   {
-    date: new Date(2026, 5-1, 17),
+    date: new Date(2026, 5 - 1, 17),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
@@ -238,65 +238,65 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Мч. Пелагија, дева Тарсиска'
   },
   {
-    date: new Date(2026, 5-1, 20),
+    date: new Date(2026, 5 - 1, 20),
     name: 'Вознесение на Господ Исус Христос Спасовден',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 5-1, 21),
+    date: new Date(2026, 5 - 1, 21),
     name: 'Вознесение на Господ Исус Христос Спасовден',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
     description: '09:00 - 13:00'
   },
   {
-    date: new Date(2026, 5-1, 24),
+    date: new Date(2026, 5 - 1, 24),
     name: 'Св. Кирил и Методиј',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 5-1, 30),
+    date: new Date(2026, 5 - 1, 30),
     name: 'ЗАДУШНИЦА',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 5-1, 31),
+    date: new Date(2026, 5 - 1, 31),
     name: 'Слегување на Св. Дух врз апостолите – Педесетница',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   // June
   {
-    date: new Date(2026, 6-1, 2),
+    date: new Date(2026, 6 - 1, 2),
     name: 'Св. рамноап. цас Константин и Едена',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 6-1, 7),
+    date: new Date(2026, 6 - 1, 7),
     name: 'Петрови Поклади',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 6-1, 14),
+    date: new Date(2026, 6 - 1, 14),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Мч. Јустин Филозоф'
   },
   {
-    date: new Date(2026, 6-1, 21),
+    date: new Date(2026, 6 - 1, 21),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Вмч. Теодор Стратилат'
   },
   {
-    date: new Date(2026, 6-1, 28),
+    date: new Date(2026, 6 - 1, 28),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
@@ -304,32 +304,32 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   // July
   {
-    date: new Date(2026, 7-1, 2),
+    date: new Date(2026, 7 - 1, 2),
     name: 'Св. Наум Охридски',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 7-1, 3),
+    date: new Date(2026, 7 - 1, 3),
     name: 'Св. Наум Охридски',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
     description: '09:00 - 13:00'
   },
   {
-    date: new Date(2026, 7-1, 5),
+    date: new Date(2026, 7 - 1, 5),
     name: 'Неделна Литургија – Пикник',
     serviceType: 'PICNIC',
     time: '09:00'
   },
   {
-    date: new Date(2026, 7-1, 12),
+    date: new Date(2026, 7 - 1, 12),
     name: 'Св. ап-ли Петар и Павле, Петровден',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 7-1, 19),
+    date: new Date(2026, 7 - 1, 19),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -337,7 +337,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Преп. Сисој Велики'
   },
   {
-    date: new Date(2026, 7-1, 26),
+    date: new Date(2026, 7 - 1, 26),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -346,7 +346,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   // August
   {
-    date: new Date(2026, 8-1, 2),
+    date: new Date(2026, 8 - 1, 2),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -354,7 +354,7 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Св. прор. Илија'
   },
   {
-    date: new Date(2026, 8-1, 9),
+    date: new Date(2026, 8 - 1, 9),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -362,60 +362,60 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Св. Климент Охридски'
   },
   {
-    date: new Date(2026, 8-1, 16),
+    date: new Date(2026, 8 - 1, 16),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Преп. Исаакиј, Далмат и Фавст'
   },
   {
-    date: new Date(2026, 8-1, 18),
+    date: new Date(2026, 8 - 1, 18),
     name: 'Преображение на Господ Исус Христос',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 8-1, 23),
+    date: new Date(2026, 8 - 1, 23),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Мч. архиѓакон Лаврентиј'
   },
   {
-    date: new Date(2026, 8-1, 27),
+    date: new Date(2026, 8 - 1, 27),
     name: 'Успение на Пресвета Богородица',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 8-1, 28),
+    date: new Date(2026, 8 - 1, 28),
     name: 'Богородица',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
     description: '09:00 - 13:00'
   },
   {
-    date: new Date(2026, 8-1, 30),
+    date: new Date(2026, 8 - 1, 30),
     name: 'Неделна Литургија – Пикник',
     serviceType: 'PICNIC',
     time: '09:00'
   },
   // September
   {
-    date: new Date(2026, 9-1, 6),
+    date: new Date(2026, 9 - 1, 6),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Свмч. Евтихиј'
   },
   {
-    date: new Date(2026, 9-1, 10),
+    date: new Date(2026, 9 - 1, 10),
     name: 'Отсекување на главата на Св. Јован Крстител',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 9-1, 13),
+    date: new Date(2026, 9 - 1, 13),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -423,28 +423,28 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Положување на појасот на Пресв. Богородица'
   },
   {
-    date: new Date(2026, 9-1, 20),
+    date: new Date(2026, 9 - 1, 20),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Мч. Созонт'
   },
   {
-    date: new Date(2026, 9-1, 21),
+    date: new Date(2026, 9 - 1, 21),
     name: 'Мала Богородица',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
     description: '09:00 - 13:00'
   },
   {
-    date: new Date(2026, 9-1, 27),
+    date: new Date(2026, 9 - 1, 27),
     name: 'Воздвижение на Чесниот Крст, Крстовден',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   // October
   {
-    date: new Date(2026, 10-1, 4),
+    date: new Date(2026, 10 - 1, 4),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -452,34 +452,34 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Ап. Кодрат'
   },
   {
-    date: new Date(2026, 10-1, 11),
+    date: new Date(2026, 10 - 1, 11),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Преп. Харитон Исповедник'
   },
   {
-    date: new Date(2026, 10-1, 18),
+    date: new Date(2026, 10 - 1, 18),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Мч. Харитина'
   },
   {
-    date: new Date(2026, 10-1, 25),
+    date: new Date(2026, 10 - 1, 25),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Св. отци од VII Вселенски Собор'
   },
   {
-    date: new Date(2026, 10-1, 26),
+    date: new Date(2026, 10 - 1, 26),
     name: 'Св. Петка, Петковден',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 10-1, 27),
+    date: new Date(2026, 10 - 1, 27),
     name: 'Св. Петка, Петковден',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -487,26 +487,26 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   // November
   {
-    date: new Date(2026, 11-1, 1),
+    date: new Date(2026, 11 - 1, 1),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Прор. Јоил'
   },
   {
-    date: new Date(2026, 11-1, 7),
+    date: new Date(2026, 11 - 1, 7),
     name: 'ЗАДУШНИЦА',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 11-1, 8),
+    date: new Date(2026, 11 - 1, 8),
     name: 'Св. вмч. Димитриј – Митровден',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 11-1, 15),
+    date: new Date(2026, 11 - 1, 15),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -514,20 +514,20 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Мч. Акиндин, Пигасиј и др.'
   },
   {
-    date: new Date(2026, 11-1, 21),
+    date: new Date(2026, 11 - 1, 21),
     name: 'Собор на св. Архангел Михаил',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 11-1, 22),
+    date: new Date(2026, 11 - 1, 22),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Преп. Матрона Цариградска'
   },
   {
-    date: new Date(2026, 11-1, 29),
+    date: new Date(2026, 11 - 1, 29),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
@@ -535,47 +535,47 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
   },
   // December
   {
-    date: new Date(2026, 12-1, 3),
+    date: new Date(2026, 12 - 1, 3),
     name: 'Воведение на Пресвета Богородица – Пречиста',
     serviceType: 'EVENING_SERVICE',
     time: '19:00'
   },
   {
-    date: new Date(2026, 12-1, 4),
+    date: new Date(2026, 12 - 1, 4),
     name: 'Воведение на Пресвета Богородица – Пречиста',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
     description: '09:00 - 13:00'
   },
   {
-    date: new Date(2026, 12-1, 6),
+    date: new Date(2026, 12 - 1, 6),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Св. Амфилохиј, еп. Икониски'
   },
   {
-    date: new Date(2026, 12-1, 13),
+    date: new Date(2026, 12 - 1, 13),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Ап. Андреј Првоповикан'
   },
   {
-    date: new Date(2026, 12-1, 19),
+    date: new Date(2026, 12 - 1, 19),
     name: 'Св. Николај',
     serviceType: 'LITURGY',
     time: '09:00'
   },
   {
-    date: new Date(2026, 12-1, 20),
+    date: new Date(2026, 12 - 1, 20),
     name: 'Неделна Литургија',
     serviceType: 'LITURGY',
     time: '09:00',
     saintName: 'Св. Амвросиј, еп. Медиолански'
   },
   {
-    date: new Date(2026, 12-1, 27),
+    date: new Date(2026, 12 - 1, 27),
     name: 'Црквата е отворена',
     serviceType: 'CHURCH_OPEN',
     time: '09:00',
@@ -583,6 +583,18 @@ export const CHURCH_EVENTS_2026: ChurchEvent[] = [
     saintName: 'Мч. Тирс, Левкиј и Калиник'
   }
 ];
+
+// Helper to generate deterministic IDs
+const generateEventId = (event: ChurchEvent): string => {
+  // Use a fixed format for the ID: event_YYYY-MM-DD_TYPE
+  const dateStr = format(event.date, 'yyyy-MM-dd');
+  return `event_${dateStr}_${event.serviceType}`;
+};
+
+export const CHURCH_EVENTS_2026: ChurchEvent[] = RAW_EVENTS_2026.map(event => ({
+  ...event,
+  id: generateEventId(event)
+}));
 
 // Use CHURCH_EVENTS_2026 as the main calendar
 export const CHURCH_EVENTS = CHURCH_EVENTS_2026;

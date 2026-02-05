@@ -2,6 +2,7 @@ import { collection, doc, getDoc, setDoc, getDocs, deleteDoc, updateDoc, query, 
 import { db } from '../firebase';
 import { CHURCH_EVENTS, ChurchEvent, ServiceType } from './ChurchCalendarService';
 import { logSentNotification } from './NotificationHistoryService';
+import { getAllEvents, mergeEvents } from './FirestoreEventService';
 import * as Notifications from 'expo-notifications';
 
 // Auto-notification configuration types
@@ -218,10 +219,14 @@ export const toggleAutoNotificationConfig = async (configId: string, isEnabled: 
 };
 
 // Get big events (picnics and major feasts) that could benefit from auto-notifications
-export const getBigEvents = (): ChurchEvent[] => {
+export const getBigEvents = async (): Promise<ChurchEvent[]> => {
   const now = new Date();
 
-  return CHURCH_EVENTS.filter(event => {
+  // Get all events merged
+  const fromFirestore = await getAllEvents();
+  const allEvents = mergeEvents(CHURCH_EVENTS, fromFirestore);
+
+  return allEvents.filter(event => {
     // Only future events
     if (event.date < now) return false;
 
@@ -246,9 +251,14 @@ export const getBigEvents = (): ChurchEvent[] => {
 };
 
 // Get ALL future events for auto-notification configuration
-export const getAllFutureEvents = (): ChurchEvent[] => {
+export const getAllFutureEvents = async (): Promise<ChurchEvent[]> => {
   const now = new Date();
-  return CHURCH_EVENTS
+
+  // Get all events merged
+  const fromFirestore = await getAllEvents();
+  const allEvents = mergeEvents(CHURCH_EVENTS, fromFirestore);
+
+  return allEvents
     .filter(event => event.date >= now)
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 };
@@ -256,7 +266,7 @@ export const getAllFutureEvents = (): ChurchEvent[] => {
 // Initialize default auto-notification configs for big events
 export const initializeDefaultConfigs = async (): Promise<number> => {
   try {
-    const bigEvents = getBigEvents();
+    const bigEvents = await getBigEvents();
     let created = 0;
 
     for (const event of bigEvents) {

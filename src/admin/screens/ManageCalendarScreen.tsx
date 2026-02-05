@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Image, Dimensions, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { 
-  Title, 
-  Card, 
-  Button, 
-  Portal, 
-  Dialog, 
+import {
+  Title,
+  Card,
+  Button,
+  Portal,
+  Dialog,
   TextInput,
   List,
   IconButton,
@@ -19,7 +19,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
 import { COLORS } from '../../constants/theme';
 import { ChurchEvent, CHURCH_EVENTS, ServiceType } from '../../services/ChurchCalendarService';
-import { getAllEvents, addEvent, updateEvent, deleteEvent, mergeEvents } from '../../services/FirestoreEventService';
+import { getAllEvents, addEvent, updateEvent, deleteEvent, mergeEvents, saveEvent } from '../../services/FirestoreEventService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -128,26 +128,43 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
 
     setLoading(true);
     try {
+      // Use the new saveEvent which handles both insert and update (upsert)
+      // and ensures hardcoded events are shadowed properly in Firestore
+
+      // If no ID (newly created event via button), generate one? 
+      // Or saveEvent will rely on ID. 
+      // Since addEvent (old) generated ID, we should probably check if we have ID.
+      // If we are adding a NEW event, we might need to generate an ID or use addEvent.
+      // But let's assume valid events being edited have IDs (even hardcoded ones now).
+
+      // If it's a NEW event (Add button), it might not have ID.
+      // Let's generate one if missing for consistency? 
+      // Or use addEvent for completely new ones?
+
+      let success = false;
       if (selectedEvent && selectedEvent.id) {
-        // Editing existing Firestore event
-        const success = await updateEvent(selectedEvent.id, sanitizedEvent);
-        if (success) {
-          Alert.alert('Успех', 'Настанот е успешно ажуриран');
-          await refreshEvents();
-        } else {
-          Alert.alert('Грешка', 'Настанот не може да се ажурира');
-        }
+        // Editing existing (Firestore or Hardcoded)
+        success = await saveEvent({
+          ...sanitizedEvent,
+          id: selectedEvent.id // Ensure ID is preserved
+        } as ChurchEvent);
       } else {
-        // Adding new event to Firestore
+        // Adding NEW event
+        // Let's use addEvent for now as it handles ID gen, OR generate our own ID.
+        // Let's stick to the existing addEvent for NEW events if they don't have IDs.
+        // BUT wait, hardcoded events NOW have IDs.
+        // So if selectedEvent is null (Add New), we use addEvent.
         const eventId = await addEvent(sanitizedEvent);
-        if (eventId) {
-          Alert.alert('Успех', 'Настанот е успешно додаден');
-          await refreshEvents();
-        } else {
-          Alert.alert('Грешка', 'Настанот не може да се додаде');
-        }
+        success = !!eventId;
       }
-      setEditDialogVisible(false);
+
+      if (success) {
+        Alert.alert('Успех', 'Настанот е успешно зачуван');
+        await refreshEvents();
+        setEditDialogVisible(false); // Close ONLY on success
+      } else {
+        Alert.alert('Грешка', 'Настанот не може да се зачува');
+      }
     } catch (error) {
       console.error('Error saving event:', error);
       Alert.alert('Грешка', 'Грешка при зачувување на настанот');
@@ -207,7 +224,7 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
   };
 
   const filteredEvents = events
-    .filter(event => 
+    .filter(event =>
       event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       format(event.date, 'dd MMMM yyyy', { locale: mk }).toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -251,10 +268,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
       <ScrollView>
         {filteredEvents.map((event, index) => {
           const localImage = getImageForEvent(event.name, event.date);
-          
+
           return (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               style={[
                 styles.eventCard,
                 { borderLeftColor: SERVICE_TYPE_COLORS[event.serviceType] }
@@ -291,7 +308,7 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
                       />
                     </View>
                   </View>
-                  
+
                   <View style={styles.cardDetails}>
                     <View style={styles.dateContainer}>
                       <Text style={styles.dateDay}>
@@ -304,10 +321,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
 
                     <View style={styles.eventInfo}>
                       <View style={styles.serviceTypeContainer}>
-                        <MaterialCommunityIcons 
-                          name={SERVICE_TYPE_ICONS[event.serviceType]} 
-                          size={16} 
-                          color={SERVICE_TYPE_COLORS[event.serviceType]} 
+                        <MaterialCommunityIcons
+                          name={SERVICE_TYPE_ICONS[event.serviceType]}
+                          size={16}
+                          color={SERVICE_TYPE_COLORS[event.serviceType]}
                         />
                         <Text style={[
                           styles.serviceType,
@@ -366,132 +383,132 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <TextInput
-              label="Име на настанот"
-              value={editedEvent.name}
-              onChangeText={name => setEditedEvent({ ...editedEvent, name })}
-              style={styles.input}
-              maxLength={200}
-            />
+                  <TextInput
+                    label="Име на настанот"
+                    value={editedEvent.name}
+                    onChangeText={name => setEditedEvent({ ...editedEvent, name })}
+                    style={styles.input}
+                    maxLength={200}
+                  />
 
-            <Button
-              mode="outlined"
-              onPress={() => setShowDatePicker(true)}
-              style={styles.input}
-            >
-              {editedEvent.date ? format(editedEvent.date, 'dd.MM.yyyy') : 'Избери датум'}
-            </Button>
+                  <Button
+                    mode="outlined"
+                    onPress={() => setShowDatePicker(true)}
+                    style={styles.input}
+                  >
+                    {editedEvent.date ? format(editedEvent.date, 'dd.MM.yyyy') : 'Избери датум'}
+                  </Button>
 
-            {showDatePicker && (
-              <DateTimePicker
-                value={editedEvent.date || new Date()}
-                mode="date"
-                onChange={(event, date) => {
-                  setShowDatePicker(false);
-                  if (date) {
-                    setEditedEvent({ ...editedEvent, date });
-                  }
-                }}
-              />
-            )}
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={editedEvent.date || new Date()}
+                      mode="date"
+                      onChange={(event, date) => {
+                        setShowDatePicker(false);
+                        if (date) {
+                          setEditedEvent({ ...editedEvent, date });
+                        }
+                      }}
+                    />
+                  )}
 
-            <Button
-              mode="outlined"
-              onPress={() => setShowTimePicker(true)}
-              style={styles.input}
-            >
-              {editedEvent.time || 'Избери време'}
-            </Button>
+                  <Button
+                    mode="outlined"
+                    onPress={() => setShowTimePicker(true)}
+                    style={styles.input}
+                  >
+                    {editedEvent.time || 'Избери време'}
+                  </Button>
 
-            {showTimePicker && (
-              <DateTimePicker
-                value={new Date(`2026-01-01T${editedEvent.time || '09:00'}`)}
-                mode="time"
-                onChange={(event, date) => {
-                  setShowTimePicker(false);
-                  if (date) {
-                    setEditedEvent({
-                      ...editedEvent,
-                      time: format(date, 'HH:mm')
-                    });
-                  }
-                }}
-              />
-            )}
+                  {showTimePicker && (
+                    <DateTimePicker
+                      value={new Date(`2026-01-01T${editedEvent.time || '09:00'}`)}
+                      mode="time"
+                      onChange={(event, date) => {
+                        setShowTimePicker(false);
+                        if (date) {
+                          setEditedEvent({
+                            ...editedEvent,
+                            time: format(date, 'HH:mm')
+                          });
+                        }
+                      }}
+                    />
+                  )}
 
-            <Menu
-              visible={serviceTypeMenuVisible}
-              onDismiss={() => setServiceTypeMenuVisible(false)}
-              anchor={
-                <Button
-                  mode="outlined"
-                  onPress={() => setServiceTypeMenuVisible(true)}
-                  style={styles.input}
-                >
-                  {editedEvent.serviceType ? getServiceTypeLabel(editedEvent.serviceType as ServiceType) : 'Избери тип'}
-                </Button>
-              }
-            >
-              <Menu.Item
-                onPress={() => {
-                  setEditedEvent({ ...editedEvent, serviceType: 'LITURGY' });
-                  setServiceTypeMenuVisible(false);
-                }}
-                title="Литургија"
-              />
-              <Menu.Item
-                onPress={() => {
-                  setEditedEvent({ ...editedEvent, serviceType: 'EVENING_SERVICE' });
-                  setServiceTypeMenuVisible(false);
-                }}
-                title="Вечерна Богослужба"
-              />
-              <Menu.Item
-                onPress={() => {
-                  setEditedEvent({ ...editedEvent, serviceType: 'CHURCH_OPEN' });
-                  setServiceTypeMenuVisible(false);
-                }}
-                title="Црквата е отворена / без свештеник"
-              />
-              <Menu.Item
-                onPress={() => {
-                  setEditedEvent({ ...editedEvent, serviceType: 'PICNIC' });
-                  setServiceTypeMenuVisible(false);
-                }}
-                title="Пикник"
-              />
-            </Menu>
+                  <Menu
+                    visible={serviceTypeMenuVisible}
+                    onDismiss={() => setServiceTypeMenuVisible(false)}
+                    anchor={
+                      <Button
+                        mode="outlined"
+                        onPress={() => setServiceTypeMenuVisible(true)}
+                        style={styles.input}
+                      >
+                        {editedEvent.serviceType ? getServiceTypeLabel(editedEvent.serviceType as ServiceType) : 'Избери тип'}
+                      </Button>
+                    }
+                  >
+                    <Menu.Item
+                      onPress={() => {
+                        setEditedEvent({ ...editedEvent, serviceType: 'LITURGY' });
+                        setServiceTypeMenuVisible(false);
+                      }}
+                      title="Литургија"
+                    />
+                    <Menu.Item
+                      onPress={() => {
+                        setEditedEvent({ ...editedEvent, serviceType: 'EVENING_SERVICE' });
+                        setServiceTypeMenuVisible(false);
+                      }}
+                      title="Вечерна Богослужба"
+                    />
+                    <Menu.Item
+                      onPress={() => {
+                        setEditedEvent({ ...editedEvent, serviceType: 'CHURCH_OPEN' });
+                        setServiceTypeMenuVisible(false);
+                      }}
+                      title="Црквата е отворена / без свештеник"
+                    />
+                    <Menu.Item
+                      onPress={() => {
+                        setEditedEvent({ ...editedEvent, serviceType: 'PICNIC' });
+                        setServiceTypeMenuVisible(false);
+                      }}
+                      title="Пикник"
+                    />
+                  </Menu>
 
-            <TextInput
-              label="Опис (опционално)"
-              value={editedEvent.description}
-              onChangeText={description => setEditedEvent({ ...editedEvent, description })}
-              multiline
-              numberOfLines={3}
-              style={styles.input}
-              maxLength={500}
-            />
+                  <TextInput
+                    label="Опис (опционално)"
+                    value={editedEvent.description}
+                    onChangeText={description => setEditedEvent({ ...editedEvent, description })}
+                    multiline
+                    numberOfLines={3}
+                    style={styles.input}
+                    maxLength={500}
+                  />
 
-            <TextInput
-              label="URL на слика (опционално)"
-              value={editedEvent.imageUrl}
-              onChangeText={imageUrl => setEditedEvent({ ...editedEvent, imageUrl })}
-              placeholder="https://denovi.mk/synaxarion/..."
-              style={styles.input}
-              maxLength={500}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+                  <TextInput
+                    label="URL на слика (опционално)"
+                    value={editedEvent.imageUrl}
+                    onChangeText={imageUrl => setEditedEvent({ ...editedEvent, imageUrl })}
+                    placeholder="https://denovi.mk/synaxarion/..."
+                    style={styles.input}
+                    maxLength={500}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
 
-            <TextInput
-              label="Име на светец (опционално)"
-              value={editedEvent.saintName}
-              onChangeText={saintName => setEditedEvent({ ...editedEvent, saintName })}
-              style={styles.input}
-              maxLength={200}
-            />
-            {/* Bottom padding for keyboard */}
-            <View style={{ height: 50 }} />
+                  <TextInput
+                    label="Име на светец (опционално)"
+                    value={editedEvent.saintName}
+                    onChangeText={saintName => setEditedEvent({ ...editedEvent, saintName })}
+                    style={styles.input}
+                    maxLength={200}
+                  />
+                  {/* Bottom padding for keyboard */}
+                  <View style={{ height: 50 }} />
                 </ScrollView>
               </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
