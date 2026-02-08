@@ -365,8 +365,6 @@ export const CalendarScreen = () => {
   const [showEventDetail, setShowEventDetail] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [visibleItems, setVisibleItems] = useState<string[]>([]);
-  const [initialScrollDone, setInitialScrollDone] = useState(false);
-
   // Hidden admin access - tap header 5 times within 3 seconds OR long press 2 sec if logged in
   const [adminTapCount, setAdminTapCount] = useState(0);
   const adminTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -577,7 +575,7 @@ export const CalendarScreen = () => {
   }, [sections]);
 
   // Find and scroll to the next upcoming event
-  const scrollToNextEvent = useCallback((animated: boolean = true) => {
+  const scrollToNextEvent = useCallback(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -604,7 +602,7 @@ export const CalendarScreen = () => {
         sectionListRef.current.scrollToLocation({
           sectionIndex,
           itemIndex: Math.max(0, itemIndex),
-          animated,
+          animated: true,
           viewOffset: 100,
         });
         setSelectedMonth(nextEventMonth);
@@ -612,17 +610,6 @@ export const CalendarScreen = () => {
       setSelectedServiceTypes(new Set());
     }
   }, [events, sections]);
-
-  // Initial auto-scroll — jump directly to current month/event without animation
-  useEffect(() => {
-    if (!isLoading && events.length > 0 && !initialScrollDone && sections.length > 0) {
-      const timer = setTimeout(() => {
-        scrollToNextEvent(false);
-        setInitialScrollDone(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, events, initialScrollDone, sections, scrollToNextEvent]);
 
   // Handle scroll events to show/hide Today button
   const handleScroll = useCallback((event: any) => {
@@ -1051,7 +1038,7 @@ export const CalendarScreen = () => {
           <FAB
             icon="calendar-arrow-right"
             label="Следен"
-            onPress={() => scrollToNextEvent(true)}
+            onPress={scrollToNextEvent}
             style={styles.todayFab}
             color={COLORS.TEXT_LIGHT}
             small
