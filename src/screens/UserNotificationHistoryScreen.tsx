@@ -18,7 +18,8 @@ import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -54,6 +55,9 @@ export const UserNotificationHistoryScreen: React.FC<UserNotificationHistoryScre
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const { refreshBadge } = useContext(BadgeContext);
+    const route = useRoute();
+    const insets = useSafeAreaInsets();
+    const isStackScreen = route.name === 'UserNotificationHistory';
 
     useEffect(() => {
         loadData();
@@ -217,8 +221,14 @@ export const UserNotificationHistoryScreen: React.FC<UserNotificationHistoryScre
                 colors={[COLORS.PRIMARY, '#A52A2A']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.header}
+                style={[styles.header, { paddingTop: insets.top + (isStackScreen ? 8 : 16) }]}
             >
+                {isStackScreen && (
+                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                        <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+                        <Text style={styles.backText}>Назад</Text>
+                    </TouchableOpacity>
+                )}
                 <View style={styles.headerIconContainer}>
                     <View style={styles.headerIconOuter}>
                         <View style={styles.headerIconInner}>
@@ -297,7 +307,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8F6F3',
     },
     header: {
-        paddingTop: 60,
         paddingBottom: 24,
         paddingHorizontal: 20,
         borderBottomLeftRadius: 32,
@@ -308,6 +317,19 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 12,
         elevation: 10,
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        paddingVertical: 8,
+        marginBottom: 4,
+    },
+    backText: {
+        color: '#fff',
+        fontSize: 16,
+        marginLeft: 8,
+        fontWeight: '600',
     },
     headerIconContainer: {
         marginBottom: 12,

@@ -12,6 +12,8 @@ import { getAllEvents, mergeEvents } from './FirestoreEventService';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const LAST_SCHEDULE_CHECK = '@last_schedule_check';
+// iOS limits scheduled local notifications to 64. Leave room for admin push.
+const MAX_SCHEDULED_NOTIFICATIONS = 50;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -39,13 +41,16 @@ class NotificationService {
 
   setupYearlyScheduling = async () => {
     try {
-      // Check if we need to schedule for the next year
       const lastCheck = await AsyncStorage.getItem(LAST_SCHEDULE_CHECK);
       const now = new Date();
       const lastCheckDate = lastCheck ? new Date(lastCheck) : null;
 
-      // If we haven't checked this year or it's the first time
-      if (!lastCheckDate || isAfter(now, addYears(lastCheckDate, 1))) {
+      // Re-schedule daily so the notification queue stays fresh
+      // as past notifications expire, new ones fill their slots
+      const shouldSchedule = !lastCheckDate ||
+        lastCheckDate.toDateString() !== now.toDateString();
+
+      if (shouldSchedule) {
         await this.scheduleYearEvents();
         await AsyncStorage.setItem(LAST_SCHEDULE_CHECK, now.toISOString());
       }
@@ -112,18 +117,52 @@ class NotificationService {
       const firestoreEvents = await getAllEvents();
       const allEvents = mergeEvents(CHURCH_EVENTS, firestoreEvents);
 
-      // Schedule current year's remaining events
-      const currentYearEvents = allEvents.filter((event: ChurchEvent) => {
+      // Gather future events
+      const futureEvents = allEvents.filter((event: ChurchEvent) => {
         const eventDate = new Date(event.date);
         return isAfter(eventDate, now) && isBefore(eventDate, nextYear);
       });
 
-      await this.scheduleEventsForYear(currentYearEvents);
-
-      // Schedule next year's events if we're in the last month
+      // Also include next year's events if we're in December
       if (now.getMonth() === 11) {
         const nextYearEvents = this.generateNextYearEvents(now.getFullYear() + 1);
-        await this.scheduleEventsForYear(nextYearEvents);
+        futureEvents.push(...nextYearEvents);
+      }
+
+      // Collect all notification candidates with their fire dates
+      const candidates: { event: ChurchEvent; minutesBefore: number; fireDate: Date }[] = [];
+
+      for (const event of futureEvents) {
+        const [hours, minutes] = event.time.split(':').map(Number);
+        const eventDate = new Date(event.date);
+        eventDate.setHours(hours, minutes);
+
+        if (settings.weekBefore) {
+          const fireDate = addMinutes(eventDate, -(7 * 24 * 60));
+          if (isAfter(fireDate, now)) {
+            candidates.push({ event, minutesBefore: 7 * 24 * 60, fireDate });
+          }
+        }
+        if (settings.dayBefore) {
+          const fireDate = addMinutes(eventDate, -(24 * 60));
+          if (isAfter(fireDate, now)) {
+            candidates.push({ event, minutesBefore: 24 * 60, fireDate });
+          }
+        }
+        if (settings.hourBefore) {
+          const fireDate = addMinutes(eventDate, -60);
+          if (isAfter(fireDate, now)) {
+            candidates.push({ event, minutesBefore: 60, fireDate });
+          }
+        }
+      }
+
+      // Sort soonest first and limit to MAX to respect iOS 64 notification cap
+      candidates.sort((a, b) => a.fireDate.getTime() - b.fireDate.getTime());
+      const toSchedule = candidates.slice(0, MAX_SCHEDULED_NOTIFICATIONS);
+
+      for (const { event, minutesBefore } of toSchedule) {
+        await this.scheduleEventReminder(event, minutesBefore);
       }
     } catch (error) {
       console.error('Error scheduling yearly events:', error);

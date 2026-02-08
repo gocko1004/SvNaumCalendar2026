@@ -2,7 +2,7 @@
   "expo": {
     "name": "Св. Наум Охридски • Триенген",
     "slug": "sv-naum-calendar",
-    "version": "2.0.3",
+    "version": "2.0.2",
     "orientation": "portrait",
     "icon": "./assets/iconnew.png",
     "userInterfaceStyle": "light",
@@ -13,7 +13,7 @@
     },
     "ios": {
       "bundleIdentifier": "com.svnaum.calendar",
-      "buildNumber": "22",
+      "buildNumber": "21",
       "supportsTablet": true,
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "We send notifications about church services and important events.",
@@ -28,7 +28,7 @@
     "android": {
       "googleServicesFile": "./google-services.json",
       "package": "com.svnaum.calendar",
-      "versionCode": 22,
+      "versionCode": 21,
       "adaptiveIcon": {
         "foregroundImage": "./assets/iconnew.png",
         "backgroundColor": "#831B26"
