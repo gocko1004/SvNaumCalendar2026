@@ -156,7 +156,7 @@ export const ManageFastingScreen = () => {
   };
 
   const renderRuleChips = (
-    selected: FastingRule,
+    selected: FastingRule | undefined,
     onSelect: (rule: FastingRule) => void,
     compact: boolean = false
   ) => (
@@ -351,6 +351,17 @@ export const ManageFastingScreen = () => {
               <Text style={styles.sectionLabel}>Правило</Text>
               {renderRuleChips(draft.defaultRule, rule =>
                 setDraft(prev => ({ ...prev, defaultRule: rule }))
+              )}
+
+              <Text style={styles.sectionLabel}>Сабота и недела (по избор)</Text>
+              <Text style={styles.specialHint}>
+                Ако е избрано, важи за викендите. Допрете повторно за да го тргнете.
+              </Text>
+              {renderRuleChips(draft.weekendRule, rule =>
+                setDraft(prev => ({
+                  ...prev,
+                  weekendRule: prev.weekendRule === rule ? undefined : rule,
+                }))
               )}
 
               <TextInput

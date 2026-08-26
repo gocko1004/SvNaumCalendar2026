@@ -24,6 +24,7 @@ export interface FastingPeriod {
   startDate: Date; // inclusive
   endDate: Date; // inclusive
   defaultRule: FastingRule;
+  weekendRule?: FastingRule; // optional Sat/Sun rule (typikons usually relax weekends)
   note?: string; // free text from the eparchy guidance
   specialDays: FastingSpecialDay[];
   isActive: boolean;
@@ -108,6 +109,7 @@ export const getAllFastingPeriods = async (): Promise<FastingPeriod[]> => {
           startDate: data.startDate?.toDate() || new Date(),
           endDate: data.endDate?.toDate() || new Date(),
           defaultRule: (data.defaultRule || 'STRICT') as FastingRule,
+          weekendRule: (data.weekendRule as FastingRule) || undefined,
           note: data.note || undefined,
           specialDays: (data.specialDays || []).map((s: any) => ({
             date: s.date?.toDate() || new Date(),
@@ -134,6 +136,7 @@ export const saveFastingPeriod = async (period: FastingPeriod): Promise<string> 
     startDate: Timestamp.fromDate(startOfDay(period.startDate)),
     endDate: Timestamp.fromDate(startOfDay(period.endDate)),
     defaultRule: period.defaultRule,
+    weekendRule: period.weekendRule || null,
     note: period.note || null,
     specialDays: period.specialDays.map(s => ({
       date: Timestamp.fromDate(startOfDay(s.date)),
@@ -171,9 +174,14 @@ export const getFastingInfoForDate = (
     const dayNumber = Math.round((day.getTime() - start.getTime()) / msPerDay) + 1;
     const totalDays = Math.round((end.getTime() - start.getTime()) / msPerDay) + 1;
 
+    const dow = day.getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const baseRule =
+      isWeekend && period.weekendRule ? period.weekendRule : period.defaultRule;
+
     return {
       period,
-      rule: special ? special.rule : period.defaultRule,
+      rule: special ? special.rule : baseRule,
       isSpecialDay: !!special,
       specialDayNote: special?.note,
       dayNumber,
