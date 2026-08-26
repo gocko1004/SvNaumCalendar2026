@@ -6,7 +6,7 @@ import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
 import { CHURCH_EVENTS, ChurchEvent, SPECIAL_FEAST_URLS, getServiceTypeLabel, ServiceType } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
 import { getDenoviImageUrl } from '../services/DenoviImageService';
-import { getAllEvents, mergeEvents } from '../services/FirestoreEventService';
+import { getAllEvents, mergeEvents, getEventOverrides, applyEventOverrides } from '../services/FirestoreEventService';
 import { getActiveAnnouncements, Announcement, ANNOUNCEMENT_TYPE_COLORS, ANNOUNCEMENT_TYPE_ICONS } from '../services/AnnouncementsService';
 import { COLORS } from '../constants/theme';
 import { format } from 'date-fns';
@@ -15,6 +15,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import SocialMediaService from '../services/SocialMediaService';
 import { Linking } from 'react-native';
 import { EventDetailSheet } from '../components/EventDetailSheet';
+import { FastingBadge } from '../components/FastingBadge';
+import { FastingDetailSheet } from '../components/FastingDetailSheet';
+import {
+  getAllFastingPeriods,
+  getFastingInfoForDate,
+  FastingPeriod,
+  FastingDayInfo,
+} from '../services/FastingService';
 import { useAuth } from '../hooks/useAuth';
 
 const SERVICE_TYPE_COLORS = {
@@ -361,6 +369,10 @@ export const CalendarScreen = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
   const [showEventDetail, setShowEventDetail] = useState(false);
+  const [fastingPeriods, setFastingPeriods] = useState<FastingPeriod[]>([]);
+  const [showFastingBadges, setShowFastingBadges] = useState(true);
+  const [fastingDetail, setFastingDetail] = useState<FastingDayInfo | null>(null);
+  const [showFastingDetail, setShowFastingDetail] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [visibleItems, setVisibleItems] = useState<string[]>([]);
 
@@ -464,7 +476,8 @@ export const CalendarScreen = () => {
     const loadAndEnrichEvents = async () => {
       try {
         const firestoreEvents = await getAllEvents();
-        const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+        const overrides = await getEventOverrides();
+        const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
         const enriched = enrichEventsWithImages(merged);
         setEvents(enriched);
       } catch (error) {
@@ -477,6 +490,9 @@ export const CalendarScreen = () => {
 
     // Load and enrich events
     loadAndEnrichEvents();
+
+    // Load fasting periods (admin-managed, additive feature)
+    getAllFastingPeriods().then(setFastingPeriods).catch(() => {});
 
     // Load active announcements
     const loadAnnouncements = async () => {
@@ -701,6 +717,40 @@ export const CalendarScreen = () => {
           );
         })}
 
+        {/* Additive „Пости" chip: toggles fasting badges on the calendar */}
+        <TouchableOpacity
+          onPress={() => setShowFastingBadges(prev => !prev)}
+          style={[
+            styles.filterChipTouchable,
+            {
+              backgroundColor: showFastingBadges ? '#6B4E9B' : COLORS.SURFACE,
+              width: isVerySmall ? 90 : 110,
+              minHeight: isVerySmall ? 36 : 40,
+              borderColor: showFastingBadges ? '#6B4E9B' : COLORS.BORDER,
+            }
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="sprout"
+            size={isVerySmall ? 14 : isSmall ? 15 : 16}
+            color={showFastingBadges ? COLORS.TEXT_LIGHT : COLORS.TEXT}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            style={[
+              styles.filterChipText,
+              {
+                color: showFastingBadges ? COLORS.TEXT_LIGHT : COLORS.TEXT,
+                fontSize: isVerySmall ? 9 : isSmall ? 10 : 11,
+                flex: 1,
+              }
+            ]}
+            numberOfLines={1}
+          >
+            Пости
+          </Text>
+        </TouchableOpacity>
+
       </ScrollView>
     );
   };
@@ -793,8 +843,28 @@ export const CalendarScreen = () => {
               </View>
             </View>
           )}
-          renderItem={({ item: event, index }) => (
+          renderItem={({ item: event, index, section }) => (
             <View style={styles.eventList}>
+              {/* Additive fasting badge: shown once per day, above the first card */}
+              {showFastingBadges && (() => {
+                const prev = index > 0 ? section.data[index - 1] : null;
+                const isFirstOfDay =
+                  !prev ||
+                  prev.date.getDate() !== event.date.getDate() ||
+                  prev.date.getMonth() !== event.date.getMonth();
+                if (!isFirstOfDay) return null;
+                const info = getFastingInfoForDate(event.date, fastingPeriods);
+                if (!info) return null;
+                return (
+                  <FastingBadge
+                    info={info}
+                    onPress={() => {
+                      setFastingDetail(info);
+                      setShowFastingDetail(true);
+                    }}
+                  />
+                );
+              })()}
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => {
@@ -1070,6 +1140,16 @@ export const CalendarScreen = () => {
           onClose={() => {
             setShowEventDetail(false);
             setSelectedEvent(null);
+          }}
+        />
+
+        {/* Fasting Detail Bottom Sheet (additive) */}
+        <FastingDetailSheet
+          visible={showFastingDetail}
+          info={fastingDetail}
+          onClose={() => {
+            setShowFastingDetail(false);
+            setFastingDetail(null);
           }}
         />
       </View>

@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import NotificationService from './NotificationService';
 import { logSentNotification } from './NotificationHistoryService';
@@ -61,6 +61,33 @@ export const getAllNews = async (): Promise<NewsItem[]> => {
 };
 
 // Get active news items (for calendar display)
+// Fetch a single news item by document id (used by notification deep links)
+export const getNewsById = async (id: string): Promise<NewsItem | null> => {
+  try {
+    const snap = await getDoc(doc(newsCollection, id));
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    return {
+      id: snap.id,
+      title: data.title,
+      content: data.content,
+      date: data.date?.toDate() || new Date(),
+      imageUrl: data.imageUrl,
+      imageUrls: data.imageUrls || [],
+      videoUrls: data.videoUrls || [],
+      linkUrl: data.linkUrl,
+      linkText: data.linkText,
+      isActive: data.isActive ?? true,
+      priority: data.priority || 0,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      updatedAt: data.updatedAt?.toDate() || new Date(),
+    } as NewsItem;
+  } catch (error) {
+    console.error('Error fetching news by id:', error);
+    return null;
+  }
+};
+
 export const getActiveNews = async (): Promise<NewsItem[]> => {
   try {
     // Simple query without orderBy to avoid index requirement
@@ -183,6 +210,7 @@ export const addNews = async (
           title: `Нова објава: ${news.title}`,
           message: news.content.substring(0, 100) + (news.content.length > 100 ? '...' : '') + mediaText,
           urgent: false,
+          data: { type: 'news', newsId: docRef.id },
         });
 
         // Log to notification history

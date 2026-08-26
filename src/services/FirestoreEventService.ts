@@ -3,7 +3,7 @@
  * Allows admins to add, edit, and delete events that sync to all users
  */
 
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ChurchEvent, ServiceType } from './ChurchCalendarService';
 
@@ -141,3 +141,96 @@ export const mergeEvents = (hardcodedEvents: ChurchEvent[], firestoreEvents: Chu
   return allEvents;
 };
 
+
+/**
+ * Overrides for HARDCODED events. Hardcoded events ship inside the app binary,
+ * so the only way to edit or cancel one without an app release is an override
+ * document keyed by the original event's date + type + time.
+ */
+const OVERRIDES_COLLECTION = 'eventOverrides';
+
+export interface EventOverride {
+  action: 'CANCEL' | 'MODIFY';
+  name?: string;
+  time?: string;
+  serviceType?: ServiceType;
+  description?: string;
+  saintName?: string;
+  reason?: string;
+}
+
+export const hardcodedEventKey = (event: ChurchEvent): string => {
+  const d = event.date;
+  const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${dateKey}_${event.serviceType}_${event.time}`;
+};
+
+export const getEventOverrides = async (): Promise<Map<string, EventOverride>> => {
+  const map = new Map<string, EventOverride>();
+  try {
+    const snapshot = await getDocs(collection(db, OVERRIDES_COLLECTION));
+    snapshot.forEach(docSnapshot => {
+      map.set(docSnapshot.id, docSnapshot.data() as EventOverride);
+    });
+  } catch (error) {
+    console.error('Error loading event overrides:', error);
+  }
+  return map;
+};
+
+export const saveEventOverride = async (key: string, override: EventOverride): Promise<boolean> => {
+  try {
+    const clean: Record<string, any> = { action: override.action, updatedAt: Timestamp.now() };
+    (['name', 'time', 'serviceType', 'description', 'saintName', 'reason'] as const).forEach(f => {
+      if (override[f] !== undefined) clean[f] = override[f];
+    });
+    await setDoc(doc(db, OVERRIDES_COLLECTION, key), clean);
+    return true;
+  } catch (error) {
+    console.error('Error saving event override:', error);
+    return false;
+  }
+};
+
+export const deleteEventOverride = async (key: string): Promise<boolean> => {
+  try {
+    await deleteDoc(doc(db, OVERRIDES_COLLECTION, key));
+    return true;
+  } catch (error) {
+    console.error('Error deleting event override:', error);
+    return false;
+  }
+};
+
+/**
+ * Apply overrides to the hardcoded event list: CANCELed events are removed,
+ * MODIFYd events are patched. Patched events carry `overrideKey` so the admin
+ * screen can keep editing them under their original key.
+ */
+export const applyEventOverrides = (
+  hardcodedEvents: ChurchEvent[],
+  overrides: Map<string, EventOverride>
+): ChurchEvent[] => {
+  if (overrides.size === 0) return hardcodedEvents;
+
+  const result: ChurchEvent[] = [];
+  for (const event of hardcodedEvents) {
+    const key = hardcodedEventKey(event);
+    const override = overrides.get(key);
+    if (!override) {
+      result.push(event);
+      continue;
+    }
+    if (override.action === 'CANCEL') continue;
+    result.push({
+      ...event,
+      name: override.name ?? event.name,
+      time: override.time ?? event.time,
+      serviceType: override.serviceType ?? event.serviceType,
+      description: override.description ?? event.description,
+      saintName: override.saintName ?? event.saintName,
+      overrideKey: key,
+    });
+  }
+  return result;
+};

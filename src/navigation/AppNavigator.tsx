@@ -12,6 +12,7 @@ import { NewsScreen } from '../screens/NewsScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { NotificationDetailScreen } from '../screens/NotificationDetailScreen';
 import { NewsDetailScreen } from '../screens/NewsDetailScreen';
+import { getNewsById } from '../services/NewsService';
 import { AdminNavigator } from './AdminNavigator';
 import { COLORS } from '../constants/theme';
 import { NewsItem } from '../services/NewsService';
@@ -125,39 +126,43 @@ export const AppNavigator = () => {
     });
 
     // Handle notification tap (when user taps on notification)
+    const openFromNotification = async (
+      title: string | null,
+      body: string | null,
+      data: any
+    ) => {
+      if (!navigationRef.current?.isReady()) return;
+
+      // News deep link: open the actual news post instead of the generic screen
+      if (data?.type === 'news' && data?.newsId) {
+        const news = await getNewsById(String(data.newsId));
+        if (news) {
+          navigationRef.current.navigate('NewsDetail', { news });
+          return;
+        }
+      }
+
+      const fullBody = data?.fullBody || body || '';
+      navigationRef.current.navigate('NotificationDetail', {
+        title: title || 'Известување',
+        body: fullBody,
+        data: data || {},
+        receivedAt: new Date().toISOString(),
+      });
+    };
+
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const { title, body, data } = response.notification.request.content;
-
-      // Use fullBody from data if available (in case body was truncated)
-      const fullBody = (data as any)?.fullBody || body || '';
-
-      // Navigate to NotificationDetail screen
-      if (navigationRef.current?.isReady()) {
-        navigationRef.current.navigate('NotificationDetail', {
-          title: title || 'Известување',
-          body: fullBody,
-          data: data || {},
-          receivedAt: new Date().toISOString(),
-        });
-      }
+      openFromNotification(title, body, data);
     });
 
     // Check if app was opened from a notification
     Notifications.getLastNotificationResponseAsync().then(response => {
       if (response) {
         const { title, body, data } = response.notification.request.content;
-        // Use fullBody from data if available (in case body was truncated)
-        const fullBody = (data as any)?.fullBody || body || '';
         // Small delay to ensure navigation is ready
         setTimeout(() => {
-          if (navigationRef.current?.isReady()) {
-            navigationRef.current.navigate('NotificationDetail', {
-              title: title || 'Известување',
-              body: fullBody,
-              data: data || {},
-              receivedAt: new Date().toISOString(),
-            });
-          }
+          openFromNotification(title, body, data);
         }, 500);
       }
     });

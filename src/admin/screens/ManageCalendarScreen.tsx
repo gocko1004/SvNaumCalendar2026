@@ -19,7 +19,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
 import { COLORS } from '../../constants/theme';
 import { ChurchEvent, CHURCH_EVENTS, ServiceType } from '../../services/ChurchCalendarService';
-import { getAllEvents, addEvent, updateEvent, deleteEvent, mergeEvents } from '../../services/FirestoreEventService';
+import { getAllEvents, addEvent, updateEvent, deleteEvent, mergeEvents, getEventOverrides, applyEventOverrides, saveEventOverride, hardcodedEventKey } from '../../services/FirestoreEventService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -71,7 +71,8 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
     setLoading(true);
     try {
       const firestoreEvents = await getAllEvents();
-      const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+      const overrides = await getEventOverrides();
+      const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
       setEvents(merged);
     } catch (error) {
       console.error('Error loading calendar from Firestore:', error);
@@ -137,6 +138,23 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
         } else {
           Alert.alert('Грешка', 'Настанот не може да се ажурира');
         }
+      } else if (selectedEvent) {
+        // Editing a HARDCODED event: save an override instead of creating a duplicate
+        const key = selectedEvent.overrideKey || hardcodedEventKey(selectedEvent);
+        const success = await saveEventOverride(key, {
+          action: 'MODIFY',
+          name: sanitizedEvent.name,
+          time: sanitizedEvent.time,
+          serviceType: sanitizedEvent.serviceType,
+          description: sanitizedEvent.description,
+          saintName: sanitizedEvent.saintName,
+        });
+        if (success) {
+          Alert.alert('Успех', 'Настанот е успешно ажуриран');
+          await refreshEvents();
+        } else {
+          Alert.alert('Грешка', 'Настанот не може да се ажурира');
+        }
       } else {
         // Adding new event to Firestore
         const eventId = await addEvent(sanitizedEvent);
@@ -157,11 +175,6 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
   };
 
   const handleDeleteEvent = async (eventToDelete: ChurchEvent) => {
-    if (!eventToDelete.id) {
-      Alert.alert('Грешка', 'Не може да се избрише хардкодиран настан');
-      return;
-    }
-
     Alert.alert(
       'Потврда',
       'Дали сте сигурни дека сакате да го избришете овој настан?',
@@ -173,7 +186,12 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
           onPress: async () => {
             setLoading(true);
             try {
-              const success = await deleteEvent(eventToDelete.id!);
+              const success = eventToDelete.id
+                ? await deleteEvent(eventToDelete.id)
+                : await saveEventOverride(
+                    eventToDelete.overrideKey || hardcodedEventKey(eventToDelete),
+                    { action: 'CANCEL' }
+                  );
               if (success) {
                 Alert.alert('Успех', 'Настанот е успешно избришан');
                 await refreshEvents();

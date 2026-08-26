@@ -21,6 +21,7 @@ export type AdminStackParamList = {
   SpecialEvents: undefined;
   ManageAnnouncements: undefined;
   ManageNews: undefined;
+  ManageFasting: undefined;
   ManageParking: undefined;
   NotificationHistory: undefined;
   AutoNotificationSettings: undefined;

@@ -7,6 +7,7 @@ import { format, addMinutes, addDays, isBefore, addYears, isAfter } from 'date-f
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
 import { getReminderText, ReminderTiming } from './NotificationTextService';
+import { getEventOverrides, applyEventOverrides } from './FirestoreEventService';
 import { db } from '../firebase';
 import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
@@ -108,8 +109,16 @@ class NotificationService {
       const now = new Date();
       const nextYear = addYears(now, 1);
 
+      // Apply admin overrides so canceled/edited hardcoded events
+      // get correct reminders (or none)
+      let effectiveEvents: ChurchEvent[] = CHURCH_EVENTS;
+      try {
+        const overrides = await getEventOverrides();
+        effectiveEvents = applyEventOverrides(CHURCH_EVENTS, overrides);
+      } catch (e) { /* offline: fall back to hardcoded */ }
+
       // Schedule current year's remaining events
-      const currentYearEvents = CHURCH_EVENTS.filter((event: ChurchEvent) => {
+      const currentYearEvents = effectiveEvents.filter((event: ChurchEvent) => {
         const eventDate = new Date(event.date);
         return isAfter(eventDate, now) && isBefore(eventDate, nextYear);
       });
@@ -377,9 +386,10 @@ class NotificationService {
     title: string;
     message: string;
     urgent?: boolean;
+    data?: Record<string, any>;
   }): Promise<{ success: boolean; sentCount: number; error?: string }> => {
     try {
-      const { title, message, urgent = true } = notification;
+      const { title, message, urgent = true, data = {} } = notification;
 
       // Get all push tokens from Firestore
       const tokensRef = collection(db, 'pushTokens');
@@ -406,7 +416,7 @@ class NotificationService {
         sound: 'default',
         title,
         body: message,
-        data: { fullBody: message },
+        data: { fullBody: message, ...data },
         priority: urgent ? 'high' : 'normal',
         channelId: urgent ? 'urgent-updates' : 'church-events',
       }));

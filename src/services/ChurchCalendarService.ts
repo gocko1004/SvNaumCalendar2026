@@ -17,6 +17,7 @@ export interface ChurchEvent {
   description?: string;
   imageUrl?: string; // Optional image URL from denovi.mk
   saintName?: string; // Saint name from denovi.mk
+  overrideKey?: string; // Set when a hardcoded event has a Firestore override applied
 }
 
 // Church events for 2026
