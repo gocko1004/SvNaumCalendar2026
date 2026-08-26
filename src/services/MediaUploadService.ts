@@ -1,7 +1,30 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../firebase';
+import { storage, auth } from '../firebase';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('Сесијата истече. Одјавете се и најавете се повторно.');
+    this.name = 'SessionExpiredError';
+  }
+}
+
+// Storage rules require an authenticated user for writes. A cached login whose
+// refresh token is dead (e.g. after a password reset) would otherwise upload
+// anonymously and fail with a confusing storage/unauthorized error.
+const assertValidSession = async (): Promise<void> => {
+  const user = auth?.currentUser;
+  if (!user) {
+    throw new SessionExpiredError();
+  }
+  try {
+    await user.getIdToken(true);
+  } catch (error) {
+    console.error('Auth token refresh failed before upload:', error);
+    throw new SessionExpiredError();
+  }
+};
 
 export interface UploadProgress {
   progress: number;
@@ -142,6 +165,8 @@ export const uploadMedia = async (
   onProgress?: (progress: number) => void
 ): Promise<string> => {
   try {
+    await assertValidSession();
+
     // Read file as blob
     const response = await fetch(asset.uri);
     const blob = await response.blob();

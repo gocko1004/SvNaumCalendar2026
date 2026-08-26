@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, setDoc, getDocs, deleteDoc, updateDoc, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { CHURCH_EVENTS, ChurchEvent, ServiceType } from './ChurchCalendarService';
+import { getReminderText, ReminderTiming } from './NotificationTextService';
 import { logSentNotification } from './NotificationHistoryService';
 import * as Notifications from 'expo-notifications';
 
@@ -81,35 +82,14 @@ export const getNotificationMessage = (event: ChurchEvent, timing: NotificationT
     };
   }
 
-  const serviceTypeLabel = {
-    LITURGY: 'Литургија',
-    EVENING_SERVICE: 'Вечерна служба',
-    CHURCH_OPEN: 'Отворена црква',
-    PICNIC: 'Пикник',
-  }[event.serviceType];
+  const timingMap: Record<NotificationTiming, ReminderTiming> = {
+    '1_WEEK': 'WEEK',
+    '3_DAYS': 'THREE_DAYS',
+    '1_DAY': 'DAY',
+    '12_HOURS': 'SAME_DAY',
+  };
 
-  switch (timing) {
-    case '1_WEEK':
-      return {
-        title: `${event.name} - за 1 недела!`,
-        body: `Потсетник: ${serviceTypeLabel} на ${event.date.toLocaleDateString('mk-MK')}. Не заборавајте да се подготвите!`,
-      };
-    case '3_DAYS':
-      return {
-        title: `${event.name} - за 3 дена!`,
-        body: `${serviceTypeLabel} е наскоро. Резервирајте го денот!`,
-      };
-    case '1_DAY':
-      return {
-        title: `${event.name} - утре!`,
-        body: `Утре е ${serviceTypeLabel} во ${event.time}ч. Ве очекуваме!`,
-      };
-    case '12_HOURS':
-      return {
-        title: `${event.name} - денес!`,
-        body: `${serviceTypeLabel} започнува во ${event.time}ч. Ве очекуваме!`,
-      };
-  }
+  return getReminderText(event, timingMap[timing]);
 };
 
 // Firestore collection reference

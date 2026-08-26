@@ -6,12 +6,10 @@ import {
   Image,
   TouchableOpacity,
   Text,
-  Dimensions,
   SafeAreaView,
-  Modal,
-  FlatList,
   Linking,
 } from 'react-native';
+import ImageView from 'react-native-image-viewing';
 import { Button, Surface } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
@@ -29,8 +27,6 @@ type RootStackParamList = {
 };
 
 type NewsDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'NewsDetail'>;
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const NewsDetailScreen: React.FC<NewsDetailScreenProps> = ({ route, navigation }) => {
   const { news } = route.params;
@@ -59,19 +55,6 @@ export const NewsDetailScreen: React.FC<NewsDetailScreenProps> = ({ route, navig
   const closeImageGallery = () => {
     setExpandedImageIndex(null);
   };
-
-  const renderGalleryItem = ({ item, index }: { item: string; index: number }) => (
-    <View style={styles.gallerySlide}>
-      <Image
-        source={{ uri: item }}
-        style={styles.galleryImage}
-        resizeMode="contain"
-      />
-      <Text style={styles.galleryCounter}>
-        {index + 1} / {allImages.length}
-      </Text>
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -205,37 +188,26 @@ export const NewsDetailScreen: React.FC<NewsDetailScreenProps> = ({ route, navig
           <View style={{ height: 40 }} />
         </ScrollView>
 
-        {/* Fullscreen Image Gallery Modal */}
-        <Modal
+        {/* Fullscreen zoomable image gallery (pinch to zoom, swipe between images) */}
+        <ImageView
+          images={allImages.map(uri => ({ uri }))}
+          imageIndex={expandedImageIndex ?? 0}
           visible={expandedImageIndex !== null}
-          transparent={true}
-          animationType="fade"
           onRequestClose={closeImageGallery}
-        >
-          <View style={styles.galleryModal}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={closeImageGallery}
-            >
+          swipeToCloseEnabled
+          doubleTapToZoomEnabled
+          HeaderComponent={() => (
+            <TouchableOpacity style={styles.closeButton} onPress={closeImageGallery}>
               <MaterialCommunityIcons name="close" size={30} color="#fff" />
             </TouchableOpacity>
+          )}
+          FooterComponent={({ imageIndex }) => (
+            <Text style={styles.galleryCounter}>
+              {imageIndex + 1} / {allImages.length}
+            </Text>
+          )}
+        />
 
-            <FlatList
-              data={allImages}
-              renderItem={renderGalleryItem}
-              keyExtractor={(_, index) => `gallery-${index}`}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              initialScrollIndex={expandedImageIndex || 0}
-              getItemLayout={(_, index) => ({
-                length: SCREEN_WIDTH,
-                offset: SCREEN_WIDTH * index,
-                index,
-              })}
-            />
-          </View>
-        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -410,11 +382,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 220,
   },
-  galleryModal: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    justifyContent: 'center',
-  },
   closeButton: {
     position: 'absolute',
     top: 50,
@@ -424,20 +391,12 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 10,
   },
-  gallerySlide: {
-    width: SCREEN_WIDTH,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  galleryImage: {
-    width: SCREEN_WIDTH - 40,
-    height: SCREEN_HEIGHT * 0.7,
-  },
   galleryCounter: {
     color: '#fff',
     fontSize: 16,
-    marginTop: 16,
+    marginBottom: 24,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

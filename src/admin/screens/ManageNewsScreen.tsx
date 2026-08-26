@@ -49,6 +49,7 @@ import {
   requestMediaPermissions,
   formatFileSize,
   formatDuration,
+  SessionExpiredError,
 } from '../../services/MediaUploadService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
@@ -249,7 +250,9 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
       await loadNews();
     } catch (error) {
       console.error('Error saving news:', error);
-      Alert.alert('Грешка', 'Неуспешно зачувување');
+      const message =
+        error instanceof SessionExpiredError ? error.message : 'Неуспешно зачувување';
+      Alert.alert('Грешка', message);
     } finally {
       setUploading(false);
       setUploadProgress(0);

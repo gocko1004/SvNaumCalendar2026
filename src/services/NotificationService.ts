@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import { format, addMinutes, addDays, isBefore, addYears, isAfter } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
+import { getReminderText, ReminderTiming } from './NotificationTextService';
 import { db } from '../firebase';
 import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
@@ -152,28 +153,24 @@ class NotificationService {
     // Don't schedule if the notification time is in the past
     if (isBefore(notificationTime, new Date())) return;
 
-    let message = '';
     let notificationType: 'week' | 'day' | 'hour' | null = null;
 
     if (minutesBefore === 60) {
-      message = `${event.name} започнува за 1 час`;
       notificationType = 'hour';
     } else if (minutesBefore === 24 * 60) {
-      message = `${event.name} е утре во ${event.time}`;
       notificationType = 'day';
     } else if (minutesBefore === 7 * 24 * 60) {
-      message = `${event.name} е следната недела во ${event.time}`;
       notificationType = 'week';
     }
 
-    if (event.serviceType === 'PICNIC' && event.description) {
-      message += `\nЛокација: ${event.description}`;
-    }
+    const timing: ReminderTiming =
+      notificationType === 'hour' ? 'HOUR' : notificationType === 'week' ? 'WEEK' : 'DAY';
+    const { title, body } = getReminderText(event, timing);
 
     // Schedule the notification
     await this.scheduleNotification({
-      title: event.name,
-      message,
+      title,
+      message: body,
       date: notificationTime,
       identifier,
       urgent: event.serviceType === 'PICNIC',
