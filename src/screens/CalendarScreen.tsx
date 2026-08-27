@@ -971,11 +971,15 @@ export const CalendarScreen = () => {
                         <View style={styles.fastingDayContent}>
                           <Text style={styles.fastingDayTitle}>{fastingItem.period.name}</Text>
                           <View style={styles.fastingDayRuleRow}>
-                            <MaterialCommunityIcons
-                              name={ruleConfig.icon as any}
-                              size={13}
-                              color={ruleConfig.color}
-                            />
+                            <View
+                              style={[styles.fastingDayRuleDot, { backgroundColor: ruleConfig.color }]}
+                            >
+                              <MaterialCommunityIcons
+                                name={ruleConfig.icon as any}
+                                size={11}
+                                color="#fff"
+                              />
+                            </View>
                             <Text style={[styles.fastingDayRuleText, { color: ruleConfig.color }]}>
                               {ruleConfig.shortLabel}
                             </Text>
@@ -1343,8 +1347,15 @@ const styles = StyleSheet.create({
   fastingDayRuleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: 5,
+    marginTop: 3,
+  },
+  fastingDayRuleDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fastingDayRuleText: {
     fontSize: 11.5,
