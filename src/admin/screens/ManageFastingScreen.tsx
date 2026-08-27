@@ -57,6 +57,35 @@ export const ManageFastingScreen = () => {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [specialDayPickerIndex, setSpecialDayPickerIndex] = useState<number | null>(null);
   const [brush, setBrush] = useState<FastingRule | 'ERASE'>('STRICT');
+  const [addDayForRule, setAddDayForRule] = useState<FastingRule | null>(null);
+
+  // Rule-first entry: assign a specific date to a rule (Goce's model - only
+  // explicitly assigned days are fasting days). Adding a day outside the
+  // period stretches the period to include it.
+  const assignDay = (date: Date, rule: FastingRule) => {
+    const day = new Date(date);
+    day.setHours(0, 0, 0, 0);
+    setDraft(prev => {
+      const others = prev.specialDays.filter(sd => !isSameDayDate(sd.date, day));
+      const start = new Date(prev.startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(prev.endDate);
+      end.setHours(0, 0, 0, 0);
+      return {
+        ...prev,
+        startDate: day < start ? day : prev.startDate,
+        endDate: day > end ? day : prev.endDate,
+        specialDays: [...others, { date: day, rule }],
+      };
+    });
+  };
+
+  const removeDay = (date: Date) => {
+    setDraft(prev => ({
+      ...prev,
+      specialDays: prev.specialDays.filter(sd => !isSameDayDate(sd.date, date)),
+    }));
+  };
 
   const loadPeriods = async () => {
     setLoading(true);
@@ -272,14 +301,13 @@ export const ManageFastingScreen = () => {
         )}
 
         {periods.map(period => {
-          const config = FASTING_RULE_CONFIG[period.defaultRule];
           return (
             <Card key={period.id} style={styles.periodCard}>
               <Card.Content>
                 <View style={styles.periodHeader}>
-                  <View style={[styles.periodRuleTag, { backgroundColor: config.color }]}>
-                    <MaterialCommunityIcons name={config.icon as any} size={12} color="#fff" />
-                    <Text style={styles.periodRuleTagText}>{config.shortLabel}</Text>
+                  <View style={[styles.periodRuleTag, { backgroundColor: '#6B4E9B' }]}>
+                    <MaterialCommunityIcons name="sprout" size={12} color="#fff" />
+                    <Text style={styles.periodRuleTagText}>{period.specialDays.length} дена</Text>
                   </View>
                   <Title style={styles.periodName}>{period.name}</Title>
                   <Switch
@@ -291,8 +319,6 @@ export const ManageFastingScreen = () => {
                 <Text style={styles.periodRange}>
                   {format(period.startDate, 'd MMMM', { locale: mk })} -{' '}
                   {format(period.endDate, 'd MMMM yyyy', { locale: mk })}
-                  {period.specialDays.length > 0 &&
-                    ` · ${period.specialDays.length} посебни дена`}
                 </Text>
                 <View style={styles.periodActions}>
                   <Button
@@ -394,126 +420,67 @@ export const ManageFastingScreen = () => {
                 />
               )}
 
-              <Text style={styles.sectionLabel}>Основно правило</Text>
+              <Text style={styles.sectionLabel}>Правила по денови</Text>
               <Text style={styles.specialHint}>
-                Важи автоматски за СИТЕ денови од постот.
+                За секое правило додајте ги деновите од типикот. Само додадените
+                денови се прикажуваат како посни во календарот.
               </Text>
-              {renderRuleChips(draft.defaultRule, rule =>
-                setDraft(prev => ({ ...prev, defaultRule: rule }))
-              )}
-
-              <Text style={styles.sectionLabel}>Исклучоци по денови</Text>
-              <Text style={styles.specialHint}>
-                За деновите што отстапуваат од основното правило: изберете правило
-                (четка), па допрете на тие денови - како во типикот. „Основно" го
-                враќа денот на основното правило.
-              </Text>
-              <View style={styles.ruleRow}>
-                {RULES.map(rule => {
-                  const config = FASTING_RULE_CONFIG[rule];
-                  const isSelected = brush === rule;
-                  return (
-                    <TouchableOpacity
-                      key={`brush-${rule}`}
-                      onPress={() => setBrush(rule)}
-                      style={[
-                        styles.ruleChip,
-                        styles.ruleChipCompact,
-                        {
-                          backgroundColor: isSelected ? config.color : '#fff',
-                          borderColor: config.color,
-                          borderWidth: isSelected ? 2.5 : 1.5,
-                        },
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={config.icon as any}
-                        size={13}
-                        color={isSelected ? '#fff' : config.color}
-                      />
-                      <Text
-                        style={[
-                          styles.ruleChipText,
-                          styles.ruleChipTextCompact,
-                          { color: isSelected ? '#fff' : config.color },
-                        ]}
-                      >
-                        {config.shortLabel}
+              {RULES.map(rule => {
+                const config = FASTING_RULE_CONFIG[rule];
+                const days = draft.specialDays
+                  .filter(sd => sd.rule === rule)
+                  .sort((a, b) => a.date.getTime() - b.date.getTime());
+                return (
+                  <View key={rule} style={[styles.ruleSection, { borderColor: config.color }]}>
+                    <View style={styles.ruleSectionHeader}>
+                      <View style={[styles.ruleSectionDot, { backgroundColor: config.color }]}>
+                        <MaterialCommunityIcons name={config.icon as any} size={14} color="#fff" />
+                      </View>
+                      <Text style={[styles.ruleSectionTitle, { color: config.color }]}>
+                        {config.shortLabel}{days.length > 0 ? ` (${days.length})` : ''}
                       </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-                <TouchableOpacity
-                  key="brush-erase"
-                  onPress={() => setBrush('ERASE')}
-                  style={[
-                    styles.ruleChip,
-                    styles.ruleChipCompact,
-                    {
-                      backgroundColor: brush === 'ERASE' ? '#666' : '#fff',
-                      borderColor: '#666',
-                      borderWidth: brush === 'ERASE' ? 2.5 : 1.5,
-                    },
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name="eraser"
-                    size={13}
-                    color={brush === 'ERASE' ? '#fff' : '#666'}
-                  />
-                  <Text
-                    style={[
-                      styles.ruleChipText,
-                      styles.ruleChipTextCompact,
-                      { color: brush === 'ERASE' ? '#fff' : '#666' },
-                    ]}
-                  >
-                    Основно
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              {periodDays().length > 70 ? (
-                <Text style={styles.specialHint}>
-                  Периодот е предолг за приказ по денови - користете „Посебни денови" подолу.
-                </Text>
-              ) : (
-                <View style={styles.dayGrid}>
-                  {periodDays().map(day => {
-                    const special = draft.specialDays.find(sd => isSameDayDate(sd.date, day));
-                    const rule = special ? special.rule : baseRuleFor(day);
-                    const config = FASTING_RULE_CONFIG[rule];
-                    return (
-                      <TouchableOpacity
-                        key={day.toISOString()}
-                        style={[
-                          styles.dayChip,
-                          { backgroundColor: config.color + (special ? 'FF' : '22') },
-                          special && styles.dayChipSpecial,
-                        ]}
-                        onPress={() => paintDayRule(day)}
+                      <Button
+                        mode="text"
+                        compact
+                        textColor={config.color}
+                        onPress={() => setAddDayForRule(rule)}
                       >
-                        <Text style={[styles.dayChipDow, { color: special ? '#fff' : config.color }]}>
-                          {WEEKDAY_LETTERS[day.getDay()]}
-                        </Text>
-                        <Text style={[styles.dayChipNum, { color: special ? '#fff' : config.color }]}>
-                          {day.getDate()}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              )}
-              <View style={styles.gridLegend}>
-                {RULES.map(rule => {
-                  const config = FASTING_RULE_CONFIG[rule];
-                  return (
-                    <View key={rule} style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: config.color }]} />
-                      <Text style={styles.legendText}>{config.shortLabel}</Text>
+                        + Додади ден
+                      </Button>
                     </View>
-                  );
-                })}
-              </View>
+                    {days.length > 0 && (
+                      <View style={styles.ruleDayChips}>
+                        {days.map(sd => (
+                          <TouchableOpacity
+                            key={sd.date.toISOString()}
+                            style={[styles.ruleDayChip, { backgroundColor: config.color }]}
+                            onPress={() => removeDay(sd.date)}
+                          >
+                            <Text style={styles.ruleDayChipText}>
+                              {format(sd.date, 'd MMM', { locale: mk })}
+                            </Text>
+                            <MaterialCommunityIcons name="close" size={12} color="#fff" />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+              <Text style={styles.specialHint}>
+                Допрете на додаден ден за да го отстраните.
+              </Text>
+              {addDayForRule && (
+                <DateTimePicker
+                  value={draft.startDate}
+                  mode="date"
+                  onChange={(_, date) => {
+                    const rule = addDayForRule;
+                    setAddDayForRule(null);
+                    if (date && rule) assignDay(date, rule);
+                  }}
+                />
+              )}
 
               <TextInput
                 label="Упатство (по избор)"
@@ -524,54 +491,6 @@ export const ManageFastingScreen = () => {
                 numberOfLines={3}
                 style={styles.input}
               />
-
-              <View style={styles.specialHeader}>
-                <Text style={styles.sectionLabel}>Посебни денови</Text>
-                <Button mode="text" compact onPress={addSpecialDay} textColor={COLORS.PRIMARY}>
-                  + Додади
-                </Button>
-              </View>
-              <Text style={styles.specialHint}>
-                Ден во постот со поинакво правило - нпр. Благовештение со дозволена риба.
-              </Text>
-
-              {draft.specialDays.map((special, index) => (
-                <View key={index} style={styles.specialCard}>
-                  <View style={styles.specialRow}>
-                    <TouchableOpacity
-                      style={styles.specialDate}
-                      onPress={() => setSpecialDayPickerIndex(index)}
-                    >
-                      <MaterialCommunityIcons name="calendar" size={16} color={COLORS.PRIMARY} />
-                      <Text style={styles.specialDateText}>
-                        {format(special.date, 'd MMM', { locale: mk })}
-                      </Text>
-                    </TouchableOpacity>
-                    <TextInput
-                      placeholder="Белешка (нпр. Благовештение)"
-                      value={special.note || ''}
-                      onChangeText={note => updateSpecialDay(index, { note })}
-                      mode="flat"
-                      dense
-                      style={styles.specialNote}
-                    />
-                    <TouchableOpacity onPress={() => removeSpecialDay(index)}>
-                      <MaterialCommunityIcons name="delete-outline" size={22} color="#B3261E" />
-                    </TouchableOpacity>
-                  </View>
-                  {specialDayPickerIndex === index && (
-                    <DateTimePicker
-                      value={special.date}
-                      mode="date"
-                      onChange={(_, date) => {
-                        setSpecialDayPickerIndex(Platform.OS === 'ios' ? index : null);
-                        if (date) updateSpecialDay(index, { date });
-                      }}
-                    />
-                  )}
-                  {renderRuleChips(special.rule, rule => updateSpecialDay(index, { rule }), true)}
-                </View>
-              ))}
 
               <Button
                 mode="contained"
@@ -807,6 +726,49 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 8,
+  },
+  ruleSection: {
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+  ruleSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  ruleSectionDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ruleSectionTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  ruleDayChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
+  },
+  ruleDayChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  ruleDayChipText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   dayGrid: {
     flexDirection: 'row',

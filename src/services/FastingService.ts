@@ -169,21 +169,20 @@ export const getFastingInfoForDate = (
     const end = startOfDay(period.endDate);
     if (day < start || day > end) continue;
 
+    // Goce's model: ONLY explicitly assigned days are fasting days.
+    // A day inside the period range without an assigned rule shows nothing.
     const special = period.specialDays.find(s => isSameDay(s.date, day));
+    if (!special) continue;
+
     const msPerDay = 24 * 60 * 60 * 1000;
     const dayNumber = Math.round((day.getTime() - start.getTime()) / msPerDay) + 1;
     const totalDays = Math.round((end.getTime() - start.getTime()) / msPerDay) + 1;
 
-    const dow = day.getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    const baseRule =
-      isWeekend && period.weekendRule ? period.weekendRule : period.defaultRule;
-
     return {
       period,
-      rule: special ? special.rule : baseRule,
-      isSpecialDay: !!special,
-      specialDayNote: special?.note,
+      rule: special.rule,
+      isSpecialDay: true,
+      specialDayNote: special.note,
       dayNumber,
       totalDays,
     };
