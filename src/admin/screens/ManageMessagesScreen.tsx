@@ -45,6 +45,7 @@ const TYPE_COLORS: Record<ContactMessageType, string> = {
   QUESTION: '#1B3661',
   REMARK: '#7B8A3E',
   COMPLAINT: '#8B0000',
+  PRAISE: '#2E7D32',
 };
 
 export const ManageMessagesScreen = () => {

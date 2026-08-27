@@ -7,12 +7,13 @@ import { sanitizeString, rateLimiter } from './ValidationService';
 // public and readable only by a signed-in admin — enforced by Firestore
 // rules with schema validation, never by this client code.
 
-export type ContactMessageType = 'QUESTION' | 'REMARK' | 'COMPLAINT';
+export type ContactMessageType = 'QUESTION' | 'REMARK' | 'COMPLAINT' | 'PRAISE';
 
 export const CONTACT_TYPE_LABELS: Record<ContactMessageType, string> = {
   QUESTION: 'Прашање',
   REMARK: 'Забелешка',
   COMPLAINT: 'Поплака',
+  PRAISE: 'Пофалба',
 };
 
 const contactCollection = collection(db, 'contactMessages');

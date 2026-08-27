@@ -22,7 +22,7 @@ import {
 
 type ActiveForm = 'none' | 'contact' | 'membership';
 
-const CONTACT_TYPES: ContactMessageType[] = ['QUESTION', 'REMARK', 'COMPLAINT'];
+const CONTACT_TYPES: ContactMessageType[] = ['QUESTION', 'REMARK', 'COMPLAINT', 'PRAISE'];
 
 export const CommunityScreen = () => {
   const [activeForm, setActiveForm] = useState<ActiveForm>('none');
@@ -409,6 +409,7 @@ const styles = StyleSheet.create({
   },
   typeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginBottom: 12,
   },
