@@ -155,6 +155,52 @@ export const ManageFastingScreen = () => {
     }));
   };
 
+
+  const WEEKDAY_LETTERS = ['Н', 'П', 'В', 'С', 'Ч', 'П', 'С'];
+
+  const isSameDayDate = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const baseRuleFor = (date: Date): FastingRule => {
+    const dow = date.getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    return isWeekend && draft.weekendRule ? draft.weekendRule : draft.defaultRule;
+  };
+
+  const periodDays = (): Date[] => {
+    const days: Date[] = [];
+    const d = new Date(draft.startDate);
+    d.setHours(0, 0, 0, 0);
+    const end = new Date(draft.endDate);
+    end.setHours(0, 0, 0, 0);
+    while (d <= end && days.length <= 70) {
+      days.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return days;
+  };
+
+  const cycleDayRule = (date: Date) => {
+    const base = baseRuleFor(date);
+    const special = draft.specialDays.find(sd => isSameDayDate(sd.date, date));
+    const current = special ? special.rule : base;
+    const next = RULES[(RULES.indexOf(current) + 1) % RULES.length];
+
+    setDraft(prev => {
+      const others = prev.specialDays.filter(sd => !isSameDayDate(sd.date, date));
+      if (next === base) {
+        // Back to the inherited rule - no special day needed
+        return { ...prev, specialDays: others };
+      }
+      return {
+        ...prev,
+        specialDays: [...others, { date, rule: next, note: special?.note }],
+      };
+    });
+  };
+
   const renderRuleChips = (
     selected: FastingRule | undefined,
     onSelect: (rule: FastingRule) => void,
@@ -363,6 +409,54 @@ export const ManageFastingScreen = () => {
                   weekendRule: prev.weekendRule === rule ? undefined : rule,
                 }))
               )}
+
+              <Text style={styles.sectionLabel}>Правила по денови</Text>
+              <Text style={styles.specialHint}>
+                Секој ден го покажува своето правило. Допрете на ден за да го смените -
+                како во типикот. Деновите со поинакво правило се зачувуваат автоматски.
+              </Text>
+              {periodDays().length > 70 ? (
+                <Text style={styles.specialHint}>
+                  Периодот е предолг за приказ по денови - користете „Посебни денови" подолу.
+                </Text>
+              ) : (
+                <View style={styles.dayGrid}>
+                  {periodDays().map(day => {
+                    const special = draft.specialDays.find(sd => isSameDayDate(sd.date, day));
+                    const rule = special ? special.rule : baseRuleFor(day);
+                    const config = FASTING_RULE_CONFIG[rule];
+                    return (
+                      <TouchableOpacity
+                        key={day.toISOString()}
+                        style={[
+                          styles.dayChip,
+                          { backgroundColor: config.color + (special ? 'FF' : '22') },
+                          special && styles.dayChipSpecial,
+                        ]}
+                        onPress={() => cycleDayRule(day)}
+                      >
+                        <Text style={[styles.dayChipDow, { color: special ? '#fff' : config.color }]}>
+                          {WEEKDAY_LETTERS[day.getDay()]}
+                        </Text>
+                        <Text style={[styles.dayChipNum, { color: special ? '#fff' : config.color }]}>
+                          {day.getDate()}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+              <View style={styles.gridLegend}>
+                {RULES.map(rule => {
+                  const config = FASTING_RULE_CONFIG[rule];
+                  return (
+                    <View key={rule} style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: config.color }]} />
+                      <Text style={styles.legendText}>{config.shortLabel}</Text>
+                    </View>
+                  );
+                })}
+              </View>
 
               <TextInput
                 label="Упатство (по избор)"
@@ -656,6 +750,56 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 8,
+  },
+  dayGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
+  dayChip: {
+    width: 40,
+    height: 44,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayChipSpecial: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  dayChipDow: {
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  dayChipNum: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  gridLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 14,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: {
+    fontSize: 11,
+    color: '#777',
+    fontWeight: '700',
   },
 });
 
