@@ -36,25 +36,71 @@ membershipApplications/{id}:
   status: 'NEW' | 'APPROVED' | 'CONTACTED'
 ```
 
-## Security rules — CRITICAL
+## Security rules — CRITICAL (Goce mandate: super secure, super isolated)
 
-These collections contain personal data. The public may only CREATE; nobody
-except a signed-in admin may ever read:
+These collections contain personal data. Principles: **create-only for the
+public, admin-only reads, schema enforced at the rules level** — the server
+rejects malformed or oversized submissions even if the app is bypassed
+entirely and someone talks to Firestore directly.
 
 ```
+function validContactMessage() {
+  let d = request.resource.data;
+  return d.keys().hasOnly(['type', 'message', 'name', 'contact', 'createdAt', 'status'])
+    && d.type in ['QUESTION', 'REMARK', 'COMPLAINT']
+    && d.message is string && d.message.size() > 0 && d.message.size() <= 3000
+    && (!('name' in d) || (d.name is string && d.name.size() <= 120))
+    && (!('contact' in d) || (d.contact is string && d.contact.size() <= 160))
+    && d.status == 'NEW'
+    && d.createdAt == request.time;
+}
 match /contactMessages/{id} {
-  allow create: if true;
+  allow create: if validContactMessage();
   allow read, update, delete: if request.auth != null;
+}
+
+function validMembershipApplication() {
+  let d = request.resource.data;
+  return d.keys().hasOnly(['fullName', 'address', 'phone', 'email',
+                           'familyMembers', 'note', 'createdAt', 'status'])
+    && d.fullName is string && d.fullName.size() > 0 && d.fullName.size() <= 160
+    && d.address is string && d.address.size() <= 300
+    && d.phone is string && d.phone.size() <= 40
+    && d.email is string && d.email.size() <= 160
+    && (!('familyMembers' in d) || (d.familyMembers is string && d.familyMembers.size() <= 1000))
+    && (!('note' in d) || (d.note is string && d.note.size() <= 2000))
+    && d.status == 'NEW'
+    && d.createdAt == request.time;
 }
 match /membershipApplications/{id} {
-  allow create: if true;
+  allow create: if validMembershipApplication();
   allow read, update, delete: if request.auth != null;
 }
 ```
 
-Spam control: client-side rate limit (the app already has `rateLimiter` in
-ValidationService), max lengths, and no links rendered from message text.
-If spam becomes real, add Firebase App Check.
+Hardening checklist (build requirements, not suggestions):
+
+- **Isolation**: these two collections share nothing with public data; no
+  queries from public screens ever touch them (write-only from the form).
+- **No public reads, ever** — not even "your own message": that requires auth
+  and invites enumeration. The form confirms locally („Пораката е испратена").
+- **Rules-level schema**: `hasOnly` + type + size checks above; server-side
+  `createdAt == request.time` prevents timestamp forgery; forced `status: 'NEW'`
+  prevents self-approval of membership applications.
+- **Client sanitation**: trim, strip control chars, length counters in the UI
+  (`ValidationService` already exists — extend it).
+- **Display safety in admin**: message text rendered as plain text only; links
+  not tappable by default (a complaint containing a link must not become a
+  phishing vector aimed at the admin).
+- **Spam posture** (Goce: pragmatic now, escalate if real): client rate limit
+  (`rateLimiter`, e.g. 3 submissions / 10 min), honeypot field the UI never
+  shows (bots fill it → rules reject via hasOnly), submission length floor.
+  Escalation path when needed: Firebase App Check enforcement — the
+  infrastructure step that cuts off non-app clients entirely.
+- **Data minimization & retention**: only the fields above; admin panel gets a
+  delete action; processed complaints can be purged after a period Goce picks.
+- **No PII in logs**: console/log statements must never print message contents
+  or applicant details.
 
 ## Fit with the roadmap
 
