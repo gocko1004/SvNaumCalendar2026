@@ -596,6 +596,7 @@ export const CalendarScreen = () => {
   }, [searchQuery, selectedServiceTypes, events]);
 
   // Scroll to specific month
+  const pendingScrollSection = useRef<number | null>(null);
   const scrollToMonth = useCallback((monthIndex: number) => {
     setSelectedMonth(monthIndex);
 
@@ -603,12 +604,17 @@ export const CalendarScreen = () => {
     const sectionIndex = sections.findIndex(s => s.monthIndex === monthIndex);
 
     if (sectionIndex !== -1 && sectionListRef.current) {
-      sectionListRef.current.scrollToLocation({
-        sectionIndex: sectionIndex,
-        itemIndex: 0,
-        animated: true,
-        viewOffset: 0,
-      });
+      pendingScrollSection.current = sectionIndex;
+      try {
+        sectionListRef.current.scrollToLocation({
+          sectionIndex: sectionIndex,
+          itemIndex: 0,
+          animated: true,
+          viewOffset: 0,
+        });
+      } catch (e) {
+        // Far-offscreen sections are handled by onScrollToIndexFailed below
+      }
     }
   }, [sections]);
 
@@ -844,6 +850,24 @@ export const CalendarScreen = () => {
         <SectionList
           ref={sectionListRef}
           sections={sections}
+          onScrollToIndexFailed={(info) => {
+            // Target not rendered yet: jump near it, let it render, then retry precisely
+            const responder = (sectionListRef.current as any)?.getScrollResponder?.();
+            responder?.scrollTo?.({ y: info.averageItemLength * info.index, animated: false });
+            setTimeout(() => {
+              const target = pendingScrollSection.current;
+              if (target !== null && sectionListRef.current) {
+                try {
+                  sectionListRef.current.scrollToLocation({
+                    sectionIndex: target,
+                    itemIndex: 0,
+                    animated: true,
+                    viewOffset: 0,
+                  });
+                } catch (e) { /* give up quietly rather than crash */ }
+              }
+            }, 300);
+          }}
           keyExtractor={(item, index) => (item?.date?.toISOString() || 'item') + index}
           renderSectionHeader={({ section: { title, monthIndex } }) => (
             <View
