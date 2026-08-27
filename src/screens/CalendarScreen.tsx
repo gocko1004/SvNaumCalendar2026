@@ -509,6 +509,27 @@ export const CalendarScreen = () => {
   }, []);
 
   // Pull-to-refresh handler
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getAllFastingPeriods().then(setFastingPeriods).catch(() => {});
+      Promise.all([getAllEvents(), getEventOverrides()])
+        .then(([firestoreEvents, overrides]) => {
+          setEvents(prev => {
+            const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
+            // Keep the enriched image URLs from the initial load pattern
+            return merged.map(evt => {
+              const match = prev.find(
+                p => p.date.getTime() === evt.date.getTime() && p.serviceType === evt.serviceType
+              );
+              return match?.imageUrl ? { ...evt, imageUrl: match.imageUrl } : evt;
+            });
+          });
+        })
+        .catch(() => {});
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
 
@@ -523,15 +544,18 @@ export const CalendarScreen = () => {
     };
 
     try {
-      const [firestoreEvents, activeAnnouncements] = await Promise.all([
+      const [firestoreEvents, activeAnnouncements, overrides, periods] = await Promise.all([
         getAllEvents(),
         getActiveAnnouncements(),
+        getEventOverrides(),
+        getAllFastingPeriods(),
       ]);
 
-      const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+      const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
       const enriched = enrichEventsWithImages(merged);
       setEvents(enriched);
       setAnnouncements(activeAnnouncements);
+      setFastingPeriods(periods);
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
