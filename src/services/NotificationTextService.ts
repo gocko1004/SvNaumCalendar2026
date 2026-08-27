@@ -25,7 +25,7 @@ const churchOpenText = (event: ChurchEvent, timing: ReminderTiming): ReminderTex
   switch (timing) {
     case 'WEEK':
     case 'THREE_DAYS':
-      body = `На ${formatDate(event.date)} црквата е отворена, без присуство на свештеник.${hours}`;
+      body = `На ${formatDate(event.date)} црквата ќе биде отворена, без присуство на свештеник.${hours}`;
       break;
     case 'DAY':
       body = `Утре црквата е отворена, но свештеникот не е присутен.${hours}`;
@@ -45,10 +45,14 @@ const liturgyText = (event: ChurchEvent, timing: ReminderTiming): ReminderText =
 
   switch (timing) {
     case 'WEEK':
-      body = `${event.name} - следната недела (${formatDate(event.date)}) во ${event.time} часот.`;
+      body = named
+        ? `${event.name} - следната недела (${formatDate(event.date)}) во ${event.time} часот.`
+        : `Следната недела (${formatDate(event.date)}) е ${event.name} - литургијата започнува во ${event.time} часот.`;
       break;
     case 'THREE_DAYS':
-      body = `За 3 дена - ${event.name} во ${event.time} часот.`;
+      body = named
+        ? `За 3 дена - ${event.name} во ${event.time} часот.`
+        : `За 3 дена е ${event.name} - литургијата започнува во ${event.time} часот.`;
       break;
     case 'DAY':
       body = named
@@ -76,10 +80,14 @@ const eveningServiceText = (event: ChurchEvent, timing: ReminderTiming): Reminde
 
   switch (timing) {
     case 'WEEK':
-      body = `${event.name} - следната недела (${formatDate(event.date)}) во ${event.time} часот.`;
+      body = named
+        ? `${event.name} - следната недела (${formatDate(event.date)}) во ${event.time} часот.`
+        : `Следната недела (${formatDate(event.date)}) е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
       break;
     case 'THREE_DAYS':
-      body = `За 3 дена - ${event.name} во ${event.time} часот.`;
+      body = named
+        ? `За 3 дена - ${event.name} во ${event.time} часот.`
+        : `За 3 дена е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
       break;
     case 'DAY':
       body = named
