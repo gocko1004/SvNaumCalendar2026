@@ -374,6 +374,7 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
       <Portal>
         <Dialog
           visible={editDialogVisible}
+          dismissable={false}
           onDismiss={() => { Keyboard.dismiss(); setEditDialogVisible(false); }}
           style={styles.dialog}
         >
@@ -382,8 +383,13 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
           </Dialog.Title>
           <Dialog.ScrollArea style={{ maxHeight: Dimensions.get('window').height * 0.6 }}>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                showsVerticalScrollIndicator={false}
+              >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                  <View>
             <TextInput
               key={`name-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="Име на настанот"
@@ -505,16 +511,18 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
             />
 
             <TextInput
+              key={`saint-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="Име на светец (опционално)"
-              value={editedEvent.saintName}
-              onChangeText={saintName => setEditedEvent({ ...editedEvent, saintName })}
+              defaultValue={editedEvent.saintName}
+              onChangeText={saintName => setEditedEvent(prev => ({ ...prev, saintName }))}
               style={styles.input}
               maxLength={200}
             />
             {/* Bottom padding for keyboard */}
             <View style={{ height: 50 }} />
-                </ScrollView>
-              </TouchableWithoutFeedback>
+                  </View>
+                </TouchableWithoutFeedback>
+              </ScrollView>
             </KeyboardAvoidingView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
