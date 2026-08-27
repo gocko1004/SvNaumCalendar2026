@@ -53,12 +53,12 @@ const liturgyText = (event: ChurchEvent, timing: ReminderTiming): ReminderText =
     case 'DAY':
       body = named
         ? `Утре - ${event.name} во ${event.time} часот.`
-        : `Утре, ${event.name} - литургијата започнува во ${event.time} часот.`;
+        : `Утре е ${event.name} - литургијата започнува во ${event.time} часот.`;
       break;
     case 'SAME_DAY':
       body = named
         ? `Денес - ${event.name} во ${event.time} часот.`
-        : `Денес, ${event.name} - литургијата започнува во ${event.time} часот.`;
+        : `Денес е ${event.name} - литургијата започнува во ${event.time} часот.`;
       break;
     case 'HOUR':
       body = named
@@ -84,12 +84,12 @@ const eveningServiceText = (event: ChurchEvent, timing: ReminderTiming): Reminde
     case 'DAY':
       body = named
         ? `Утре - ${event.name} во ${event.time} часот.`
-        : `Утре, ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
+        : `Утре е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
       break;
     case 'SAME_DAY':
       body = named
         ? `Денес - ${event.name} во ${event.time} часот.`
-        : `Денес, ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
+        : `Денес е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
       break;
     case 'HOUR':
       body = `Вечерната богослужба започнува за еден час.`;
