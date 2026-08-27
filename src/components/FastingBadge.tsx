@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    alignSelf: 'stretch',
+    alignSelf: 'flex-start',
     marginTop: 8,
     borderRadius: 999,
     paddingVertical: 7,
@@ -50,7 +50,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    flex: 1,
     fontSize: 12,
     fontWeight: '700',
     color: '#fff',
