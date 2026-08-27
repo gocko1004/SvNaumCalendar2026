@@ -46,29 +46,29 @@ export const FASTING_RULE_CONFIG: Record<
   { label: string; shortLabel: string; icon: string; color: string; description: string }
 > = {
   STRICT: {
-    label: 'Строг пост (без масло)',
-    shortLabel: 'Строг пост',
+    label: 'Строг пост (на вода)',
+    shortLabel: 'На вода',
     icon: 'sprout',
     color: '#8E1F1F',
     description: 'без масло и вино',
   },
   WITH_OIL: {
-    label: 'Пост со масло',
-    shortLabel: 'Со масло',
+    label: 'Пост на масло',
+    shortLabel: 'На масло',
     icon: 'water',
     color: '#7B8A3E',
     description: 'дозволено масло',
   },
   WINE_OIL: {
-    label: 'Вино и масло',
-    shortLabel: 'Вино и масло',
+    label: 'Пост на вино и масло',
+    shortLabel: 'На вино и масло',
     icon: 'glass-wine',
     color: '#A3622E',
     description: 'дозволено вино и масло',
   },
   FISH: {
-    label: 'Дозволена риба',
-    shortLabel: 'Риба',
+    label: 'Пост на риба',
+    shortLabel: 'На риба',
     icon: 'fish',
     color: '#1F6273',
     description: 'дозволена риба, вино и масло',
