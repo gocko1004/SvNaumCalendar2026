@@ -41,6 +41,14 @@ The app becomes the single place communication goes out from: Facebook business 
 connection (post from app → page), and inbound sync. Spec sketch in
 [04-communications-hub.md](04-communications-hub.md).
 
+## Release checklist additions (Google Play quality requirements, announced Aug 2026)
+
+- Compress/resize images on upload in MediaUploadService (memory + bitmap
+  thresholds; also cuts Firebase bandwidth).
+- Confirm R8/code shrinking is active in the production EAS build.
+- Check Play Console → Android vitals for memory flags before submitting.
+- Verify backup/device-migration behavior (data is in Firebase; low risk).
+
 ## Standing issues / debt
 
 - 2026 calendar is hardcoded (`ChurchCalendarService.ts`) → 2027 requires a release.
