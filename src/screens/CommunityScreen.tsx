@@ -9,8 +9,9 @@ import {
   Platform,
   Keyboard,
 } from 'react-native';
-import { Surface, Text, TextInput, Button } from 'react-native-paper';
+import { Surface, Text, TextInput, Button, Checkbox } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native';
 import { COLORS } from '../constants/theme';
 import {
@@ -25,7 +26,9 @@ type ActiveForm = 'none' | 'contact' | 'membership';
 const CONTACT_TYPES: ContactMessageType[] = ['QUESTION', 'REMARK', 'COMPLAINT', 'PRAISE'];
 
 export const CommunityScreen = () => {
+  const navigation = useNavigation<any>();
   const [activeForm, setActiveForm] = useState<ActiveForm>('none');
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const [sending, setSending] = useState(false);
 
   // Contact form
@@ -53,6 +56,7 @@ export const CommunityScreen = () => {
     setEmail('');
     setFamilyMembers('');
     setNote('');
+    setPolicyAccepted(false);
   };
 
   const handleSendMessage = async () => {
@@ -228,6 +232,9 @@ export const CommunityScreen = () => {
               <Text style={styles.privacyNote}>
                 Пораката ја гледа само црковната администрација. Поплаките може да се испратат анонимно.
               </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
+                <Text style={styles.policyLink}>Политика на приватност</Text>
+              </TouchableOpacity>
               <Button
                 mode="contained"
                 onPress={handleSendMessage}
@@ -309,11 +316,32 @@ export const CommunityScreen = () => {
               <Text style={styles.privacyNote}>
                 Податоците ги гледа само црковната администрација и служат исклучиво за контакт околу членството.
               </Text>
+              <TouchableOpacity
+                style={styles.consentRow}
+                onPress={() => setPolicyAccepted(prev => !prev)}
+                activeOpacity={0.7}
+              >
+                <Checkbox
+                  status={policyAccepted ? 'checked' : 'unchecked'}
+                  onPress={() => setPolicyAccepted(prev => !prev)}
+                  color={COLORS.PRIMARY}
+                />
+                <Text style={styles.consentText}>
+                  Ја прочитав{' '}
+                  <Text
+                    style={styles.policyLinkInline}
+                    onPress={() => navigation.navigate('PrivacyPolicy')}
+                  >
+                    политиката на приватност
+                  </Text>{' '}
+                  и се согласувам моите податоци да се обработуваат за зачленување во црковната општина.
+                </Text>
+              </TouchableOpacity>
               <Button
                 mode="contained"
                 onPress={handleSendApplication}
                 loading={sending}
-                disabled={sending}
+                disabled={sending || !policyAccepted}
                 buttonColor={COLORS.PRIMARY}
                 style={styles.sendButton}
               >
@@ -445,6 +473,31 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     borderRadius: 8,
+  },
+  policyLink: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.PRIMARY,
+    textDecorationLine: 'underline',
+    marginBottom: 12,
+  },
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 2,
+  },
+  consentText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: '#555',
+    lineHeight: 18,
+    marginTop: 6,
+  },
+  policyLinkInline: {
+    color: COLORS.PRIMARY,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });
 

@@ -13,6 +13,7 @@ import { NotificationSettingsScreen } from '../screens/NotificationSettingsScree
 import { NotificationDetailScreen } from '../screens/NotificationDetailScreen';
 import { NewsDetailScreen } from '../screens/NewsDetailScreen';
 import { CommunityScreen } from '../screens/CommunityScreen';
+import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
 import { getNewsById } from '../services/NewsService';
 import { AdminNavigator } from './AdminNavigator';
 import { COLORS } from '../constants/theme';
@@ -31,6 +32,7 @@ export type RootStackParamList = {
   NewsDetail: {
     news: NewsItem;
   };
+  PrivacyPolicy: undefined;
 };
 
 const Tab = createBottomTabNavigator();
@@ -220,6 +222,14 @@ export const AppNavigator = () => {
         <RootStack.Screen
           name="NewsDetail"
           component={NewsDetailScreen}
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
+        <RootStack.Screen
+          name="PrivacyPolicy"
+          component={PrivacyPolicyScreen}
           options={{
             presentation: 'card',
             animation: 'slide_from_right',
