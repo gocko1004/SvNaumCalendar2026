@@ -22,7 +22,7 @@ export const FastingBadge: React.FC<FastingBadgeProps> = ({ info, onPress }) => 
       hitSlop={{ top: 4, bottom: 4 }}
     >
       <View style={styles.iconDot}>
-        <MaterialCommunityIcons name={config.icon as any} size={13} color={config.color} />
+        <MaterialCommunityIcons name={config.icon as any} size={14} color={config.color} />
       </View>
       <Text style={styles.label}>{config.shortLabel}</Text>
       <MaterialCommunityIcons name="chevron-right" size={16} color="#fff" />

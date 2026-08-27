@@ -49,7 +49,7 @@ export const FASTING_RULE_CONFIG: Record<
     label: 'Строг пост (без масло)',
     shortLabel: 'Строг пост',
     icon: 'sprout',
-    color: '#6B4E9B',
+    color: '#8E1F1F',
     description: 'без масло и вино',
   },
   WITH_OIL: {
@@ -70,7 +70,7 @@ export const FASTING_RULE_CONFIG: Record<
     label: 'Дозволена риба',
     shortLabel: 'Риба',
     icon: 'fish',
-    color: '#1B3661',
+    color: '#1F6273',
     description: 'дозволена риба, вино и масло',
   },
 };
