@@ -1315,16 +1315,16 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   fastingDayDate: {
-    width: 50,
-    paddingVertical: 8,
+    width: 70,
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
   },
   fastingDayDateDay: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    lineHeight: 18,
+    lineHeight: 19,
   },
   fastingDayDateMonth: {
     color: '#fff',
@@ -1333,8 +1333,8 @@ const styles = StyleSheet.create({
   },
   fastingDayContent: {
     flex: 1,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
   fastingDayTitle: {
     fontSize: 13,
