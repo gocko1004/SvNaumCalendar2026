@@ -25,7 +25,12 @@ export const FastingBadge: React.FC<FastingBadgeProps> = ({ info, onPress }) => 
         <MaterialCommunityIcons name={config.icon as any} size={13} color="#fff" />
       </View>
       <Text style={[styles.label, { color: config.color }]}>{config.shortLabel}</Text>
-      <MaterialCommunityIcons name="chevron-right" size={16} color={config.color} />
+      <MaterialCommunityIcons
+        name="chevron-right"
+        size={16}
+        color={config.color}
+        style={styles.chevron}
+      />
     </TouchableOpacity>
   );
 };
@@ -49,6 +54,9 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12.5,
     fontWeight: '700',
+  },
+  chevron: {
+    marginTop: 2,
   },
 });
 
