@@ -138,7 +138,7 @@ export const CommunityScreen = () => {
           {/* Entry cards */}
           {activeForm === 'none' && (
             <>
-              <TouchableOpacity onPress={() => setActiveForm('contact')} activeOpacity={0.85}>
+              <TouchableOpacity onPress={() => { setPolicyAccepted(false); setActiveForm('contact'); }} activeOpacity={0.85}>
                 <Surface style={styles.entryCard}>
                   <View style={styles.entryIcon}>
                     <MaterialCommunityIcons name="email-outline" size={26} color={COLORS.PRIMARY} />
@@ -153,7 +153,7 @@ export const CommunityScreen = () => {
                 </Surface>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => setActiveForm('membership')} activeOpacity={0.85}>
+              <TouchableOpacity onPress={() => { setPolicyAccepted(false); setActiveForm('membership'); }} activeOpacity={0.85}>
                 <Surface style={styles.entryCard}>
                   <View style={styles.entryIcon}>
                     <MaterialCommunityIcons name="account-plus-outline" size={26} color={COLORS.PRIMARY} />
@@ -232,14 +232,32 @@ export const CommunityScreen = () => {
               <Text style={styles.privacyNote}>
                 Пораката ја гледа само црковната администрација. Поплаките може да се испратат анонимно.
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
-                <Text style={styles.policyLink}>Политика на приватност</Text>
+              <TouchableOpacity
+                style={styles.consentRow}
+                onPress={() => setPolicyAccepted(prev => !prev)}
+                activeOpacity={0.7}
+              >
+                <Checkbox
+                  status={policyAccepted ? 'checked' : 'unchecked'}
+                  onPress={() => setPolicyAccepted(prev => !prev)}
+                  color={COLORS.PRIMARY}
+                />
+                <Text style={styles.consentText}>
+                  Ја прочитав{' '}
+                  <Text
+                    style={styles.policyLinkInline}
+                    onPress={() => navigation.navigate('PrivacyPolicy')}
+                  >
+                    политиката на приватност
+                  </Text>{' '}
+                  и се согласувам мојата порака да биде обработена.
+                </Text>
               </TouchableOpacity>
               <Button
                 mode="contained"
                 onPress={handleSendMessage}
                 loading={sending}
-                disabled={sending}
+                disabled={sending || !policyAccepted}
                 buttonColor={COLORS.PRIMARY}
                 style={styles.sendButton}
               >
