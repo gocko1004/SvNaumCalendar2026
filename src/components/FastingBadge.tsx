@@ -16,21 +16,18 @@ export const FastingBadge: React.FC<FastingBadgeProps> = ({ info, onPress }) => 
 
   return (
     <TouchableOpacity
-      style={[
-        styles.chip,
-        { backgroundColor: config.color + '12', borderColor: config.color + '55' },
-      ]}
+      style={[styles.chip, { backgroundColor: config.color }]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
       hitSlop={{ top: 4, bottom: 4 }}
     >
-      <View style={[styles.iconDot, { backgroundColor: config.color }]}>
-        <MaterialCommunityIcons name={config.icon as any} size={12} color="#fff" />
+      <View style={styles.iconDot}>
+        <MaterialCommunityIcons name={config.icon as any} size={13} color={config.color} />
       </View>
-      <Text style={[styles.label, { color: config.color }]} numberOfLines={1}>
+      <Text style={styles.label} numberOfLines={1}>
         {info.period.name} · {config.shortLabel}
       </Text>
-      <MaterialCommunityIcons name="chevron-right" size={16} color={config.color} />
+      <MaterialCommunityIcons name="chevron-right" size={16} color="#fff" />
     </TouchableOpacity>
   );
 };
@@ -42,15 +39,15 @@ const styles = StyleSheet.create({
     gap: 7,
     alignSelf: 'stretch',
     marginTop: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingVertical: 6,
+    borderRadius: 999,
+    paddingVertical: 7,
     paddingHorizontal: 10,
   },
   iconDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -58,6 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontWeight: '700',
+    color: '#fff',
   },
 });
 
