@@ -49,6 +49,20 @@ connection (post from app → page), and inbound sync. Spec sketch in
 - Check Play Console → Android vitals for memory flags before submitting.
 - Verify backup/device-migration behavior (data is in Firebase; low risk).
 
+## Known issues (final review, 27 Aug 2026 - documented, deliberately not fixed yet)
+
+- **Auto-notification configs are dormant**: the „Авто известувања" admin screen
+  saves configs to Firestore, but nothing ever schedules from them
+  (checkAndScheduleNotifications has no caller). The standard reminders cover
+  the need. DECIDE BEFORE RELEASE: wire it properly (needs dedup against the
+  standard reminders) or hide the screen.
+- Minor: news send-failure is logged as SENT in notification history.
+- Minor: cold-start notification tap waits a fixed 500ms for navigation and
+  gives up silently if not ready.
+- Minor: sanitizeString strips <angle-bracketed> text from community messages.
+- Minor: clearing description/saintName of an overridden hardcoded event
+  reverts to the original instead of clearing (empty string dropped).
+
 ## Standing issues / debt
 
 - 2026 calendar is hardcoded (`ChurchCalendarService.ts`) → 2027 requires a release.
