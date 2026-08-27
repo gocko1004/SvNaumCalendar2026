@@ -67,7 +67,11 @@ connection (post from app → page), and inbound sync. Spec sketch in
 
 - 2026 calendar is hardcoded (`ChurchCalendarService.ts`) → 2027 requires a release.
   Fixing properly is part of Phase 3 (calendar into Firestore with override layer).
-- Duplicate `src/firebase.js` / `src/firebase.ts` (Metro resolves `.js`, tsc sees
-  `.ts`). Remove the compat `.ts` copy when convenient.
+- ~~Duplicate `src/firebase.js` / `src/firebase.ts`~~ FIXED 27 Aug 2026. Metro
+  resolves `.ts` BEFORE `.js`, so the compat copy (no RN auth persistence) was
+  the one used - admin sessions died on every reload, causing
+  `storage/unauthorized` uploads and `Missing or insufficient permissions`
+  writes. `firebase.ts` deleted, EventDetailsService converted to the modular
+  API, `firebase.d.ts` added for types.
 - Admin password was exposed in a chat session on 26 Aug 2026 → must be rotated in
   Firebase Console → Authentication.
