@@ -964,6 +964,21 @@ export const CalendarScreen = () => {
                         {event.description || `${event.time}ч`}
                       </Text>
                     </View>
+
+                    {/* Fasting line under the time (additive) */}
+                    {showFastingBadges && (() => {
+                      const info = getFastingInfoForDate(event.date, fastingPeriods);
+                      if (!info) return null;
+                      return (
+                        <FastingBadge
+                          info={info}
+                          onPress={() => {
+                            setFastingDetail(info);
+                            setShowFastingDetail(true);
+                          }}
+                        />
+                      );
+                    })()}
                   </View>
 
                   {/* Image Section */}
@@ -971,21 +986,6 @@ export const CalendarScreen = () => {
                     <EventImage event={event} />
                   </View>
                 </View>
-
-                {/* Fasting row inside the card (additive) */}
-                {showFastingBadges && (() => {
-                  const info = getFastingInfoForDate(event.date, fastingPeriods);
-                  if (!info) return null;
-                  return (
-                    <FastingBadge
-                      info={info}
-                      onPress={() => {
-                        setFastingDetail(info);
-                        setShowFastingDetail(true);
-                      }}
-                    />
-                  );
-                })()}
 
                 {/* Circular More Button - Fades in/out for middle 2 cards */}
                 {hasScrolled && (

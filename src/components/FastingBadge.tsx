@@ -8,9 +8,8 @@ interface FastingBadgeProps {
   onPress: () => void;
 }
 
-// Fasting chip inside the event card, under the content. Indented past the
-// 70px date column so it never collides with the floating "more" icon that
-// is absolutely positioned in that zone. Styled like the app's other chips:
+// Fasting chip rendered inside the card's content column, directly under the
+// time row - same width as the event text. Styled like the app's other chips:
 // soft tint, fine colored border, rounded corners.
 export const FastingBadge: React.FC<FastingBadgeProps> = ({ info, onPress }) => {
   const config = FASTING_RULE_CONFIG[info.rule];
@@ -41,10 +40,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    marginLeft: 78, // clear of the date column + floating icon
-    marginRight: 10,
-    marginTop: 2,
-    marginBottom: 10,
+    alignSelf: 'stretch',
+    marginTop: 8,
     borderRadius: 10,
     borderWidth: 1,
     paddingVertical: 6,
