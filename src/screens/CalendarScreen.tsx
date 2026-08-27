@@ -915,11 +915,11 @@ export const CalendarScreen = () => {
 
                   {/* Content Section */}
                   <View style={styles.integratedContentSection}>
-                    <Text style={styles.integratedTitle} numberOfLines={3}>
+                    <Text style={styles.integratedTitle}>
                       {event.name}
                     </Text>
                     {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
-                      <Text style={styles.integratedSaintName} numberOfLines={2}>
+                      <Text style={styles.integratedSaintName}>
                         {event.saintName}
                       </Text>
                     )}

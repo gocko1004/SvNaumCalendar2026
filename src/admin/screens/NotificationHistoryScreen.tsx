@@ -166,7 +166,7 @@ export const NotificationHistoryScreen: React.FC<NotificationHistoryScreenProps>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
               <MaterialCommunityIcons name={categoryIcon as any} size={20} color={categoryColor} />
-              <Text style={styles.cardTitle} numberOfLines={1}>{notification.title}</Text>
+              <Text style={styles.cardTitle}>{notification.title}</Text>
             </View>
             <View style={[styles.statusChip, { backgroundColor: statusColor + '20' }]}>
               <RNText style={[styles.statusChipText, { color: statusColor }]}>

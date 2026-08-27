@@ -315,7 +315,7 @@ export const ManageNewsScreen: React.FC<ManageNewsScreenProps> = ({ navigation }
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
               <MaterialCommunityIcons name={NEWS_ICON as any} size={20} color={NEWS_COLOR} />
-              <Text style={styles.cardTitle} numberOfLines={1}>
+              <Text style={styles.cardTitle}>
                 {news.title}
               </Text>
             </View>

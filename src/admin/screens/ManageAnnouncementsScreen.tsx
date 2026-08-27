@@ -281,7 +281,7 @@ export const ManageAnnouncementsScreen: React.FC<ManageAnnouncementsScreenProps>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
               <MaterialCommunityIcons name={typeIcon as any} size={24} color={typeColor} />
-              <Text style={styles.cardTitle} numberOfLines={1}>{announcement.title}</Text>
+              <Text style={styles.cardTitle}>{announcement.title}</Text>
             </View>
             <View style={styles.cardActions}>
               <Switch
