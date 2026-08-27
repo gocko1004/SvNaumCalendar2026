@@ -371,7 +371,7 @@ export const CalendarScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
   const [showEventDetail, setShowEventDetail] = useState(false);
   const [fastingPeriods, setFastingPeriods] = useState<FastingPeriod[]>([]);
-  const [showFastingBadges, setShowFastingBadges] = useState(true);
+  const [fastingFilter, setFastingFilter] = useState(false);
   const [fastingDetail, setFastingDetail] = useState<FastingDayInfo | null>(null);
   const [showFastingDetail, setShowFastingDetail] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -589,7 +589,9 @@ export const CalendarScreen = () => {
       .filter(event => {
         const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
-        return matchesSearch && matchesType;
+        const matchesFasting =
+          !fastingFilter || getFastingInfoForDate(event.date, fastingPeriods) !== null;
+        return matchesSearch && matchesType && matchesFasting;
       })
       .reduce((acc, event) => {
         const month = event.date.getMonth();
@@ -607,7 +609,7 @@ export const CalendarScreen = () => {
         data: events.sort((a, b) => a.date.getTime() - b.date.getTime())
       }))
       .sort((a, b) => a.monthIndex - b.monthIndex);
-  }, [searchQuery, selectedServiceTypes, events]);
+  }, [searchQuery, selectedServiceTypes, events, fastingFilter, fastingPeriods]);
 
   // Scroll to specific month
   const pendingScrollSection = useRef<number | null>(null);
@@ -763,28 +765,28 @@ export const CalendarScreen = () => {
 
         {/* Additive „Пости" chip: toggles fasting badges on the calendar */}
         <TouchableOpacity
-          onPress={() => setShowFastingBadges(prev => !prev)}
+          onPress={() => setFastingFilter(prev => !prev)}
           style={[
             styles.filterChipTouchable,
             {
-              backgroundColor: showFastingBadges ? '#6B4E9B' : COLORS.SURFACE,
+              backgroundColor: fastingFilter ? '#6B4E9B' : COLORS.SURFACE,
               width: isVerySmall ? 90 : 110,
               minHeight: isVerySmall ? 36 : 40,
-              borderColor: showFastingBadges ? '#6B4E9B' : COLORS.BORDER,
+              borderColor: fastingFilter ? '#6B4E9B' : COLORS.BORDER,
             }
           ]}
         >
           <MaterialCommunityIcons
             name="sprout"
             size={isVerySmall ? 14 : isSmall ? 15 : 16}
-            color={showFastingBadges ? COLORS.TEXT_LIGHT : COLORS.TEXT}
+            color={fastingFilter ? COLORS.TEXT_LIGHT : COLORS.TEXT}
             style={{ marginRight: 6 }}
           />
           <Text
             style={[
               styles.filterChipText,
               {
-                color: showFastingBadges ? COLORS.TEXT_LIGHT : COLORS.TEXT,
+                color: fastingFilter ? COLORS.TEXT_LIGHT : COLORS.TEXT,
                 fontSize: isVerySmall ? 9 : isSmall ? 10 : 11,
                 flex: 1,
               }
@@ -965,8 +967,8 @@ export const CalendarScreen = () => {
                       </Text>
                     </View>
 
-                    {/* Fasting line under the time (additive) */}
-                    {showFastingBadges && (() => {
+                    {/* Fasting line under the time - always shown on fasting days */}
+                    {(() => {
                       const info = getFastingInfoForDate(event.date, fastingPeriods);
                       if (!info) return null;
                       return (
