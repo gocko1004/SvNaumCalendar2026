@@ -60,11 +60,11 @@ export const FASTING_RULE_CONFIG: Record<
     description: 'дозволено масло',
   },
   WINE_OIL: {
-    label: 'Пост на вино и масло',
-    shortLabel: 'На вино и масло',
+    label: 'Пост на масло и вино',
+    shortLabel: 'На масло и вино',
     icon: 'glass-wine',
     color: '#A3622E',
-    description: 'дозволено вино и масло',
+    description: 'дозволено масло и вино',
   },
   FISH: {
     label: 'Пост на риба',
