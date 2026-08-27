@@ -272,6 +272,13 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
         </Card.Content>
       </Card>
 
+      <Card style={styles.card} onPress={() => handleNavigation('ManageMessages')}>
+        <Card.Content>
+          <Title>📨 Пораки од верници</Title>
+          <Paragraph>Пораки, поплаки и пријави за зачленување од заедницата</Paragraph>
+        </Card.Content>
+      </Card>
+
       <Card style={styles.card} onPress={() => handleNavigation('ManageParking')}>
         <Card.Content>
           <Title>🅿️ Паркинг</Title>

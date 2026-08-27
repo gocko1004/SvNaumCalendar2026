@@ -8,6 +8,7 @@ export type RootStackParamList = {
 export type MainTabParamList = {
   Calendar: undefined;
   'Add Event': undefined;
+  Community: undefined;
   Settings: undefined;
 };
 
@@ -22,6 +23,7 @@ export type AdminStackParamList = {
   ManageAnnouncements: undefined;
   ManageNews: undefined;
   ManageFasting: undefined;
+  ManageMessages: undefined;
   ManageParking: undefined;
   NotificationHistory: undefined;
   AutoNotificationSettings: undefined;

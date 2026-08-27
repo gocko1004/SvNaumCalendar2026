@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FastingDayInfo, FASTING_RULE_CONFIG } from '../services/FastingService';
 
@@ -8,38 +8,46 @@ interface FastingBadgeProps {
   onPress: () => void;
 }
 
-// Small chip shown above a day's first event card. Tapping opens the fasting
-// detail sheet. Purely additive — existing cards are untouched.
+// Fasting row shown INSIDE the event card, under the main content (Goce's
+// chosen design): period name + today's rule. Tapping opens the detail sheet.
 export const FastingBadge: React.FC<FastingBadgeProps> = ({ info, onPress }) => {
   const config = FASTING_RULE_CONFIG[info.rule];
 
   return (
     <TouchableOpacity
-      style={[styles.badge, { backgroundColor: config.color }]}
+      style={[styles.row, { backgroundColor: config.color + '14' }]}
       onPress={onPress}
-      activeOpacity={0.8}
-      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      activeOpacity={0.7}
     >
-      <MaterialCommunityIcons name={config.icon as any} size={12} color="#fff" />
-      <Text style={styles.label}>{config.shortLabel}</Text>
+      <View style={[styles.iconDot, { backgroundColor: config.color }]}>
+        <MaterialCommunityIcons name={config.icon as any} size={13} color="#fff" />
+      </View>
+      <Text style={[styles.label, { color: config.color }]}>
+        {info.period.name} · {config.shortLabel}
+      </Text>
+      <MaterialCommunityIcons name="chevron-right" size={18} color={config.color} />
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  badge: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    marginBottom: 6,
-    gap: 5,
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  iconDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
-    color: '#fff',
-    fontSize: 11,
+    flex: 1,
+    fontSize: 12.5,
     fontWeight: '700',
   },
 });

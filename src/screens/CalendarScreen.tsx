@@ -893,26 +893,6 @@ export const CalendarScreen = () => {
           )}
           renderItem={({ item: event, index, section }) => (
             <View style={styles.eventList}>
-              {/* Additive fasting badge: shown once per day, above the first card */}
-              {showFastingBadges && (() => {
-                const prev = index > 0 ? section.data[index - 1] : null;
-                const isFirstOfDay =
-                  !prev ||
-                  prev.date.getDate() !== event.date.getDate() ||
-                  prev.date.getMonth() !== event.date.getMonth();
-                if (!isFirstOfDay) return null;
-                const info = getFastingInfoForDate(event.date, fastingPeriods);
-                if (!info) return null;
-                return (
-                  <FastingBadge
-                    info={info}
-                    onPress={() => {
-                      setFastingDetail(info);
-                      setShowFastingDetail(true);
-                    }}
-                  />
-                );
-              })()}
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => {
@@ -977,6 +957,21 @@ export const CalendarScreen = () => {
                     <EventImage event={event} />
                   </View>
                 </View>
+
+                {/* Fasting row inside the card (additive) */}
+                {showFastingBadges && (() => {
+                  const info = getFastingInfoForDate(event.date, fastingPeriods);
+                  if (!info) return null;
+                  return (
+                    <FastingBadge
+                      info={info}
+                      onPress={() => {
+                        setFastingDetail(info);
+                        setShowFastingDetail(true);
+                      }}
+                    />
+                  );
+                })()}
 
                 {/* Circular More Button - Fades in/out for middle 2 cards */}
                 {hasScrolled && (

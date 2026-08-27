@@ -11,6 +11,7 @@ import {
   AutoNotificationSettingsScreen,
   ManageNewsScreen,
   ManageFastingScreen,
+  ManageMessagesScreen,
   ManageParkingScreen
 } from '../admin/screens';
 import { ManageAnnouncementsScreen } from '../admin/screens/ManageAnnouncementsScreen';
@@ -94,6 +95,11 @@ export const AdminNavigator = () => {
         name="ManageFasting"
         component={ManageFastingScreen}
         options={{ title: 'Пости' }}
+      />
+      <AdminStack.Screen
+        name="ManageMessages"
+        component={ManageMessagesScreen}
+        options={{ title: 'Пораки од верници' }}
       />
       <AdminStack.Screen
         name="ManageParking"

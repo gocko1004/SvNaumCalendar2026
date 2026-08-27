@@ -12,6 +12,7 @@ import { NewsScreen } from '../screens/NewsScreen';
 import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 import { NotificationDetailScreen } from '../screens/NotificationDetailScreen';
 import { NewsDetailScreen } from '../screens/NewsDetailScreen';
+import { CommunityScreen } from '../screens/CommunityScreen';
 import { getNewsById } from '../services/NewsService';
 import { AdminNavigator } from './AdminNavigator';
 import { COLORS } from '../constants/theme';
@@ -98,6 +99,17 @@ const MainTabs = () => {
           title: 'Новости',
           tabBarIcon: ({ color, size }) => (
             <Icon name="newspaper-variant" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Community"
+        component={CommunityScreen}
+        options={{
+          headerShown: false,
+          title: 'Заедница',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="account-group" size={size} color={color} />
           ),
         }}
       />

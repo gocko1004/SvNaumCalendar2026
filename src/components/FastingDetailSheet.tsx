@@ -67,9 +67,13 @@ export const FastingDetailSheet: React.FC<FastingDetailSheetProps> = ({
               <View style={styles.headerContent}>
                 <Text style={styles.title}>{info.period.name}</Text>
                 <Text style={styles.range}>
-                  {format(info.period.startDate, 'd MMMM', { locale: mk })} -{' '}
-                  {format(info.period.endDate, 'd MMMM yyyy', { locale: mk })} · ден{' '}
-                  {info.dayNumber} од {info.totalDays}
+                  {info.totalDays === 1
+                    ? format(info.period.startDate, 'd MMMM yyyy', { locale: mk })
+                    : `${format(info.period.startDate, 'd MMMM', { locale: mk })} - ${format(
+                        info.period.endDate,
+                        'd MMMM yyyy',
+                        { locale: mk }
+                      )} · ден ${info.dayNumber} од ${info.totalDays}`}
                 </Text>
               </View>
             </View>
