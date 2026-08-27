@@ -960,9 +960,7 @@ export const CalendarScreen = () => {
                   >
                     <Card style={styles.fastingDayCard}>
                       <View style={styles.fastingDayRow}>
-                        <View
-                          style={[styles.fastingDayDate, { backgroundColor: ruleConfig.color }]}
-                        >
+                        <View style={styles.fastingDayDate}>
                           <Text style={styles.fastingDayDateDay}>
                             {format(event.date, 'dd', { locale: mk })}
                           </Text>
@@ -1319,6 +1317,7 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#6B4E9B', // lenten violet - the fasting identity color
   },
   fastingDayDateDay: {
     color: '#fff',
