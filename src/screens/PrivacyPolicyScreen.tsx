@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -12,7 +12,7 @@ const SECTIONS: { title: string; body: string }[] = [
   {
     title: 'Кој е одговорен',
     body:
-      'Оваа апликација е развиена за Македонската православна црковна општина „Св. Наум Охридски" - Тринген, Швајцарија. За прашања за вашите податоци контактирајте нè на: svnaum.triengen@gmail.com',
+      'Оваа апликација е развиена за Македонската православна црковна општина „Св. Наум Охридски" - Тринген, Швајцарија. За прашања за вашите податоци контактирајте нè на: mpc.triengen@gmail.com',
   },
   {
     title: 'Кои податоци ги собираме',
@@ -42,7 +42,7 @@ const SECTIONS: { title: string; body: string }[] = [
   {
     title: 'Вашите права',
     body:
-      'Во секое време можете да побарате да дознаете кои податоци ги чуваме за вас, да ги исправиме или да ги избришеме. Пишете ни на svnaum.triengen@gmail.com - одговараме најдоцна за 30 дена.',
+      'Во секое време можете да побарате да дознаете кои податоци ги чуваме за вас, да ги исправиме или да ги избришеме. Пишете ни на mpc.triengen@gmail.com - одговараме најдоцна за 30 дена.',
   },
   {
     title: 'Известувања',
@@ -80,6 +80,14 @@ export const PrivacyPolicyScreen = () => {
           </View>
         ))}
 
+        <Button
+          mode="contained"
+          onPress={() => navigation.goBack()}
+          buttonColor={COLORS.PRIMARY}
+          style={styles.closeButton}
+        >
+          Затвори
+        </Button>
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -90,6 +98,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F5F3E8',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
   },
   header: {
     paddingTop: 8,
@@ -131,6 +140,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#3d3428',
     lineHeight: 21,
+  },
+  closeButton: {
+    marginTop: 10,
+    borderRadius: 8,
   },
 });
 

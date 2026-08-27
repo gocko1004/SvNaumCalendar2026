@@ -6,7 +6,7 @@
 
 Оваа апликација е развиена за Македонската православна црковна општина
 „Св. Наум Охридски" - Тринген, Швајцарија (здружение). За прашања за вашите
-податоци контактирајте нè на: **svnaum.triengen@gmail.com**
+податоци контактирајте нè на: **mpc.triengen@gmail.com**
 
 ## Кои податоци ги собираме
 
@@ -60,7 +60,7 @@ Privacy Framework), според која сертифицираните аме�
 ## Вашите права
 
 Во секое време можете да побарате да дознаете кои податоци ги чуваме за вас,
-да ги исправиме или да ги избришеме. Пишете ни на svnaum.triengen@gmail.com -
+да ги исправиме или да ги избришеме. Пишете ни на mpc.triengen@gmail.com -
 одговараме најдоцна за 30 дена.
 
 ## Известувања
@@ -85,7 +85,7 @@ Push известувањата можете да ги оневозможите 
 
 This application is operated by the Macedonian Orthodox Church community
 "St. Naum Ohridski" - Triengen, Switzerland (association). For any questions
-about your data, contact us at: **svnaum.triengen@gmail.com**
+about your data, contact us at: **mpc.triengen@gmail.com**
 
 ## Data we collect
 
@@ -137,7 +137,7 @@ adequate data protection.
 ## Your rights
 
 You may at any time ask what data we hold about you, and request correction
-or deletion. Write to svnaum.triengen@gmail.com - we respond within 30 days.
+or deletion. Write to mpc.triengen@gmail.com - we respond within 30 days.
 
 ## Notifications
 
