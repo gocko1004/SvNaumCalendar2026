@@ -981,7 +981,7 @@ export const CalendarScreen = () => {
                               />
                             </View>
                             <Text style={[styles.fastingDayRuleText, { color: ruleConfig.color }]}>
-                              {ruleConfig.shortLabel}
+                              {ruleConfig.label}
                             </Text>
                           </View>
                         </View>

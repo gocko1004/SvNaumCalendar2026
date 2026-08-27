@@ -24,7 +24,7 @@ export const FastingBadge: React.FC<FastingBadgeProps> = ({ info, onPress }) => 
       <View style={[styles.iconDot, { backgroundColor: config.color }]}>
         <MaterialCommunityIcons name={config.icon as any} size={13} color="#fff" />
       </View>
-      <Text style={[styles.label, { color: config.color }]}>{config.shortLabel}</Text>
+      <Text style={[styles.label, { color: config.color }]}>{config.label}</Text>
       <MaterialCommunityIcons
         name="chevron-right"
         size={16}
