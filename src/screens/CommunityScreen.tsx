@@ -125,9 +125,9 @@ export const CommunityScreen = () => {
         >
           <View style={styles.header}>
             <MaterialCommunityIcons name="account-group" size={40} color={COLORS.PRIMARY} />
-            <Text style={styles.title}>Заедница</Text>
+            <Text style={styles.title}>Црковна Општина</Text>
             <Text style={styles.subtitle}>
-              Пишете ни или зачленете се во црковната заедница
+              Пишете ни или зачленете се во црковната општина
             </Text>
           </View>
 
@@ -157,7 +157,7 @@ export const CommunityScreen = () => {
                   <View style={styles.entryText}>
                     <Text style={styles.entryTitle}>Зачленување</Text>
                     <Text style={styles.entrySubtitle}>
-                      Пријавете се за членство во црковната заедница
+                      Пријавете се за членство во црковната општина
                     </Text>
                   </View>
                   <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />

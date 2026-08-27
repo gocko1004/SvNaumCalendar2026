@@ -107,7 +107,7 @@ const MainTabs = () => {
         component={CommunityScreen}
         options={{
           headerShown: false,
-          title: 'Заедница',
+          title: 'Цр. Општина',
           tabBarIcon: ({ color, size }) => (
             <Icon name="account-group" size={size} color={color} />
           ),

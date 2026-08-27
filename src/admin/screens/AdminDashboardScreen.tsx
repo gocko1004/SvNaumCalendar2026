@@ -275,7 +275,7 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
       <Card style={styles.card} onPress={() => handleNavigation('ManageMessages')}>
         <Card.Content>
           <Title>📨 Пораки од верници</Title>
-          <Paragraph>Пораки, поплаки и пријави за зачленување од заедницата</Paragraph>
+          <Paragraph>Пораки, поплаки и пријави за зачленување до црковната општина</Paragraph>
         </Card.Content>
       </Card>
 
