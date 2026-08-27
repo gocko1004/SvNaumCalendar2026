@@ -56,6 +56,7 @@ export const ManageFastingScreen = () => {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [specialDayPickerIndex, setSpecialDayPickerIndex] = useState<number | null>(null);
+  const [brush, setBrush] = useState<FastingRule | 'ERASE'>('STRICT');
 
   const loadPeriods = async () => {
     setLoading(true);
@@ -182,21 +183,20 @@ export const ManageFastingScreen = () => {
     return days;
   };
 
-  const cycleDayRule = (date: Date) => {
+  // Paint the tapped day with the active brush; the eraser (or painting the
+  // base rule) returns the day to the inherited rule.
+  const paintDayRule = (date: Date) => {
     const base = baseRuleFor(date);
     const special = draft.specialDays.find(sd => isSameDayDate(sd.date, date));
-    const current = special ? special.rule : base;
-    const next = RULES[(RULES.indexOf(current) + 1) % RULES.length];
 
     setDraft(prev => {
       const others = prev.specialDays.filter(sd => !isSameDayDate(sd.date, date));
-      if (next === base) {
-        // Back to the inherited rule - no special day needed
+      if (brush === 'ERASE' || brush === base) {
         return { ...prev, specialDays: others };
       }
       return {
         ...prev,
-        specialDays: [...others, { date, rule: next, note: special?.note }],
+        specialDays: [...others, { date, rule: brush, note: special?.note }],
       };
     });
   };
@@ -399,22 +399,75 @@ export const ManageFastingScreen = () => {
                 setDraft(prev => ({ ...prev, defaultRule: rule }))
               )}
 
-              <Text style={styles.sectionLabel}>Сабота и недела (по избор)</Text>
-              <Text style={styles.specialHint}>
-                Ако е избрано, важи за викендите. Допрете повторно за да го тргнете.
-              </Text>
-              {renderRuleChips(draft.weekendRule, rule =>
-                setDraft(prev => ({
-                  ...prev,
-                  weekendRule: prev.weekendRule === rule ? undefined : rule,
-                }))
-              )}
-
               <Text style={styles.sectionLabel}>Правила по денови</Text>
               <Text style={styles.specialHint}>
-                Секој ден го покажува своето правило. Допрете на ден за да го смените -
-                како во типикот. Деновите со поинакво правило се зачувуваат автоматски.
+                Изберете правило (четка), па допрете на деновите за да го примените -
+                како во типикот. „Основно" го враќа денот на основното правило.
               </Text>
+              <View style={styles.ruleRow}>
+                {RULES.map(rule => {
+                  const config = FASTING_RULE_CONFIG[rule];
+                  const isSelected = brush === rule;
+                  return (
+                    <TouchableOpacity
+                      key={`brush-${rule}`}
+                      onPress={() => setBrush(rule)}
+                      style={[
+                        styles.ruleChip,
+                        styles.ruleChipCompact,
+                        {
+                          backgroundColor: isSelected ? config.color : '#fff',
+                          borderColor: config.color,
+                          borderWidth: isSelected ? 2.5 : 1.5,
+                        },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name={config.icon as any}
+                        size={13}
+                        color={isSelected ? '#fff' : config.color}
+                      />
+                      <Text
+                        style={[
+                          styles.ruleChipText,
+                          styles.ruleChipTextCompact,
+                          { color: isSelected ? '#fff' : config.color },
+                        ]}
+                      >
+                        {config.shortLabel}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity
+                  key="brush-erase"
+                  onPress={() => setBrush('ERASE')}
+                  style={[
+                    styles.ruleChip,
+                    styles.ruleChipCompact,
+                    {
+                      backgroundColor: brush === 'ERASE' ? '#666' : '#fff',
+                      borderColor: '#666',
+                      borderWidth: brush === 'ERASE' ? 2.5 : 1.5,
+                    },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="eraser"
+                    size={13}
+                    color={brush === 'ERASE' ? '#fff' : '#666'}
+                  />
+                  <Text
+                    style={[
+                      styles.ruleChipText,
+                      styles.ruleChipTextCompact,
+                      { color: brush === 'ERASE' ? '#fff' : '#666' },
+                    ]}
+                  >
+                    Основно
+                  </Text>
+                </TouchableOpacity>
+              </View>
               {periodDays().length > 70 ? (
                 <Text style={styles.specialHint}>
                   Периодот е предолг за приказ по денови - користете „Посебни денови" подолу.
@@ -433,7 +486,7 @@ export const ManageFastingScreen = () => {
                           { backgroundColor: config.color + (special ? 'FF' : '22') },
                           special && styles.dayChipSpecial,
                         ]}
-                        onPress={() => cycleDayRule(day)}
+                        onPress={() => paintDayRule(day)}
                       >
                         <Text style={[styles.dayChipDow, { color: special ? '#fff' : config.color }]}>
                           {WEEKDAY_LETTERS[day.getDay()]}

@@ -22,6 +22,7 @@ import {
   getFastingInfoForDate,
   FastingPeriod,
   FastingDayInfo,
+  FASTING_RULE_CONFIG,
 } from '../services/FastingService';
 import { useAuth } from '../hooks/useAuth';
 
@@ -585,14 +586,51 @@ export const CalendarScreen = () => {
 
   // Group and filter events for SectionList
   const sections = React.useMemo(() => {
-    const grouped = events
-      .filter(event => {
-        const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
-        const matchesFasting =
-          !fastingFilter || getFastingInfoForDate(event.date, fastingPeriods) !== null;
-        return matchesSearch && matchesType && matchesFasting;
-      })
+    const filteredEvents = events.filter(event => {
+      const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
+      const matchesFasting =
+        !fastingFilter || getFastingInfoForDate(event.date, fastingPeriods) !== null;
+      return matchesSearch && matchesType && matchesFasting;
+    });
+
+    // Compact fasting-day items: every day inside an active fast that has no
+    // service card gets its own small card (Goce's design).
+    const eventDayKeys = new Set(
+      events.map(e => `${e.date.getFullYear()}-${e.date.getMonth()}-${e.date.getDate()}`)
+    );
+    const addedFastKeys = new Set<string>();
+    const fastingDayItems: any[] = [];
+    if (selectedServiceTypes.size === 0 || fastingFilter) {
+      for (const period of fastingPeriods) {
+        if (!period.isActive) continue;
+        if (!period.name.toLowerCase().includes(searchQuery.toLowerCase())) continue;
+        const d = new Date(period.startDate);
+        d.setHours(0, 0, 0, 0);
+        const end = new Date(period.endDate);
+        end.setHours(0, 0, 0, 0);
+        let guard = 0;
+        while (d <= end && guard++ < 400) {
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (!eventDayKeys.has(key) && !addedFastKeys.has(key)) {
+            const info = getFastingInfoForDate(d, fastingPeriods);
+            if (info) {
+              addedFastKeys.add(key);
+              fastingDayItems.push({
+                date: new Date(d),
+                name: info.period.name,
+                serviceType: 'FASTING_DAY',
+                time: '',
+                __fasting: info,
+              });
+            }
+          }
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+
+    const grouped = ([...filteredEvents, ...fastingDayItems] as ChurchEvent[])
       .reduce((acc, event) => {
         const month = event.date.getMonth();
         if (!acc[month]) {
@@ -907,7 +945,52 @@ export const CalendarScreen = () => {
               </View>
             </View>
           )}
-          renderItem={({ item: event, index, section }) => (
+          renderItem={({ item: event, index, section }) => {
+            const fastingItem = (event as any).__fasting as FastingDayInfo | undefined;
+            if (fastingItem) {
+              const ruleConfig = FASTING_RULE_CONFIG[fastingItem.rule];
+              return (
+                <View style={styles.eventList}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setFastingDetail(fastingItem);
+                      setShowFastingDetail(true);
+                    }}
+                  >
+                    <Card style={styles.fastingDayCard}>
+                      <View style={styles.fastingDayRow}>
+                        <View
+                          style={[styles.fastingDayDate, { backgroundColor: ruleConfig.color }]}
+                        >
+                          <Text style={styles.fastingDayDateDay}>
+                            {format(event.date, 'dd', { locale: mk })}
+                          </Text>
+                          <Text style={styles.fastingDayDateMonth}>
+                            {format(event.date, 'MMM', { locale: mk })}
+                          </Text>
+                        </View>
+                        <View style={styles.fastingDayContent}>
+                          <Text style={styles.fastingDayTitle}>{fastingItem.period.name}</Text>
+                          <View style={styles.fastingDayRuleRow}>
+                            <MaterialCommunityIcons
+                              name={ruleConfig.icon as any}
+                              size={13}
+                              color={ruleConfig.color}
+                            />
+                            <Text style={[styles.fastingDayRuleText, { color: ruleConfig.color }]}>
+                              {ruleConfig.shortLabel}
+                            </Text>
+                          </View>
+                        </View>
+                        <MaterialCommunityIcons name="chevron-right" size={20} color="#B8A88E" />
+                      </View>
+                    </Card>
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+            return (
             <View style={styles.eventList}>
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -999,7 +1082,8 @@ export const CalendarScreen = () => {
               </Card>
               </TouchableOpacity>
             </View>
-          )}
+            );
+          }}
           stickySectionHeadersEnabled={false}
           scrollEventThrottle={16}
           onScroll={handleScroll}
@@ -1217,6 +1301,56 @@ export const CalendarScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  fastingDayCard: {
+    marginBottom: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFFDF8',
+    borderWidth: 0.5,
+    borderColor: '#D4AF37',
+    overflow: 'hidden',
+  },
+  fastingDayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  fastingDayDate: {
+    width: 50,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fastingDayDateDay: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  fastingDayDateMonth: {
+    color: '#fff',
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
+  fastingDayContent: {
+    flex: 1,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+  },
+  fastingDayTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2C1810',
+  },
+  fastingDayRuleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  fastingDayRuleText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.BACKGROUND,
