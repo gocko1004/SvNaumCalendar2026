@@ -34,6 +34,7 @@ import {
   deleteFastingPeriod,
 } from '../../services/FastingService';
 import { COLORS } from '../../constants/theme';
+import { assertValidSession, SessionExpiredError } from '../../services/AuthGuard';
 
 const RULES: FastingRule[] = ['STRICT', 'WITH_OIL', 'WINE_OIL', 'FISH'];
 
@@ -133,12 +134,16 @@ export const ManageFastingScreen = () => {
     }
     setSaving(true);
     try {
+      await assertValidSession();
       await saveFastingPeriod({ ...draft, name: draft.name.trim(), note: draft.note?.trim() });
       setFormVisible(false);
       await loadPeriods();
     } catch (error) {
       console.error('Error saving fasting period:', error);
-      Alert.alert('Грешка', 'Неуспешно зачувување');
+      Alert.alert(
+        'Грешка',
+        error instanceof SessionExpiredError ? error.message : 'Неуспешно зачувување'
+      );
     } finally {
       setSaving(false);
     }

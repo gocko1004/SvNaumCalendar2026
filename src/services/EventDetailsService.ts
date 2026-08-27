@@ -1,3 +1,13 @@
+import {
+  collection,
+  doc as docRefFn,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  Timestamp,
+} from 'firebase/firestore';
 import { db } from '../firebase';
 
 // Field types available for dynamic content
@@ -85,13 +95,13 @@ export const generateEventId = (date: Date, serviceType: string): string => {
 // Get event details from Firestore
 export const getEventDetails = async (eventId: string): Promise<EventDetails | null> => {
   try {
-    const doc = await db.collection('eventDetails').doc(eventId).get();
-    if (!doc.exists) {
+    const snap = await getDoc(docRefFn(db, 'eventDetails', eventId));
+    if (!snap.exists()) {
       return null;
     }
-    const data = doc.data();
+    const data = snap.data();
     return {
-      eventId: doc.id,
+      eventId: snap.id,
       customFields: data?.customFields || [],
       updatedAt: data?.updatedAt?.toDate() || new Date(),
       createdAt: data?.createdAt?.toDate() || new Date(),
@@ -105,20 +115,20 @@ export const getEventDetails = async (eventId: string): Promise<EventDetails | n
 // Save event details to Firestore
 export const saveEventDetails = async (eventId: string, customFields: EventCustomField[]): Promise<boolean> => {
   try {
-    const docRef = db.collection('eventDetails').doc(eventId);
-    const doc = await docRef.get();
+    const ref = docRefFn(db, 'eventDetails', eventId);
+    const snap = await getDoc(ref);
 
-    if (doc.exists) {
-      await docRef.update({
+    if (snap.exists()) {
+      await updateDoc(ref, {
         customFields,
-        updatedAt: new Date(),
+        updatedAt: Timestamp.now(),
       });
     } else {
-      await docRef.set({
+      await setDoc(ref, {
         eventId,
         customFields,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
     }
     return true;
@@ -131,7 +141,7 @@ export const saveEventDetails = async (eventId: string, customFields: EventCusto
 // Delete event details from Firestore
 export const deleteEventDetails = async (eventId: string): Promise<boolean> => {
   try {
-    await db.collection('eventDetails').doc(eventId).delete();
+    await deleteDoc(docRefFn(db, 'eventDetails', eventId));
     return true;
   } catch (error) {
     console.error('Error deleting event details:', error);
@@ -142,7 +152,7 @@ export const deleteEventDetails = async (eventId: string): Promise<boolean> => {
 // Get all events that have custom details
 export const getAllEventDetails = async (): Promise<EventDetails[]> => {
   try {
-    const snapshot = await db.collection('eventDetails').get();
+    const snapshot = await getDocs(collection(db, 'eventDetails'));
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {

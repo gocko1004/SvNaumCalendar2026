@@ -27,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getImageForEvent } from '../../services/LocalImageService';
 import { sanitizeChurchEvent, rateLimiter } from '../../services/ValidationService';
+import { assertValidSession, SessionExpiredError } from '../../services/AuthGuard';
 import { EventDetailsEditor } from '../components/EventDetailsEditor';
 
 const CALENDAR_STORAGE_KEY = '@church_calendar';
@@ -129,6 +130,8 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
 
     setLoading(true);
     try {
+      await assertValidSession();
+
       if (selectedEvent && selectedEvent.id) {
         // Editing existing Firestore event
         const success = await updateEvent(selectedEvent.id, sanitizedEvent);
@@ -170,7 +173,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
       setEditDialogVisible(false);
     } catch (error) {
       console.error('Error saving event:', error);
-      Alert.alert('Грешка', 'Грешка при зачувување на настанот');
+      Alert.alert(
+        'Грешка',
+        error instanceof SessionExpiredError ? error.message : 'Грешка при зачувување на настанот'
+      );
     } finally {
       setLoading(false);
     }
@@ -188,6 +194,8 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
           onPress: async () => {
             setLoading(true);
             try {
+              await assertValidSession();
+
               const success = eventToDelete.id
                 ? await deleteEvent(eventToDelete.id)
                 : await saveEventOverride(
@@ -202,7 +210,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
               }
             } catch (error) {
               console.error('Error deleting event:', error);
-              Alert.alert('Грешка', 'Грешка при бришење на настанот');
+              Alert.alert(
+                'Грешка',
+                error instanceof SessionExpiredError ? error.message : 'Грешка при бришење на настанот'
+              );
             } finally {
               setLoading(false);
             }
