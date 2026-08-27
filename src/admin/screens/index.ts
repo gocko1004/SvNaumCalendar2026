@@ -7,4 +7,5 @@ export { AutoNotificationSettingsScreen } from './AutoNotificationSettingsScreen
 export { ManageNewsScreen } from './ManageNewsScreen';
 export { ManageFastingScreen } from './ManageFastingScreen';
 export { ManageMessagesScreen } from './ManageMessagesScreen';
+export { NotificationPreviewScreen } from './NotificationPreviewScreen';
 export { ManageParkingScreen } from './ManageParkingScreen';
