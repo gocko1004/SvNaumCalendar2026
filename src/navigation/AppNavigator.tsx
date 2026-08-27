@@ -154,6 +154,15 @@ export const AppNavigator = () => {
         }
       }
 
+      // Event reminder: open the calendar on that event's card
+      if (data?.type === 'event' && data?.eventKey) {
+        (navigationRef.current as any).navigate('MainTabs', {
+          screen: 'Calendar',
+          params: { openEventKey: String(data.eventKey), openEventNonce: Date.now() },
+        });
+        return;
+      }
+
       const fullBody = data?.fullBody || body || '';
       navigationRef.current.navigate('NotificationDetail', {
         title: title || 'Известување',

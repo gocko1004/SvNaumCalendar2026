@@ -7,7 +7,7 @@ import { format, addMinutes, addDays, isBefore, addYears, isAfter } from 'date-f
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
 import { getReminderText, ReminderTiming } from './NotificationTextService';
-import { getEventOverrides, applyEventOverrides } from './FirestoreEventService';
+import { getEventOverrides, applyEventOverrides, hardcodedEventKey } from './FirestoreEventService';
 import { db } from '../firebase';
 import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
@@ -176,13 +176,14 @@ class NotificationService {
       notificationType === 'hour' ? 'HOUR' : notificationType === 'week' ? 'WEEK' : 'DAY';
     const { title, body } = getReminderText(event, timing);
 
-    // Schedule the notification
+    // Schedule the notification; tapping it opens the event card in the calendar
     await this.scheduleNotification({
       title,
       message: body,
       date: notificationTime,
       identifier,
       urgent: event.serviceType === 'PICNIC',
+      data: { type: 'event', eventKey: hardcodedEventKey(event) },
     });
 
     // Post to social media if it's a notification type we want to share
@@ -334,8 +335,9 @@ class NotificationService {
     date: Date;
     identifier?: string;
     urgent?: boolean;
+    data?: Record<string, any>;
   }) => {
-    const { title, message, date, identifier, urgent } = reminder;
+    const { title, message, date, identifier, urgent, data } = reminder;
 
     // Calculate seconds until notification
     const secondsUntilNotification = Math.floor((date.getTime() - Date.now()) / 1000);
@@ -353,6 +355,7 @@ class NotificationService {
         title,
         body: message,
         sound: true,
+        data: data || {},
         priority: urgent ? Notifications.AndroidNotificationPriority.MAX : Notifications.AndroidNotificationPriority.DEFAULT,
       },
       trigger: {

@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl, SectionList, Vibration } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card, Title, Searchbar, Surface, Button, Dialog, Portal, FAB } from 'react-native-paper';
 import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
 import { CHURCH_EVENTS, ChurchEvent, SPECIAL_FEAST_URLS, getServiceTypeLabel, ServiceType } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
 import { getDenoviImageUrl } from '../services/DenoviImageService';
-import { getAllEvents, mergeEvents, getEventOverrides, applyEventOverrides } from '../services/FirestoreEventService';
+import { getAllEvents, mergeEvents, getEventOverrides, applyEventOverrides, hardcodedEventKey } from '../services/FirestoreEventService';
 import { getActiveAnnouncements, Announcement, ANNOUNCEMENT_TYPE_COLORS, ANNOUNCEMENT_TYPE_ICONS } from '../services/AnnouncementsService';
 import { COLORS } from '../constants/theme';
 import { format } from 'date-fns';
@@ -352,6 +352,7 @@ const AnnouncementCard = ({ announcement, onPress }: { announcement: Announcemen
 
 export const CalendarScreen = () => {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const [fontsLoaded] = useFonts({
     Triodion_400Regular,
   });
@@ -529,6 +530,19 @@ export const CalendarScreen = () => {
     });
     return unsubscribe;
   }, [navigation]);
+
+  // Deep link from a tapped reminder: open that event's card
+  useEffect(() => {
+    const key = route.params?.openEventKey;
+    if (!key || events.length === 0) return;
+    const match = events.find(e => hardcodedEventKey(e) === key || e.overrideKey === key);
+    if (match) {
+      scrollToMonth(match.date.getMonth());
+      setSelectedEvent(match);
+      setShowEventDetail(true);
+    }
+    navigation.setParams({ openEventKey: undefined, openEventNonce: undefined });
+  }, [route.params?.openEventNonce, events]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
