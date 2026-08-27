@@ -3,7 +3,7 @@
  * Allows admins to add, edit, and delete events that sync to all users
  */
 
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, setDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ChurchEvent, ServiceType } from './ChurchCalendarService';
 
@@ -117,17 +117,6 @@ export const deleteEvent = async (eventId: string): Promise<boolean> => {
  * Firestore events take precedence (can override hardcoded ones)
  */
 export const mergeEvents = (hardcodedEvents: ChurchEvent[], firestoreEvents: ChurchEvent[]): ChurchEvent[] => {
-  // Create a map of Firestore events by date (for quick lookup)
-  const firestoreMap = new Map<string, ChurchEvent[]>();
-  
-  firestoreEvents.forEach(event => {
-    const dateKey = event.date.toISOString().split('T')[0];
-    if (!firestoreMap.has(dateKey)) {
-      firestoreMap.set(dateKey, []);
-    }
-    firestoreMap.get(dateKey)!.push(event);
-  });
-  
   // Combine: Start with hardcoded, then add Firestore events
   const allEvents = [...hardcodedEvents];
   
@@ -152,10 +141,12 @@ const OVERRIDES_COLLECTION = 'eventOverrides';
 export interface EventOverride {
   action: 'CANCEL' | 'MODIFY';
   name?: string;
+  date?: Date;
   time?: string;
   serviceType?: ServiceType;
   description?: string;
   saintName?: string;
+  imageUrl?: string;
   reason?: string;
 }
 
@@ -170,7 +161,11 @@ export const getEventOverrides = async (): Promise<Map<string, EventOverride>> =
   try {
     const snapshot = await getDocs(collection(db, OVERRIDES_COLLECTION));
     snapshot.forEach(docSnapshot => {
-      map.set(docSnapshot.id, docSnapshot.data() as EventOverride);
+      const data = docSnapshot.data();
+      map.set(docSnapshot.id, {
+        ...data,
+        date: data.date?.toDate ? data.date.toDate() : undefined,
+      } as EventOverride);
     });
   } catch (error) {
     console.error('Error loading event overrides:', error);
@@ -181,9 +176,10 @@ export const getEventOverrides = async (): Promise<Map<string, EventOverride>> =
 export const saveEventOverride = async (key: string, override: EventOverride): Promise<boolean> => {
   try {
     const clean: Record<string, any> = { action: override.action, updatedAt: Timestamp.now() };
-    (['name', 'time', 'serviceType', 'description', 'saintName', 'reason'] as const).forEach(f => {
+    (['name', 'time', 'serviceType', 'description', 'saintName', 'imageUrl', 'reason'] as const).forEach(f => {
       if (override[f] !== undefined) clean[f] = override[f];
     });
+    if (override.date !== undefined) clean.date = Timestamp.fromDate(override.date);
     await setDoc(doc(db, OVERRIDES_COLLECTION, key), clean);
     return true;
   } catch (error) {
@@ -225,10 +221,12 @@ export const applyEventOverrides = (
     result.push({
       ...event,
       name: override.name ?? event.name,
+      date: override.date ?? event.date,
       time: override.time ?? event.time,
       serviceType: override.serviceType ?? event.serviceType,
       description: override.description ?? event.description,
       saintName: override.saintName ?? event.saintName,
+      imageUrl: override.imageUrl ?? event.imageUrl,
       overrideKey: key,
     });
   }

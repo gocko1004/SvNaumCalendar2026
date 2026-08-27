@@ -492,13 +492,6 @@ const styles = StyleSheet.create({
   sendButton: {
     borderRadius: 8,
   },
-  policyLink: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.PRIMARY,
-    textDecorationLine: 'underline',
-    marginBottom: 12,
-  },
   consentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

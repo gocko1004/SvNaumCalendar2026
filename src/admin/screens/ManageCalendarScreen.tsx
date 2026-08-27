@@ -144,10 +144,12 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
         const success = await saveEventOverride(key, {
           action: 'MODIFY',
           name: sanitizedEvent.name,
+          date: sanitizedEvent.date,
           time: sanitizedEvent.time,
           serviceType: sanitizedEvent.serviceType,
           description: sanitizedEvent.description,
           saintName: sanitizedEvent.saintName,
+          imageUrl: sanitizedEvent.imageUrl,
         });
         if (success) {
           Alert.alert('Успех', 'Настанот е успешно ажуриран');

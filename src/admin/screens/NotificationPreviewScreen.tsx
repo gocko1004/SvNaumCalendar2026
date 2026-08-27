@@ -59,7 +59,11 @@ export const NotificationPreviewScreen = () => {
           sound: 'default',
           data: { type: 'event', eventKey: hardcodedEventKey(event) },
         },
-        trigger: { seconds: 3, channelId: 'church-events' } as any,
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 3,
+          channelId: 'church-events',
+        } as any,
       });
       Alert.alert(
         'Тестот е закажан',

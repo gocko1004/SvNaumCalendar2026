@@ -92,6 +92,14 @@ const startOfDay = (d: Date): Date => {
   return c;
 };
 
+// Dates are STORED at local noon: a +-12h timezone difference between the
+// admin who saves and a user who reads can then never shift the calendar day.
+const atNoon = (d: Date): Date => {
+  const c = new Date(d);
+  c.setHours(12, 0, 0, 0);
+  return c;
+};
+
 const isSameDay = (a: Date, b: Date): boolean =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
@@ -133,13 +141,13 @@ export const saveFastingPeriod = async (period: FastingPeriod): Promise<string> 
 
   await setDoc(docRef, {
     name: period.name,
-    startDate: Timestamp.fromDate(startOfDay(period.startDate)),
-    endDate: Timestamp.fromDate(startOfDay(period.endDate)),
+    startDate: Timestamp.fromDate(atNoon(period.startDate)),
+    endDate: Timestamp.fromDate(atNoon(period.endDate)),
     defaultRule: period.defaultRule,
     weekendRule: period.weekendRule || null,
     note: period.note || null,
     specialDays: period.specialDays.map(s => ({
-      date: Timestamp.fromDate(startOfDay(s.date)),
+      date: Timestamp.fromDate(atNoon(s.date)),
       rule: s.rule,
       note: s.note || null,
     })),

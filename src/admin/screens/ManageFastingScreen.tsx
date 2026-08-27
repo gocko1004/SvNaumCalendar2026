@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -55,9 +55,10 @@ export const ManageFastingScreen = () => {
   const [draft, setDraft] = useState<FastingPeriod>(emptyPeriod());
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
-  const [specialDayPickerIndex, setSpecialDayPickerIndex] = useState<number | null>(null);
-  const [brush, setBrush] = useState<FastingRule | 'ERASE'>('STRICT');
   const [addDayForRule, setAddDayForRule] = useState<FastingRule | null>(null);
+  // Tracks whether the admin has deliberately set the Од/До dates; until then
+  // the first assigned day snaps the range instead of stretching from 'today'.
+  const rangeTouchedRef = useRef(false);
 
   // Rule-first entry: assign a specific date to a rule (Goce's model - only
   // explicitly assigned days are fasting days). Adding a day outside the
@@ -67,6 +68,10 @@ export const ManageFastingScreen = () => {
     day.setHours(0, 0, 0, 0);
     setDraft(prev => {
       const others = prev.specialDays.filter(sd => !isSameDayDate(sd.date, day));
+      if (!rangeTouchedRef.current && prev.specialDays.length === 0) {
+        // Pristine range: the first assigned day defines the period
+        return { ...prev, startDate: day, endDate: day, specialDays: [{ date: day, rule }] };
+      }
       const start = new Date(prev.startDate);
       start.setHours(0, 0, 0, 0);
       const end = new Date(prev.endDate);
@@ -98,6 +103,7 @@ export const ManageFastingScreen = () => {
   }, []);
 
   const openNew = (preset?: { name: string; defaultRule: FastingRule }) => {
+    rangeTouchedRef.current = false;
     setDraft({
       ...emptyPeriod(),
       name: preset?.name || '',
@@ -107,6 +113,7 @@ export const ManageFastingScreen = () => {
   };
 
   const openEdit = (period: FastingPeriod) => {
+    rangeTouchedRef.current = true;
     setDraft({ ...period, specialDays: [...period.specialDays] });
     setFormVisible(true);
   };
@@ -116,7 +123,11 @@ export const ManageFastingScreen = () => {
       Alert.alert('Грешка', 'Внесете име на постот');
       return;
     }
-    if (draft.endDate < draft.startDate) {
+    const startDay = new Date(draft.startDate);
+    startDay.setHours(0, 0, 0, 0);
+    const endDay = new Date(draft.endDate);
+    endDay.setHours(0, 0, 0, 0);
+    if (endDay < startDay) {
       Alert.alert('Грешка', 'Крајниот датум е пред почетниот');
       return;
     }
@@ -161,116 +172,11 @@ export const ManageFastingScreen = () => {
     }
   };
 
-  const addSpecialDay = () => {
-    setDraft(prev => ({
-      ...prev,
-      specialDays: [
-        ...prev.specialDays,
-        { date: prev.startDate, rule: 'FISH', note: '' } as FastingSpecialDay,
-      ],
-    }));
-  };
-
-  const updateSpecialDay = (index: number, patch: Partial<FastingSpecialDay>) => {
-    setDraft(prev => ({
-      ...prev,
-      specialDays: prev.specialDays.map((s, i) => (i === index ? { ...s, ...patch } : s)),
-    }));
-  };
-
-  const removeSpecialDay = (index: number) => {
-    setDraft(prev => ({
-      ...prev,
-      specialDays: prev.specialDays.filter((_, i) => i !== index),
-    }));
-  };
-
-
-  const WEEKDAY_LETTERS = ['Н', 'П', 'В', 'С', 'Ч', 'П', 'С'];
 
   const isSameDayDate = (a: Date, b: Date) =>
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate();
-
-  const baseRuleFor = (date: Date): FastingRule => {
-    const dow = date.getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    return isWeekend && draft.weekendRule ? draft.weekendRule : draft.defaultRule;
-  };
-
-  const periodDays = (): Date[] => {
-    const days: Date[] = [];
-    const d = new Date(draft.startDate);
-    d.setHours(0, 0, 0, 0);
-    const end = new Date(draft.endDate);
-    end.setHours(0, 0, 0, 0);
-    while (d <= end && days.length <= 70) {
-      days.push(new Date(d));
-      d.setDate(d.getDate() + 1);
-    }
-    return days;
-  };
-
-  // Paint the tapped day with the active brush; the eraser (or painting the
-  // base rule) returns the day to the inherited rule.
-  const paintDayRule = (date: Date) => {
-    const base = baseRuleFor(date);
-    const special = draft.specialDays.find(sd => isSameDayDate(sd.date, date));
-
-    setDraft(prev => {
-      const others = prev.specialDays.filter(sd => !isSameDayDate(sd.date, date));
-      if (brush === 'ERASE' || brush === base) {
-        return { ...prev, specialDays: others };
-      }
-      return {
-        ...prev,
-        specialDays: [...others, { date, rule: brush, note: special?.note }],
-      };
-    });
-  };
-
-  const renderRuleChips = (
-    selected: FastingRule | undefined,
-    onSelect: (rule: FastingRule) => void,
-    compact: boolean = false
-  ) => (
-    <View style={styles.ruleRow}>
-      {RULES.map(rule => {
-        const config = FASTING_RULE_CONFIG[rule];
-        const isSelected = selected === rule;
-        return (
-          <TouchableOpacity
-            key={rule}
-            onPress={() => onSelect(rule)}
-            style={[
-              styles.ruleChip,
-              compact && styles.ruleChipCompact,
-              {
-                backgroundColor: isSelected ? config.color : '#fff',
-                borderColor: config.color,
-              },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={config.icon as any}
-              size={compact ? 13 : 15}
-              color={isSelected ? '#fff' : config.color}
-            />
-            <Text
-              style={[
-                styles.ruleChipText,
-                compact && styles.ruleChipTextCompact,
-                { color: isSelected ? '#fff' : config.color },
-              ]}
-            >
-              {config.shortLabel}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
 
   return (
     <View style={styles.container}>
@@ -405,7 +311,10 @@ export const ManageFastingScreen = () => {
                   mode="date"
                   onChange={(_, date) => {
                     setShowStartPicker(Platform.OS === 'ios');
-                    if (date) setDraft(prev => ({ ...prev, startDate: date }));
+                    if (date) {
+                      rangeTouchedRef.current = true;
+                      setDraft(prev => ({ ...prev, startDate: date }));
+                    }
                   }}
                 />
               )}
@@ -415,7 +324,10 @@ export const ManageFastingScreen = () => {
                   mode="date"
                   onChange={(_, date) => {
                     setShowEndPicker(Platform.OS === 'ios');
-                    if (date) setDraft(prev => ({ ...prev, endDate: date }));
+                    if (date) {
+                      rangeTouchedRef.current = true;
+                      setDraft(prev => ({ ...prev, endDate: date }));
+                    }
                   }}
                 />
               )}
@@ -658,71 +570,10 @@ const styles = StyleSheet.create({
     color: '#777',
     marginBottom: 8,
   },
-  ruleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
-  },
-  ruleChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    borderWidth: 1.5,
-    borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-  },
-  ruleChipCompact: {
-    paddingVertical: 4,
-    paddingHorizontal: 9,
-  },
-  ruleChipText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  ruleChipTextCompact: {
-    fontSize: 11,
-  },
-  specialHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   specialHint: {
     fontSize: 12,
     color: '#999',
     marginBottom: 10,
-  },
-  specialCard: {
-    borderWidth: 1,
-    borderColor: '#E4D9C2',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: '#FBF8EF',
-  },
-  specialRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  specialDate: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  specialDateText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.PRIMARY,
-  },
-  specialNote: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    fontSize: 13,
-    height: 36,
   },
   saveButton: {
     marginTop: 8,
@@ -770,55 +621,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  dayGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 10,
-  },
-  dayChip: {
-    width: 40,
-    height: 44,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   dayChipSpecial: {
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-  },
-  dayChipDow: {
-    fontSize: 9,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  dayChipNum: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  gridLegend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 14,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  legendText: {
-    fontSize: 11,
-    color: '#777',
-    fontWeight: '700',
   },
 });
 

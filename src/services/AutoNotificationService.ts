@@ -2,7 +2,6 @@ import { collection, doc, getDoc, setDoc, getDocs, deleteDoc, updateDoc, query, 
 import { db } from '../firebase';
 import { CHURCH_EVENTS, ChurchEvent, ServiceType } from './ChurchCalendarService';
 import { getReminderText, ReminderTiming } from './NotificationTextService';
-import { logSentNotification } from './NotificationHistoryService';
 import * as Notifications from 'expo-notifications';
 
 // Auto-notification configuration types
