@@ -60,7 +60,7 @@ export const FastingDetailSheet: React.FC<FastingDetailSheetProps> = ({
           >
             {/* Header */}
             <View style={styles.header}>
-              <View style={[styles.dateBadge, { backgroundColor: config.color }]}>
+              <View style={[styles.dateBadge, { backgroundColor: '#6B4E9B' }]}>
                 <MaterialCommunityIcons name={config.icon as any} size={22} color="#fff" />
                 <Text style={styles.dateBadgeLabel}>пост</Text>
               </View>
