@@ -142,7 +142,7 @@ export const CommunityScreen = () => {
                   <View style={styles.entryText}>
                     <Text style={styles.entryTitle}>Пишете ни</Text>
                     <Text style={styles.entrySubtitle}>
-                      Прашање, забелешка или поплака до црковната општина
+                      Прашање, забелешка, поплака или пофалба до црковната општина
                     </Text>
                   </View>
                   <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
