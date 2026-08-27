@@ -394,15 +394,19 @@ export const ManageFastingScreen = () => {
                 />
               )}
 
-              <Text style={styles.sectionLabel}>Правило</Text>
+              <Text style={styles.sectionLabel}>Основно правило</Text>
+              <Text style={styles.specialHint}>
+                Важи автоматски за СИТЕ денови од постот.
+              </Text>
               {renderRuleChips(draft.defaultRule, rule =>
                 setDraft(prev => ({ ...prev, defaultRule: rule }))
               )}
 
-              <Text style={styles.sectionLabel}>Правила по денови</Text>
+              <Text style={styles.sectionLabel}>Исклучоци по денови</Text>
               <Text style={styles.specialHint}>
-                Изберете правило (четка), па допрете на деновите за да го примените -
-                како во типикот. „Основно" го враќа денот на основното правило.
+                За деновите што отстапуваат од основното правило: изберете правило
+                (четка), па допрете на тие денови - како во типикот. „Основно" го
+                враќа денот на основното правило.
               </Text>
               <View style={styles.ruleRow}>
                 {RULES.map(rule => {
