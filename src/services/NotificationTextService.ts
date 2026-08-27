@@ -82,22 +82,22 @@ const eveningServiceText = (event: ChurchEvent, timing: ReminderTiming): Reminde
     case 'WEEK':
       body = named
         ? `${event.name} - следната недела (${formatDate(event.date)}) во ${event.time} часот.`
-        : `Следната недела (${formatDate(event.date)}) е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
+        : `Вечерна богослужба за ${event.name} - следната недела (${formatDate(event.date)}) во ${event.time} часот.`;
       break;
     case 'THREE_DAYS':
       body = named
         ? `За 3 дена - ${event.name} во ${event.time} часот.`
-        : `За 3 дена е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
+        : `За 3 дена - вечерна богослужба за ${event.name}, во ${event.time} часот.`;
       break;
     case 'DAY':
       body = named
         ? `Утре - ${event.name} во ${event.time} часот.`
-        : `Утре е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
+        : `Утре вечерната богослужба за ${event.name} започнува во ${event.time} часот.`;
       break;
     case 'SAME_DAY':
       body = named
         ? `Денес - ${event.name} во ${event.time} часот.`
-        : `Денес е ${event.name} - вечерната богослужба започнува во ${event.time} часот.`;
+        : `Денес вечерната богослужба за ${event.name} започнува во ${event.time} часот.`;
       break;
     case 'HOUR':
       body = `Вечерната богослужба започнува за еден час.`;
