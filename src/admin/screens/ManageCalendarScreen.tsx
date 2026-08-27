@@ -385,9 +385,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
               <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <TextInput
+              key={`name-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="Име на настанот"
-              value={editedEvent.name}
-              onChangeText={name => setEditedEvent({ ...editedEvent, name })}
+              defaultValue={editedEvent.name}
+              onChangeText={name => setEditedEvent(prev => ({ ...prev, name }))}
               style={styles.input}
               maxLength={200}
             />
@@ -481,9 +482,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
             </Menu>
 
             <TextInput
+              key={`desc-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="Опис (опционално)"
-              value={editedEvent.description}
-              onChangeText={description => setEditedEvent({ ...editedEvent, description })}
+              defaultValue={editedEvent.description}
+              onChangeText={description => setEditedEvent(prev => ({ ...prev, description }))}
               multiline
               numberOfLines={3}
               style={styles.input}
@@ -491,9 +493,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
             />
 
             <TextInput
+              key={`img-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="URL на слика (опционално)"
-              value={editedEvent.imageUrl}
-              onChangeText={imageUrl => setEditedEvent({ ...editedEvent, imageUrl })}
+              defaultValue={editedEvent.imageUrl}
+              onChangeText={imageUrl => setEditedEvent(prev => ({ ...prev, imageUrl }))}
               placeholder="https://denovi.mk/synaxarion/..."
               style={styles.input}
               maxLength={500}
