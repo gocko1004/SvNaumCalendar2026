@@ -11,6 +11,7 @@ import {
   mergeEvents,
   getEventOverrides,
   applyEventOverrides,
+  hardcodedEventKey,
 } from '../../services/FirestoreEventService';
 import { getReminderText, ReminderTiming } from '../../services/NotificationTextService';
 import { COLORS } from '../../constants/theme';
@@ -52,7 +53,12 @@ export const NotificationPreviewScreen = () => {
     const { title, body } = getReminderText(event, timing);
     try {
       await Notifications.scheduleNotificationAsync({
-        content: { title, body, sound: 'default' },
+        content: {
+          title,
+          body,
+          sound: 'default',
+          data: { type: 'event', eventKey: hardcodedEventKey(event) },
+        },
         trigger: { seconds: 3, channelId: 'church-events' } as any,
       });
       Alert.alert(
