@@ -1,0 +1,200 @@
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+  Timestamp,
+} from 'firebase/firestore';
+import { db, auth } from '../firebase';
+
+// Fasting rules per the eparchy guidance. Admin-managed — nothing is hardcoded
+// about WHEN fasts happen; only the vocabulary of rules lives in code.
+export type FastingRule = 'STRICT' | 'WITH_OIL' | 'WINE_OIL' | 'FISH';
+
+export interface FastingSpecialDay {
+  date: Date;
+  rule: FastingRule;
+  note?: string; // нпр. „Благовештение"
+}
+
+export interface FastingPeriod {
+  id?: string;
+  name: string;
+  startDate: Date; // inclusive
+  endDate: Date; // inclusive
+  defaultRule: FastingRule;
+  weekendRule?: FastingRule; // optional Sat/Sun rule (typikons usually relax weekends)
+  note?: string; // free text from the eparchy guidance
+  specialDays: FastingSpecialDay[];
+  isActive: boolean;
+  createdBy?: string;
+  updatedAt?: Date;
+}
+
+export interface FastingDayInfo {
+  period: FastingPeriod;
+  rule: FastingRule;
+  isSpecialDay: boolean;
+  specialDayNote?: string;
+  dayNumber: number; // 1-based day within the period
+  totalDays: number;
+}
+
+export const FASTING_RULE_CONFIG: Record<
+  FastingRule,
+  { label: string; shortLabel: string; icon: string; color: string; description: string }
+> = {
+  STRICT: {
+    label: 'Строг пост (на вода)',
+    shortLabel: 'На вода',
+    icon: 'sprout',
+    color: '#8E1F1F',
+    description: 'без масло и вино',
+  },
+  WITH_OIL: {
+    label: 'Пост на масло',
+    shortLabel: 'На масло',
+    icon: 'water',
+    color: '#7B8A3E',
+    description: 'дозволено масло',
+  },
+  WINE_OIL: {
+    label: 'Пост на масло и вино',
+    shortLabel: 'На масло и вино',
+    icon: 'glass-wine',
+    color: '#A3622E',
+    description: 'дозволено масло и вино',
+  },
+  FISH: {
+    label: 'Пост на риба',
+    shortLabel: 'На риба',
+    icon: 'fish',
+    color: '#1F6273',
+    description: 'дозволена риба, вино и масло',
+  },
+};
+
+// The four yearly fasts as admin presets — names and typical rules only;
+// the admin always sets the actual dates.
+export const FASTING_PRESETS: { name: string; defaultRule: FastingRule }[] = [
+  { name: 'Велигденски пост', defaultRule: 'STRICT' },
+  { name: 'Петровски пост', defaultRule: 'WITH_OIL' },
+  { name: 'Богородичен пост', defaultRule: 'STRICT' },
+  { name: 'Божиќен пост', defaultRule: 'WITH_OIL' },
+];
+
+const fastingCollection = collection(db, 'fastingPeriods');
+
+const startOfDay = (d: Date): Date => {
+  const c = new Date(d);
+  c.setHours(0, 0, 0, 0);
+  return c;
+};
+
+// Dates are STORED at local noon: a +-12h timezone difference between the
+// admin who saves and a user who reads can then never shift the calendar day.
+const atNoon = (d: Date): Date => {
+  const c = new Date(d);
+  c.setHours(12, 0, 0, 0);
+  return c;
+};
+
+const isSameDay = (a: Date, b: Date): boolean =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+export const getAllFastingPeriods = async (): Promise<FastingPeriod[]> => {
+  try {
+    const snapshot = await getDocs(fastingCollection);
+    return snapshot.docs
+      .map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          name: data.name || '',
+          startDate: data.startDate?.toDate() || new Date(),
+          endDate: data.endDate?.toDate() || new Date(),
+          defaultRule: (data.defaultRule || 'STRICT') as FastingRule,
+          weekendRule: (data.weekendRule as FastingRule) || undefined,
+          note: data.note || undefined,
+          specialDays: (data.specialDays || []).map((s: any) => ({
+            date: s.date?.toDate() || new Date(),
+            rule: (s.rule || 'FISH') as FastingRule,
+            note: s.note || undefined,
+          })),
+          isActive: data.isActive ?? true,
+          createdBy: data.createdBy || undefined,
+          updatedAt: data.updatedAt?.toDate() || undefined,
+        } as FastingPeriod;
+      })
+      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  } catch (error) {
+    console.error('Error loading fasting periods:', error);
+    return [];
+  }
+};
+
+export const saveFastingPeriod = async (period: FastingPeriod): Promise<string> => {
+  const docRef = period.id ? doc(fastingCollection, period.id) : doc(fastingCollection);
+
+  await setDoc(docRef, {
+    name: period.name,
+    startDate: Timestamp.fromDate(atNoon(period.startDate)),
+    endDate: Timestamp.fromDate(atNoon(period.endDate)),
+    defaultRule: period.defaultRule,
+    weekendRule: period.weekendRule || null,
+    note: period.note || null,
+    specialDays: period.specialDays.map(s => ({
+      date: Timestamp.fromDate(atNoon(s.date)),
+      rule: s.rule,
+      note: s.note || null,
+    })),
+    isActive: period.isActive,
+    createdBy: period.createdBy || auth?.currentUser?.uid || null,
+    updatedAt: Timestamp.now(),
+  });
+
+  return docRef.id;
+};
+
+export const deleteFastingPeriod = async (id: string): Promise<void> => {
+  await deleteDoc(doc(fastingCollection, id));
+};
+
+// Resolve the effective fasting info for one calendar day, or null when the
+// day is not inside any active fasting period.
+export const getFastingInfoForDate = (
+  date: Date,
+  periods: FastingPeriod[]
+): FastingDayInfo | null => {
+  const day = startOfDay(date);
+
+  for (const period of periods) {
+    if (!period.isActive) continue;
+    const start = startOfDay(period.startDate);
+    const end = startOfDay(period.endDate);
+    if (day < start || day > end) continue;
+
+    // Goce's model: ONLY explicitly assigned days are fasting days.
+    // A day inside the period range without an assigned rule shows nothing.
+    const special = period.specialDays.find(s => isSameDay(s.date, day));
+    if (!special) continue;
+
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const dayNumber = Math.round((day.getTime() - start.getTime()) / msPerDay) + 1;
+    const totalDays = Math.round((end.getTime() - start.getTime()) / msPerDay) + 1;
+
+    return {
+      period,
+      rule: special.rule,
+      isSpecialDay: true,
+      specialDayNote: special.note,
+      dayNumber,
+      totalDays,
+    };
+  }
+
+  return null;
+};

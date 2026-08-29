@@ -206,7 +206,7 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
         <Card.Content>
           <View style={styles.configHeader}>
             <View style={styles.configTitleRow}>
-              <Text style={styles.configTitle} numberOfLines={1}>
+              <Text style={styles.configTitle}>
                 {config.eventName}
               </Text>
               <Switch
@@ -288,7 +288,7 @@ export const AutoNotificationSettingsScreen: React.FC<AutoNotificationSettingsSc
         <Card.Content>
           <View style={styles.eventRow}>
             <View style={styles.eventInfo}>
-              <RNText style={styles.eventName} numberOfLines={1}>
+              <RNText style={styles.eventName}>
                 {event.name}
               </RNText>
               <RNText style={styles.eventDate}>

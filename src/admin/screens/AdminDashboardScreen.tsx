@@ -265,6 +265,27 @@ export const AdminDashboardScreen = ({ navigation }: AdminDashboardScreenProps) 
         </Card.Content>
       </Card>
 
+      <Card style={styles.card} onPress={() => handleNavigation('ManageFasting')}>
+        <Card.Content>
+          <Title>🌿 Пости</Title>
+          <Paragraph>Периоди на пост со правила - се прикажуваат на календарот</Paragraph>
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.card} onPress={() => handleNavigation('ManageMessages')}>
+        <Card.Content>
+          <Title>📨 Пораки од верници</Title>
+          <Paragraph>Пораки, поплаки и пријави за зачленување до црковната општина</Paragraph>
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.card} onPress={() => handleNavigation('NotificationPreview')}>
+        <Card.Content>
+          <Title>🔔 Преглед на известувања</Title>
+          <Paragraph>Како изгледаат потсетниците - тест само на овој телефон</Paragraph>
+        </Card.Content>
+      </Card>
+
       <Card style={styles.card} onPress={() => handleNavigation('ManageParking')}>
         <Card.Content>
           <Title>🅿️ Паркинг</Title>

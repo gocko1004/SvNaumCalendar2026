@@ -112,6 +112,7 @@ export const useAuth = () => {
       }
       return { success: false, error: 'Невалидно корисничко име или лозинка' };
     } catch (error) {
+      console.error('Login failed:', (error as any)?.code, (error as any)?.message);
       let errorMessage = 'Невалидно корисничко име или лозинка';
 
       if (error instanceof FirebaseError) {

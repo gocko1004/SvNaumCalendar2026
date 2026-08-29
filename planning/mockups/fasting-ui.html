@@ -1,0 +1,487 @@
+<title>Св. Наум Пости</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Triodion&family=PT+Sans:wght@400;700&display=swap">
+<style>
+  :root {
+    --board: #EFE9DE;
+    --board-ink: #2C221B;
+    --board-muted: #7A6C5F;
+    --board-line: #D8CFC0;
+    --board-card: #F7F3EA;
+    --accent: #8B0000;
+    --gold: #B8942E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --board: #211A15;
+      --board-ink: #EDE4D6;
+      --board-muted: #A79684;
+      --board-line: #3A2F26;
+      --board-card: #2A2119;
+      --gold: #D4AF37;
+    }
+  }
+  :root[data-theme="dark"] {
+    --board: #211A15;
+    --board-ink: #EDE4D6;
+    --board-muted: #A79684;
+    --board-line: #3A2F26;
+    --board-card: #2A2119;
+    --gold: #D4AF37;
+  }
+
+  body {
+    background: var(--board);
+    color: var(--board-ink);
+    font-family: 'PT Sans', 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    padding: 40px 24px 72px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  .kicker {
+    text-transform: uppercase; letter-spacing: .14em; font-size: 12px;
+    color: var(--board-muted); margin: 0 0 6px;
+  }
+  h1 {
+    font-family: 'Triodion', 'PT Sans', serif;
+    font-size: clamp(30px, 4.5vw, 44px);
+    margin: 0 0 10px; font-weight: 400; text-wrap: balance;
+    color: var(--board-ink);
+  }
+  .lede { max-width: 62ch; margin: 0 0 8px; color: var(--board-ink); }
+  .lede + .lede { color: var(--board-muted); }
+
+  /* Rule legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 38px;
+  }
+  .rule-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1.5px solid var(--rc, #6B4E9B); color: var(--board-ink);
+    background: var(--board-card);
+    border-radius: 999px; padding: 7px 14px 7px 9px; font-size: 13.5px; font-weight: 700;
+  }
+  .rule-chip .dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--rc); display: inline-flex; align-items: center; justify-content: center;
+  }
+  .rule-chip svg { display: block; }
+
+  /* Phone board */
+  .phones {
+    display: flex; flex-wrap: wrap; gap: 34px; align-items: flex-start;
+    justify-content: center;
+  }
+  .study { width: 316px; }
+  .study h2 {
+    font-family: 'Triodion', serif; font-weight: 400; font-size: 21px;
+    margin: 0 0 4px; color: var(--board-ink);
+  }
+  .study .sub { font-size: 13px; color: var(--board-muted); margin: 0 0 14px; }
+
+  .phone {
+    width: 316px; box-sizing: border-box;
+    background: #17120E; border-radius: 34px; padding: 10px;
+    box-shadow: 0 18px 40px rgba(20, 10, 5, .28);
+  }
+  .screen {
+    background: #F5F3E8; border-radius: 26px; overflow: hidden;
+    font-size: 13px; color: #2C1810;
+  }
+  .statusbar {
+    display: flex; justify-content: space-between; padding: 8px 16px 2px;
+    font-size: 10.5px; color: #6b5b4e; font-variant-numeric: tabular-nums;
+  }
+  .appbar {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 8px 14px 10px;
+  }
+  .appbar .t { font-family: 'Triodion', serif; font-size: 19px; color: #8B0000; }
+  .appbar .m { font-size: 11px; color: #8a7a6a; font-weight: 700; }
+  .screen-body { padding: 0 12px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* Fasting banner */
+  .fast-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(90deg, #6B4E9B 0%, #59407f 100%);
+    color: #F5EFFF; border-radius: 12px; padding: 9px 12px;
+  }
+  .fast-banner b { font-size: 13px; }
+  .fast-banner .days { margin-left: auto; font-size: 11px; opacity: .85; white-space: nowrap; }
+
+  /* Production event card: colored date block left, content middle, image right */
+  .pcard {
+    border: 2px solid #D4AF37; border-radius: 15px; background: #F8F4E9;
+    display: flex; overflow: hidden;
+    box-shadow: 0 3px 6px rgba(0,0,0,.12);
+  }
+  .pcard .dateblock {
+    width: 50px; flex: none; color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .pcard .dateblock b { font-size: 18px; line-height: 1.1; }
+  .pcard .dateblock span { font-size: 10px; text-transform: uppercase; }
+  .pcard .content { flex: 1; padding: 9px 10px; min-width: 0; }
+  .pcard .nm { font-weight: 700; font-size: 13px; line-height: 1.25; color: #2C1810; }
+  .pcard .st { font-size: 10.5px; color: #8a7a6a; margin: 1px 0 4px; }
+  .pcard .inforow { display: flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; margin-top: 2px; }
+  .pcard .inforow.time { color: #555; font-weight: 400; font-variant-numeric: tabular-nums; }
+  .pcard .thumb {
+    width: 62px; flex: none; background: #E9E2D2 center/cover;
+    display: flex; align-items: center; justify-content: center; color: #B8A88E;
+  }
+  /* Filter chip row: existing chips + the added „Пости" chip */
+  .filters { display: flex; gap: 6px; padding: 0 12px 10px; overflow: hidden; }
+  .fchip {
+    font-size: 10px; font-weight: 700; color: #2C1810; white-space: nowrap;
+    border: 1.5px solid #D4AF37; border-radius: 999px; padding: 5px 10px; background: #fff;
+  }
+  .fchip.on { background: var(--fc); border-color: var(--fc); color: #fff; }
+
+  /* The added fasting chip: sits above the card, aligned with the date block */
+  .day-fast { display: flex; margin-bottom: 5px; }
+  .daterow { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .daterow .d { font-weight: 700; color: #2C1810; font-size: 12px; }
+  .daterow .rule { margin-left: auto; }
+
+  /* The fasting badge on a card */
+  .fast-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; font-weight: 700; color: #fff;
+    border-radius: 999px; padding: 3px 9px 3px 5px;
+    background: var(--rc, #6B4E9B);
+  }
+  .fast-badge svg { display: block; }
+
+  /* Detail sheet phone — mirrors the production EventDetailSheet exactly:
+     white sheet, 24px top radius, grey drag handle + hint, X close, date badge header */
+  .dim { background: rgba(0, 0, 0, .5); padding: 64px 0 0; }
+  .sheet {
+    background: #fff; border-radius: 24px 24px 26px 26px; padding: 12px 16px 20px;
+    position: relative;
+  }
+  .grab { width: 40px; height: 5px; border-radius: 3px; background: #DDD; margin: 0 auto 3px; }
+  .grab-hint { text-align: center; font-size: 10px; color: #999; margin: 0 0 10px; }
+  .sheet-x {
+    position: absolute; top: 12px; right: 12px; color: #666; font-size: 17px; line-height: 1;
+  }
+  .sheet-head { display: flex; gap: 12px; align-items: flex-start; }
+  .sheet-datebadge {
+    width: 52px; height: 56px; border-radius: 12px; background: #6B4E9B; color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; flex: none;
+  }
+  .sheet-datebadge b { font-size: 19px; line-height: 1.1; }
+  .sheet-datebadge span { font-size: 10px; text-transform: uppercase; }
+  .sheet h3 { font-size: 17px; font-weight: 700; margin: 0; color: #2C1810; }
+  .sheet .range { font-size: 12px; color: #8a7a6a; margin: 2px 0 6px; }
+  .sheet-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(107, 78, 155, .12); color: #6B4E9B;
+    border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 700;
+  }
+  .sheet-divider { height: 1px; background: #EEE; margin: 14px 0; }
+  .today-rule {
+    display: flex; gap: 10px; align-items: center;
+    background: #F7F4FB; border-radius: 12px; padding: 12px;
+    margin-bottom: 12px;
+  }
+  .today-rule .dot { width: 38px; height: 38px; border-radius: 50%; background: #6B4E9B; flex: none; display: flex; align-items: center; justify-content: center; }
+  .today-rule b { font-size: 14px; color: #2C1810; }
+  .today-rule small { display: block; color: #6d5c7d; font-size: 11px; }
+  .note { font-size: 12.5px; color: #555; margin: 0; line-height: 1.5; }
+  .note-head { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #8B0000; margin: 0 0 5px; }
+
+  /* Admin phone */
+  .admin-title { font-family: 'Triodion', serif; font-size: 19px; color: #8B0000; padding: 8px 14px 0; }
+  .period-card {
+    border: 2px solid #D4AF37; border-radius: 15px; background: #F8F4E9;
+    padding: 11px 12px;
+  }
+  .period-card .row1 { display: flex; align-items: center; gap: 8px; }
+  .period-card .nm { font-weight: 700; font-size: 13.5px; }
+  .period-card .sw {
+    margin-left: auto; width: 34px; height: 19px; border-radius: 10px; background: #34C759;
+    position: relative; flex: none;
+  }
+  .period-card .sw::after {
+    content: ""; position: absolute; right: 2px; top: 2px; width: 15px; height: 15px;
+    border-radius: 50%; background: #fff;
+  }
+  .period-card .rg { font-size: 11px; color: #8a7a6a; margin: 3px 0 8px; }
+  .period-card .foot { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    font-size: 11px; font-weight: 700; color: #8B0000;
+    border: 1px solid #D4AF37; background: #FFFDF6; border-radius: 8px; padding: 4px 10px;
+  }
+  .icon-btn.del { color: #a33; }
+  .fab {
+    position: absolute; right: 16px; bottom: 16px;
+    width: 48px; height: 48px; border-radius: 50%; background: #8B0000; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; line-height: 1; box-shadow: 0 6px 14px rgba(80, 0, 0, .35);
+  }
+  .screen.rel { position: relative; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .preset {
+    font-size: 10.5px; font-weight: 700; color: #1B3661;
+    border: 1px dashed #1B3661; border-radius: 999px; padding: 4px 10px; background: #fff;
+  }
+
+  /* Annotations under each phone */
+  .notes { margin: 16px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .notes li { display: flex; gap: 10px; font-size: 13.5px; color: var(--board-ink); }
+  .notes .pin {
+    flex: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--gold); color: #241A05; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  }
+  .pin-on {
+    position: absolute; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--gold); color: #241A05; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3); z-index: 3;
+  }
+  .phone { position: relative; }
+
+  .closing {
+    margin: 56px auto 0; max-width: 66ch; border-top: 1px solid var(--board-line);
+    padding-top: 22px; color: var(--board-muted); font-size: 14px;
+  }
+  .closing b { color: var(--board-ink); }
+</style>
+
+<div class="wrap">
+  <p class="kicker">Дизајн предлог · Св. Наум Календар</p>
+  <h1>Пости во календарот</h1>
+  <p class="lede">Постите ги внесува администраторот - датуми, правило и исклучоци - и веднаш се гледаат кај сите корисници. Ништо не е фиксирано во кодот.</p>
+  <p class="lede">Виолетовата е традиционалната богослужбена боја на постот - затоа таа го носи обележјето, а црвено-златниот изглед на апликацијата останува недопрен.</p>
+
+  <div class="legend">
+    <span class="rule-chip" style="--rc:#6B4E9B">
+      <span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg></span>
+      Строг пост (без масло)
+    </span>
+    <span class="rule-chip" style="--rc:#7B8A3E">
+      <span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 3c3.2 4.2 5.5 7.4 5.5 10.3A5.4 5.4 0 0 1 12 18.7a5.4 5.4 0 0 1-5.5-5.4C6.5 10.4 8.8 7.2 12 3z"/></svg></span>
+      Пост со масло
+    </span>
+    <span class="rule-chip" style="--rc:#A3622E">
+      <span class="dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v6M8.5 21h7"/></svg></span>
+      Вино и масло
+    </span>
+    <span class="rule-chip" style="--rc:#1B3661">
+      <span class="dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M3 12c3-4.5 7-6.5 11-6.5 3 0 5.5 1.4 7 3.2-.4 1-1 2-2 2.8 1 .8 1.6 1.8 2 2.8-1.5 1.8-4 3.2-7 3.2-4 0-8-2-11-5.5zm14.4-1.3a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z"/></svg></span>
+      Дозволена риба
+    </span>
+  </div>
+
+  <div class="phones">
+
+    <!-- Phone 1: user calendar, production cards + added fasting chip -->
+    <div class="study">
+      <h2>1 · Календар за корисници</h2>
+      <p class="sub">Постојниот дизајн недопрен - обележјето само се додава над картичката, порамнето со датумот.</p>
+      <div class="phone">
+        <span class="pin-on" style="top: 128px; left: -8px;">А</span>
+        <div class="screen">
+          <div class="statusbar"><span>10:42</span><span>5G ▮▮▮</span></div>
+          <div class="appbar"><span class="t">Март</span><span class="m">Календар 2026</span></div>
+          <div class="filters">
+            <span class="fchip" style="--fc:#8B0000">Литургија</span>
+            <span class="fchip" style="--fc:#2C4A6E">Вечерна</span>
+            <span class="fchip" style="--fc:#8a7a6a">Отворена</span>
+            <span class="fchip on" style="--fc:#6B4E9B">Пости</span>
+          </div>
+          <div class="screen-body">
+
+            <div>
+              <div class="day-fast"><span class="fast-badge" style="--rc:#7B8A3E">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M12 3c3.2 4.2 5.5 7.4 5.5 10.3A5.4 5.4 0 0 1 12 18.7a5.4 5.4 0 0 1-5.5-5.4C6.5 10.4 8.8 7.2 12 3z"/></svg>
+                Пост со масло</span></div>
+              <div class="pcard">
+                <div class="dateblock" style="background:#8B0000"><b>15</b><span>мар</span></div>
+                <div class="content">
+                  <div class="nm">Неделна Литургија</div>
+                  <div class="st">Св. 40 Севастиски маченици</div>
+                  <div class="inforow" style="color:#8B0000">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8B0000" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M7 8h10M9 21h6"/></svg>
+                    Литургија</div>
+                  <div class="inforow time">🕘 09:00ч</div>
+                </div>
+                <div class="thumb">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 15 5-5 4 4 3-3 6 6"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="day-fast"><span class="fast-badge" style="--rc:#6B4E9B">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg>
+                Строг пост</span></div>
+              <div class="pcard">
+                <div class="dateblock" style="background:#2C4A6E"><b>18</b><span>мар</span></div>
+                <div class="content">
+                  <div class="nm">Вечерна Богослужба</div>
+                  <div class="st">Претходно осветени дарови</div>
+                  <div class="inforow" style="color:#2C4A6E">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2C4A6E" stroke-width="2" stroke-linecap="round"><path d="M12 3a7 7 0 1 0 9 9 9 9 0 1 1-9-9z"/></svg>
+                    Вечерна Богослужба</div>
+                  <div class="inforow time">🕖 19:00ч</div>
+                </div>
+                <div class="thumb">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 15 5-5 4 4 3-3 6 6"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="day-fast"><span class="fast-badge" style="--rc:#1B3661">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M3 12c3-4.5 7-6.5 11-6.5 3 0 5.5 1.4 7 3.2-.4 1-1 2-2 2.8 1 .8 1.6 1.8 2 2.8-1.5 1.8-4 3.2-7 3.2-4 0-8-2-11-5.5z"/></svg>
+                Дозволена риба</span></div>
+              <div class="pcard">
+                <div class="dateblock" style="background:#8B0000"><b>07</b><span>апр</span></div>
+                <div class="content">
+                  <div class="nm">Благовештение</div>
+                  <div class="st">Благовештение на Пресвета Богородица</div>
+                  <div class="inforow" style="color:#8B0000">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8B0000" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M7 8h10M9 21h6"/></svg>
+                    Литургија</div>
+                  <div class="inforow time">🕘 09:00ч</div>
+                </div>
+                <div class="thumb">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 15 5-5 4 4 3-3 6 6"/></svg>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><span class="pin">А</span>Допир на обележјето ги отвора деталите за постот. Картичката останува иста - допир на неа отвора настан, како и досега.</li>
+        <li><span class="pin">·</span>На 7 април обележјето само покажува „Дозволена риба" - посебниот ден си го носи правилото, без посебна листа.</li>
+      </ul>
+    </div>
+
+    <!-- Phone 2: detail sheet in production style -->
+    <div class="study">
+      <h2>2 · Детали за постот</h2>
+      <p class="sub">Идентичен со постојниот лист за настани: бел, зафатка за влечење, X за затворање.</p>
+      <div class="phone">
+        <span class="pin-on" style="top: 262px; left: -8px;">Б</span>
+        <span class="pin-on" style="bottom: 96px; right: -8px;">В</span>
+        <div class="screen">
+          <div class="dim">
+            <div class="sheet">
+              <div class="grab"></div>
+              <p class="grab-hint">Повлечи нагоре за повеќе</p>
+              <span class="sheet-x">✕</span>
+              <div class="sheet-head">
+                <div class="sheet-datebadge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg>
+                  <span>пост</span>
+                </div>
+                <div>
+                  <h3>Велигденски пост</h3>
+                  <p class="range">2 март - 18 април 2026 · ден 12 од 48</p>
+                  <span class="sheet-chip">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6B4E9B" stroke-width="2.4" stroke-linecap="round"><path d="M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg>
+                    Пост
+                  </span>
+                </div>
+              </div>
+              <div class="sheet-divider"></div>
+              <div class="today-rule">
+                <span class="dot">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg>
+                </span>
+                <span><b>Денес: Строг пост</b><small>без масло и вино</small></span>
+              </div>
+              <p class="note-head">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8B0000" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
+                Упатство
+              </p>
+              <p class="note">Според упатството на Европската епархија на МПЦ-ОА. Во сабота и недела се благословува вино и масло. На Благовештение и Цветници е дозволена риба.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><span class="pin">Б</span>Правилото за денес е најголемото нешто на листот - тоа е она што корисникот го бара.</li>
+        <li><span class="pin">В</span>Без листа на исклучоци - секој ден си го покажува своето правило на календарот. Упатството е слободен текст што админот го менува секоја година.</li>
+      </ul>
+    </div>
+
+    <!-- Phone 3: admin -->
+    <div class="study">
+      <h2>3 · Админ · Пости</h2>
+      <p class="sub">Управување без ниту една линија код.</p>
+      <div class="phone">
+        <span class="pin-on" style="top: 96px; right: -8px;">Д</span>
+        <span class="pin-on" style="bottom: 154px; left: -8px;">Ѓ</span>
+        <div class="screen rel">
+          <div class="statusbar"><span>10:42</span><span>5G ▮▮▮</span></div>
+          <div class="admin-title">Пости</div>
+          <div class="screen-body" style="padding-top:10px">
+            <div class="presets">
+              <span class="preset">+ Велигденски</span>
+              <span class="preset">+ Петровски</span>
+              <span class="preset">+ Богородичен</span>
+              <span class="preset">+ Божиќен</span>
+            </div>
+
+            <div class="period-card">
+              <div class="row1">
+                <span class="fast-badge" style="--rc:#6B4E9B">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg>
+                  Строг</span>
+                <span class="nm">Велигденски пост</span>
+                <span class="sw"></span>
+              </div>
+              <div class="rg">2 март - 18 април · 2 посебни дена (Благовештение, Цветници)</div>
+              <div class="foot">
+                <span class="icon-btn">Измени</span>
+                <span class="icon-btn del">Избриши</span>
+              </div>
+            </div>
+
+            <div class="period-card">
+              <div class="row1">
+                <span class="fast-badge" style="--rc:#7B8A3E">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M12 3c3.2 4.2 5.5 7.4 5.5 10.3A5.4 5.4 0 0 1 12 18.7a5.4 5.4 0 0 1-5.5-5.4C6.5 10.4 8.8 7.2 12 3z"/></svg>
+                  Со масло</span>
+                <span class="nm">Богородичен пост</span>
+                <span class="sw"></span>
+              </div>
+              <div class="rg">14 - 27 август · без исклучоци</div>
+              <div class="foot">
+                <span class="icon-btn">Измени</span>
+                <span class="icon-btn del">Избриши</span>
+              </div>
+            </div>
+
+            <div class="period-card" style="border-style:dashed; opacity:.8">
+              <div class="row1">
+                <span class="nm" style="color:#8a7a6a">Преглед пред зачувување</span>
+              </div>
+              <div class="rg">Како ќе изгледа на календарот:</div>
+              <div class="daterow" style="margin:0"><span class="d">Среда, 3 декември</span>
+                <span class="rule"><span class="fast-badge" style="--rc:#6B4E9B">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 21V9M12 9C12 5 9 3 5 3c0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/></svg>
+                  Строг пост</span></span>
+              </div>
+            </div>
+          </div>
+          <span class="fab">+</span>
+        </div>
+      </div>
+      <ul class="notes">
+        <li><span class="pin">Д</span>Четирите годишни поста се готови шаблони - еден допир, па само датумите се дотеруваат.</li>
+        <li><span class="pin">Ѓ</span>Прегледот во формата покажува точно како ќе изгледа обележјето пред да се зачува.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="closing"><b>Технички:</b> сè живее во Firestore (<code>fastingPeriods</code>) - датуми, правило, белешка, исклучоци. Читањето е јавно, пишувањето бара најавен администратор со дозвола <code>fasting.manage</code>. Целосна спецификација: <code>planning/01-fasting-feature.md</code> во репото.</p>
+</div>

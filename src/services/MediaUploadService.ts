@@ -1,7 +1,10 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { assertValidSession, SessionExpiredError } from './AuthGuard';
+
+export { SessionExpiredError };
+
 
 export interface UploadProgress {
   progress: number;
@@ -142,6 +145,8 @@ export const uploadMedia = async (
   onProgress?: (progress: number) => void
 ): Promise<string> => {
   try {
+    await assertValidSession();
+
     // Read file as blob
     const response = await fetch(asset.uri);
     const blob = await response.blob();

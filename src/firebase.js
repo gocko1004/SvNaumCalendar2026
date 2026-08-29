@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getReactNativePersistence, initializeAuth, getAuth } from 'firebase/auth';
+import * as firebaseAuth from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase client configuration
@@ -15,57 +15,64 @@ const firebaseConfig = {
   measurementId: "G-W87V472GVX"
 };
 
-const isDevelopment = process.env.NODE_ENV !== 'production';
-
 let app;
 let auth;
+let db;
+let storage;
 let initError = null;
+let authPersistent = false;
 
 try {
-  // Initialize Firebase App (modular SDK)
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
-  }
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  storage = getStorage(app);
 
-  // Initialize Auth with React Native persistence using AsyncStorage
-  // This ensures auth state persists across app restarts and navigation
-  try {
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    });
-  } catch (authError) {
-    // Auth might already be initialized, get existing instance
-    if (authError.code === 'auth/already-initialized') {
-      auth = getAuth(app);
-    } else {
-      throw authError;
+  const { initializeAuth, getAuth, getReactNativePersistence } = firebaseAuth;
+
+  // Preferred: React Native persistence so the admin session survives app
+  // restarts. Falls back to the default auth instance if that path is
+  // unavailable in this SDK/bundler combination - login must always work.
+  if (typeof getReactNativePersistence === 'function' && typeof initializeAuth === 'function') {
+    try {
+      auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage),
+      });
+      authPersistent = true;
+    } catch (authError) {
+      if (authError?.code === 'auth/already-initialized' && typeof getAuth === 'function') {
+        auth = getAuth(app);
+        authPersistent = true;
+      } else {
+        console.warn('[firebase] initializeAuth with RN persistence failed:', authError?.message);
+      }
     }
+  } else {
+    console.warn(
+      '[firebase] RN persistence unavailable (getReactNativePersistence=' +
+        typeof getReactNativePersistence + ', initializeAuth=' + typeof initializeAuth + ')'
+    );
   }
 
-  if (isDevelopment) {
-    console.log('Firebase Initialized with AsyncStorage persistence');
+  if (!auth && typeof firebaseAuth.getAuth === 'function') {
+    auth = firebaseAuth.getAuth(app);
   }
 
+  if (!auth) {
+    throw new Error('Auth instance could not be created');
+  }
+
+  console.log(
+    '[firebase] initialized; auth persistence:',
+    authPersistent ? 'AsyncStorage (persistent)' : 'default (may not persist)'
+  );
 } catch (error) {
-  console.error('Firebase Init Failed:', error);
+  console.error('[firebase] Init failed:', error?.message, error);
   initError = error;
-  // Try to salvage app for other services
-  try {
-    app = getApp();
-    auth = getAuth(app);
-  } catch (e) { /* ignore */ }
 }
 
-// Export services using Modular syntax for rest of app
-// Convert compat app to modular app (they are practically same object)
 export { app };
-
-// DB and Storage
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-
-// Export Auth
+export { db };
+export { storage };
 export { auth };
 export { initError };
+export { authPersistent };

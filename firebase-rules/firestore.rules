@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Only these specific accounts are administrators.
+    // To add an admin later: add their UID to this list.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.uid in ['2AJnbYVj5ANtCoUHUcsKKmSS1643', 'tmO0tN2qnGRo5ATMSKqOzF8Y0Z93'];
+    }
+
+    match /churchEvents/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /eventDetails/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /announcements/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /news/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /fastingPeriods/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /eventOverrides/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /autoNotifyConfig/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    match /autoNotifyLog/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    match /parkingLocations/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /parkingRules/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /settings/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /notificationHistory/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /pushTokens/{document=**} {
+      allow read: if isAdmin();
+      allow write: if true;
+    }
+    match /contactMessages/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['type','message','name','contact','createdAt','status'])
+        && request.resource.data.type in ['QUESTION','REMARK','COMPLAINT','PRAISE']
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 3000
+        && request.resource.data.status == 'NEW'
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if isAdmin();
+    }
+    match /membershipApplications/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['fullName','address','phone','email','familyMembers','note','createdAt','status'])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 160
+        && request.resource.data.status == 'NEW'
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if isAdmin();
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

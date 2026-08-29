@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl, SectionList, Vibration } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, StyleSheet, ScrollView, Image, Animated, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Text, RefreshControl, SectionList, Vibration, Platform, StatusBar } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Card, Title, Searchbar, Surface, Button, Dialog, Portal, FAB } from 'react-native-paper';
 import { useFonts, Triodion_400Regular } from '@expo-google-fonts/triodion';
 import { CHURCH_EVENTS, ChurchEvent, SPECIAL_FEAST_URLS, getServiceTypeLabel, ServiceType } from '../services/ChurchCalendarService';
 import { getImageForEvent } from '../services/LocalImageService';
 import { getDenoviImageUrl } from '../services/DenoviImageService';
-import { getAllEvents, mergeEvents } from '../services/FirestoreEventService';
+import { getAllEvents, mergeEvents, getEventOverrides, applyEventOverrides, hardcodedEventKey } from '../services/FirestoreEventService';
 import { getActiveAnnouncements, Announcement, ANNOUNCEMENT_TYPE_COLORS, ANNOUNCEMENT_TYPE_ICONS } from '../services/AnnouncementsService';
 import { COLORS } from '../constants/theme';
 import { format } from 'date-fns';
@@ -15,6 +15,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import SocialMediaService from '../services/SocialMediaService';
 import { Linking } from 'react-native';
 import { EventDetailSheet } from '../components/EventDetailSheet';
+import { FastingBadge } from '../components/FastingBadge';
+import { FastingDetailSheet } from '../components/FastingDetailSheet';
+import {
+  getAllFastingPeriods,
+  getFastingInfoForDate,
+  FastingPeriod,
+  FastingDayInfo,
+  FASTING_RULE_CONFIG,
+} from '../services/FastingService';
 import { useAuth } from '../hooks/useAuth';
 
 const SERVICE_TYPE_COLORS = {
@@ -344,6 +353,7 @@ const AnnouncementCard = ({ announcement, onPress }: { announcement: Announcemen
 
 export const CalendarScreen = () => {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const [fontsLoaded] = useFonts({
     Triodion_400Regular,
   });
@@ -361,6 +371,10 @@ export const CalendarScreen = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
   const [showEventDetail, setShowEventDetail] = useState(false);
+  const [fastingPeriods, setFastingPeriods] = useState<FastingPeriod[]>([]);
+  const [fastingFilter, setFastingFilter] = useState(false);
+  const [fastingDetail, setFastingDetail] = useState<FastingDayInfo | null>(null);
+  const [showFastingDetail, setShowFastingDetail] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [visibleItems, setVisibleItems] = useState<string[]>([]);
 
@@ -464,7 +478,8 @@ export const CalendarScreen = () => {
     const loadAndEnrichEvents = async () => {
       try {
         const firestoreEvents = await getAllEvents();
-        const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+        const overrides = await getEventOverrides();
+        const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
         const enriched = enrichEventsWithImages(merged);
         setEvents(enriched);
       } catch (error) {
@@ -477,6 +492,9 @@ export const CalendarScreen = () => {
 
     // Load and enrich events
     loadAndEnrichEvents();
+
+    // Load fasting periods (admin-managed, additive feature)
+    getAllFastingPeriods().then(setFastingPeriods).catch(() => {});
 
     // Load active announcements
     const loadAnnouncements = async () => {
@@ -493,6 +511,40 @@ export const CalendarScreen = () => {
   }, []);
 
   // Pull-to-refresh handler
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getAllFastingPeriods().then(setFastingPeriods).catch(() => {});
+      Promise.all([getAllEvents(), getEventOverrides()])
+        .then(([firestoreEvents, overrides]) => {
+          setEvents(prev => {
+            const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
+            // Keep the enriched image URLs from the initial load pattern
+            return merged.map(evt => {
+              const match = prev.find(
+                p => p.date.getTime() === evt.date.getTime() && p.serviceType === evt.serviceType
+              );
+              return match?.imageUrl ? { ...evt, imageUrl: match.imageUrl } : evt;
+            });
+          });
+        })
+        .catch(() => {});
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  // Deep link from a tapped reminder: open that event's card
+  useEffect(() => {
+    const key = route.params?.openEventKey;
+    if (!key || events.length === 0) return;
+    const match = events.find(e => hardcodedEventKey(e) === key || e.overrideKey === key);
+    if (match) {
+      scrollToMonth(match.date.getMonth());
+      setSelectedEvent(match);
+      setShowEventDetail(true);
+    }
+    navigation.setParams({ openEventKey: undefined, openEventNonce: undefined });
+  }, [route.params?.openEventNonce, events]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
 
@@ -507,15 +559,18 @@ export const CalendarScreen = () => {
     };
 
     try {
-      const [firestoreEvents, activeAnnouncements] = await Promise.all([
+      const [firestoreEvents, activeAnnouncements, overrides, periods] = await Promise.all([
         getAllEvents(),
         getActiveAnnouncements(),
+        getEventOverrides(),
+        getAllFastingPeriods(),
       ]);
 
-      const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+      const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
       const enriched = enrichEventsWithImages(merged);
       setEvents(enriched);
       setAnnouncements(activeAnnouncements);
+      setFastingPeriods(periods);
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -531,12 +586,51 @@ export const CalendarScreen = () => {
 
   // Group and filter events for SectionList
   const sections = React.useMemo(() => {
-    const grouped = events
-      .filter(event => {
-        const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
-        return matchesSearch && matchesType;
-      })
+    const filteredEvents = events.filter(event => {
+      const matchesSearch = event.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = selectedServiceTypes.size === 0 || selectedServiceTypes.has(event.serviceType);
+      const matchesFasting =
+        !fastingFilter || getFastingInfoForDate(event.date, fastingPeriods) !== null;
+      return matchesSearch && matchesType && matchesFasting;
+    });
+
+    // Compact fasting-day items: every day inside an active fast that has no
+    // service card gets its own small card (Goce's design).
+    const eventDayKeys = new Set(
+      events.map(e => `${e.date.getFullYear()}-${e.date.getMonth()}-${e.date.getDate()}`)
+    );
+    const addedFastKeys = new Set<string>();
+    const fastingDayItems: any[] = [];
+    if (selectedServiceTypes.size === 0 || fastingFilter) {
+      for (const period of fastingPeriods) {
+        if (!period.isActive) continue;
+        if (!period.name.toLowerCase().includes(searchQuery.toLowerCase())) continue;
+        const d = new Date(period.startDate);
+        d.setHours(0, 0, 0, 0);
+        const end = new Date(period.endDate);
+        end.setHours(0, 0, 0, 0);
+        let guard = 0;
+        while (d <= end && guard++ < 400) {
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (!eventDayKeys.has(key) && !addedFastKeys.has(key)) {
+            const info = getFastingInfoForDate(d, fastingPeriods);
+            if (info) {
+              addedFastKeys.add(key);
+              fastingDayItems.push({
+                date: new Date(d),
+                name: info.period.name,
+                serviceType: 'FASTING_DAY',
+                time: '',
+                __fasting: info,
+              });
+            }
+          }
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+
+    const grouped = ([...filteredEvents, ...fastingDayItems] as ChurchEvent[])
       .reduce((acc, event) => {
         const month = event.date.getMonth();
         if (!acc[month]) {
@@ -553,9 +647,10 @@ export const CalendarScreen = () => {
         data: events.sort((a, b) => a.date.getTime() - b.date.getTime())
       }))
       .sort((a, b) => a.monthIndex - b.monthIndex);
-  }, [searchQuery, selectedServiceTypes, events]);
+  }, [searchQuery, selectedServiceTypes, events, fastingFilter, fastingPeriods]);
 
   // Scroll to specific month
+  const pendingScrollSection = useRef<number | null>(null);
   const scrollToMonth = useCallback((monthIndex: number) => {
     setSelectedMonth(monthIndex);
 
@@ -563,12 +658,17 @@ export const CalendarScreen = () => {
     const sectionIndex = sections.findIndex(s => s.monthIndex === monthIndex);
 
     if (sectionIndex !== -1 && sectionListRef.current) {
-      sectionListRef.current.scrollToLocation({
-        sectionIndex: sectionIndex,
-        itemIndex: 0,
-        animated: true,
-        viewOffset: 0,
-      });
+      pendingScrollSection.current = sectionIndex;
+      try {
+        sectionListRef.current.scrollToLocation({
+          sectionIndex: sectionIndex,
+          itemIndex: 0,
+          animated: true,
+          viewOffset: 0,
+        });
+      } catch (e) {
+        // Far-offscreen sections are handled by onScrollToIndexFailed below
+      }
     }
   }, [sections]);
 
@@ -701,6 +801,40 @@ export const CalendarScreen = () => {
           );
         })}
 
+        {/* Additive „Пости" chip: toggles fasting badges on the calendar */}
+        <TouchableOpacity
+          onPress={() => setFastingFilter(prev => !prev)}
+          style={[
+            styles.filterChipTouchable,
+            {
+              backgroundColor: fastingFilter ? '#6B4E9B' : COLORS.SURFACE,
+              width: isVerySmall ? 90 : 110,
+              minHeight: isVerySmall ? 36 : 40,
+              borderColor: fastingFilter ? '#6B4E9B' : COLORS.BORDER,
+            }
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="sprout"
+            size={isVerySmall ? 14 : isSmall ? 15 : 16}
+            color={fastingFilter ? COLORS.TEXT_LIGHT : COLORS.TEXT}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            style={[
+              styles.filterChipText,
+              {
+                color: fastingFilter ? COLORS.TEXT_LIGHT : COLORS.TEXT,
+                fontSize: isVerySmall ? 9 : isSmall ? 10 : 11,
+                flex: 1,
+              }
+            ]}
+            numberOfLines={1}
+          >
+            Пости
+          </Text>
+        </TouchableOpacity>
+
       </ScrollView>
     );
   };
@@ -770,6 +904,24 @@ export const CalendarScreen = () => {
         <SectionList
           ref={sectionListRef}
           sections={sections}
+          onScrollToIndexFailed={(info) => {
+            // Target not rendered yet: jump near it, let it render, then retry precisely
+            const responder = (sectionListRef.current as any)?.getScrollResponder?.();
+            responder?.scrollTo?.({ y: info.averageItemLength * info.index, animated: false });
+            setTimeout(() => {
+              const target = pendingScrollSection.current;
+              if (target !== null && sectionListRef.current) {
+                try {
+                  sectionListRef.current.scrollToLocation({
+                    sectionIndex: target,
+                    itemIndex: 0,
+                    animated: true,
+                    viewOffset: 0,
+                  });
+                } catch (e) { /* give up quietly rather than crash */ }
+              }
+            }, 300);
+          }}
           keyExtractor={(item, index) => (item?.date?.toISOString() || 'item') + index}
           renderSectionHeader={({ section: { title, monthIndex } }) => (
             <View
@@ -793,7 +945,54 @@ export const CalendarScreen = () => {
               </View>
             </View>
           )}
-          renderItem={({ item: event, index }) => (
+          renderItem={({ item: event, index, section }) => {
+            const fastingItem = (event as any).__fasting as FastingDayInfo | undefined;
+            if (fastingItem) {
+              const ruleConfig = FASTING_RULE_CONFIG[fastingItem.rule];
+              return (
+                <View style={styles.eventList}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setFastingDetail(fastingItem);
+                      setShowFastingDetail(true);
+                    }}
+                  >
+                    <Card style={styles.fastingDayCard}>
+                      <View style={styles.fastingDayRow}>
+                        <View style={styles.fastingDayDate}>
+                          <Text style={styles.fastingDayDateDay}>
+                            {format(event.date, 'dd', { locale: mk })}
+                          </Text>
+                          <Text style={styles.fastingDayDateMonth}>
+                            {format(event.date, 'MMM', { locale: mk })}
+                          </Text>
+                        </View>
+                        <View style={styles.fastingDayContent}>
+                          <Text style={styles.fastingDayTitle}>{fastingItem.period.name}</Text>
+                          <View style={styles.fastingDayRuleRow}>
+                            <View
+                              style={[styles.fastingDayRuleDot, { backgroundColor: ruleConfig.color }]}
+                            >
+                              <MaterialCommunityIcons
+                                name={ruleConfig.icon as any}
+                                size={11}
+                                color="#fff"
+                              />
+                            </View>
+                            <Text style={[styles.fastingDayRuleText, { color: ruleConfig.color }]}>
+                              {ruleConfig.label}
+                            </Text>
+                          </View>
+                        </View>
+                        <MaterialCommunityIcons name="chevron-right" size={20} color="#B8A88E" />
+                      </View>
+                    </Card>
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+            return (
             <View style={styles.eventList}>
               <TouchableOpacity
                 activeOpacity={0.9}
@@ -821,11 +1020,11 @@ export const CalendarScreen = () => {
 
                   {/* Content Section */}
                   <View style={styles.integratedContentSection}>
-                    <Text style={styles.integratedTitle} numberOfLines={3}>
+                    <Text style={styles.integratedTitle}>
                       {event.name}
                     </Text>
                     {event.saintName && !event.saintName.toLowerCase().includes('not found') && event.saintName.trim() !== '' && (
-                      <Text style={styles.integratedSaintName} numberOfLines={2}>
+                      <Text style={styles.integratedSaintName}>
                         {event.saintName}
                       </Text>
                     )}
@@ -852,6 +1051,21 @@ export const CalendarScreen = () => {
                         {event.description || `${event.time}ч`}
                       </Text>
                     </View>
+
+                    {/* Fasting line under the time - always shown on fasting days */}
+                    {(() => {
+                      const info = getFastingInfoForDate(event.date, fastingPeriods);
+                      if (!info) return null;
+                      return (
+                        <FastingBadge
+                          info={info}
+                          onPress={() => {
+                            setFastingDetail(info);
+                            setShowFastingDetail(true);
+                          }}
+                        />
+                      );
+                    })()}
                   </View>
 
                   {/* Image Section */}
@@ -870,7 +1084,8 @@ export const CalendarScreen = () => {
               </Card>
               </TouchableOpacity>
             </View>
-          )}
+            );
+          }}
           stickySectionHeadersEnabled={false}
           scrollEventThrottle={16}
           onScroll={handleScroll}
@@ -1072,15 +1287,84 @@ export const CalendarScreen = () => {
             setSelectedEvent(null);
           }}
         />
+
+        {/* Fasting Detail Bottom Sheet (additive) */}
+        <FastingDetailSheet
+          visible={showFastingDetail}
+          info={fastingDetail}
+          onClose={() => {
+            setShowFastingDetail(false);
+            setFastingDetail(null);
+          }}
+        />
       </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  fastingDayCard: {
+    marginBottom: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFFDF8',
+    borderWidth: 0.5,
+    borderColor: '#D4AF37',
+    overflow: 'hidden',
+  },
+  fastingDayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 10,
+  },
+  fastingDayDate: {
+    width: 70,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6B4E9B', // lenten violet - the fasting identity color
+  },
+  fastingDayDateDay: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 19,
+  },
+  fastingDayDateMonth: {
+    color: '#fff',
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
+  fastingDayContent: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  fastingDayTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2C1810',
+  },
+  fastingDayRuleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 3,
+  },
+  fastingDayRuleDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fastingDayRuleText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.BACKGROUND,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
   },
   mainContainer: {
     flex: 1,

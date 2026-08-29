@@ -19,7 +19,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/types';
 import { COLORS } from '../../constants/theme';
 import { ChurchEvent, CHURCH_EVENTS, ServiceType } from '../../services/ChurchCalendarService';
-import { getAllEvents, addEvent, updateEvent, deleteEvent, mergeEvents } from '../../services/FirestoreEventService';
+import { getAllEvents, addEvent, updateEvent, deleteEvent, mergeEvents, getEventOverrides, applyEventOverrides, saveEventOverride, hardcodedEventKey } from '../../services/FirestoreEventService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -27,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getImageForEvent } from '../../services/LocalImageService';
 import { sanitizeChurchEvent, rateLimiter } from '../../services/ValidationService';
+import { assertValidSession, SessionExpiredError } from '../../services/AuthGuard';
 import { EventDetailsEditor } from '../components/EventDetailsEditor';
 
 const CALENDAR_STORAGE_KEY = '@church_calendar';
@@ -71,7 +72,8 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
     setLoading(true);
     try {
       const firestoreEvents = await getAllEvents();
-      const merged = mergeEvents(CHURCH_EVENTS, firestoreEvents);
+      const overrides = await getEventOverrides();
+      const merged = mergeEvents(applyEventOverrides(CHURCH_EVENTS, overrides), firestoreEvents);
       setEvents(merged);
     } catch (error) {
       console.error('Error loading calendar from Firestore:', error);
@@ -128,9 +130,30 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
 
     setLoading(true);
     try {
+      await assertValidSession();
+
       if (selectedEvent && selectedEvent.id) {
         // Editing existing Firestore event
         const success = await updateEvent(selectedEvent.id, sanitizedEvent);
+        if (success) {
+          Alert.alert('Успех', 'Настанот е успешно ажуриран');
+          await refreshEvents();
+        } else {
+          Alert.alert('Грешка', 'Настанот не може да се ажурира');
+        }
+      } else if (selectedEvent) {
+        // Editing a HARDCODED event: save an override instead of creating a duplicate
+        const key = selectedEvent.overrideKey || hardcodedEventKey(selectedEvent);
+        const success = await saveEventOverride(key, {
+          action: 'MODIFY',
+          name: sanitizedEvent.name,
+          date: sanitizedEvent.date,
+          time: sanitizedEvent.time,
+          serviceType: sanitizedEvent.serviceType,
+          description: sanitizedEvent.description,
+          saintName: sanitizedEvent.saintName,
+          imageUrl: sanitizedEvent.imageUrl,
+        });
         if (success) {
           Alert.alert('Успех', 'Настанот е успешно ажуриран');
           await refreshEvents();
@@ -150,18 +173,16 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
       setEditDialogVisible(false);
     } catch (error) {
       console.error('Error saving event:', error);
-      Alert.alert('Грешка', 'Грешка при зачувување на настанот');
+      Alert.alert(
+        'Грешка',
+        error instanceof SessionExpiredError ? error.message : 'Грешка при зачувување на настанот'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteEvent = async (eventToDelete: ChurchEvent) => {
-    if (!eventToDelete.id) {
-      Alert.alert('Грешка', 'Не може да се избрише хардкодиран настан');
-      return;
-    }
-
     Alert.alert(
       'Потврда',
       'Дали сте сигурни дека сакате да го избришете овој настан?',
@@ -173,7 +194,14 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
           onPress: async () => {
             setLoading(true);
             try {
-              const success = await deleteEvent(eventToDelete.id!);
+              await assertValidSession();
+
+              const success = eventToDelete.id
+                ? await deleteEvent(eventToDelete.id)
+                : await saveEventOverride(
+                    eventToDelete.overrideKey || hardcodedEventKey(eventToDelete),
+                    { action: 'CANCEL' }
+                  );
               if (success) {
                 Alert.alert('Успех', 'Настанот е успешно избришан');
                 await refreshEvents();
@@ -182,7 +210,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
               }
             } catch (error) {
               console.error('Error deleting event:', error);
-              Alert.alert('Грешка', 'Грешка при бришење на настанот');
+              Alert.alert(
+                'Грешка',
+                error instanceof SessionExpiredError ? error.message : 'Грешка при бришење на настанот'
+              );
             } finally {
               setLoading(false);
             }
@@ -356,6 +387,7 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
       <Portal>
         <Dialog
           visible={editDialogVisible}
+          dismissable={false}
           onDismiss={() => { Keyboard.dismiss(); setEditDialogVisible(false); }}
           style={styles.dialog}
         >
@@ -364,12 +396,18 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
           </Dialog.Title>
           <Dialog.ScrollArea style={{ maxHeight: Dimensions.get('window').height * 0.6 }}>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                showsVerticalScrollIndicator={false}
+              >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                  <View>
             <TextInput
+              key={`name-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="Име на настанот"
-              value={editedEvent.name}
-              onChangeText={name => setEditedEvent({ ...editedEvent, name })}
+              defaultValue={editedEvent.name}
+              onChangeText={name => setEditedEvent(prev => ({ ...prev, name }))}
               style={styles.input}
               maxLength={200}
             />
@@ -463,9 +501,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
             </Menu>
 
             <TextInput
+              key={`desc-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="Опис (опционално)"
-              value={editedEvent.description}
-              onChangeText={description => setEditedEvent({ ...editedEvent, description })}
+              defaultValue={editedEvent.description}
+              onChangeText={description => setEditedEvent(prev => ({ ...prev, description }))}
               multiline
               numberOfLines={3}
               style={styles.input}
@@ -473,9 +512,10 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
             />
 
             <TextInput
+              key={`img-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="URL на слика (опционално)"
-              value={editedEvent.imageUrl}
-              onChangeText={imageUrl => setEditedEvent({ ...editedEvent, imageUrl })}
+              defaultValue={editedEvent.imageUrl}
+              onChangeText={imageUrl => setEditedEvent(prev => ({ ...prev, imageUrl }))}
               placeholder="https://denovi.mk/synaxarion/..."
               style={styles.input}
               maxLength={500}
@@ -484,16 +524,18 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
             />
 
             <TextInput
+              key={`saint-${selectedEvent?.id || selectedEvent?.overrideKey || 'new'}`}
               label="Име на светец (опционално)"
-              value={editedEvent.saintName}
-              onChangeText={saintName => setEditedEvent({ ...editedEvent, saintName })}
+              defaultValue={editedEvent.saintName}
+              onChangeText={saintName => setEditedEvent(prev => ({ ...prev, saintName }))}
               style={styles.input}
               maxLength={200}
             />
             {/* Bottom padding for keyboard */}
             <View style={{ height: 50 }} />
-                </ScrollView>
-              </TouchableWithoutFeedback>
+                  </View>
+                </TouchableWithoutFeedback>
+              </ScrollView>
             </KeyboardAvoidingView>
           </Dialog.ScrollArea>
           <Dialog.Actions>

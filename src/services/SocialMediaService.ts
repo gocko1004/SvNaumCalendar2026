@@ -3,6 +3,7 @@ import { ChurchEvent } from './ChurchCalendarService';
 import { format } from 'date-fns';
 import { mk } from 'date-fns/locale';
 import { CONFIG } from '../constants/config';
+import { getReminderText } from './NotificationTextService';
 import ApiService from './ApiService';
 
 const {
@@ -119,24 +120,18 @@ class SocialMediaService {
   postEventToSocialMedia = async (event: ChurchEvent, notificationType: 'week' | 'day' | 'hour') => {
     if (!AUTO_POST.ENABLED) return { facebookSuccess: true, websiteSuccess: true };
 
-    const formattedDate = format(event.date, 'dd MMMM yyyy', { locale: mk });
-    let title = '';
-    let message = '';
+    const timing =
+      notificationType === 'week' ? 'WEEK' : notificationType === 'hour' ? 'HOUR' : 'DAY';
+    const { body } = getReminderText(event, timing);
 
-    switch (notificationType) {
-      case 'week':
-        title = `Најава: ${event.name}`;
-        message = `Следната недела на ${formattedDate} во ${event.time} ќе се одржи ${event.name}.\n\n${event.description || ''}`;
-        break;
-      case 'day':
-        title = `Потсетник: ${event.name}`;
-        message = `Утре во ${event.time} ќе се одржи ${event.name}.\n\n${event.description || ''}`;
-        break;
-      case 'hour':
-        title = `${event.name} започнува наскоро`;
-        message = `За 1 час започнува ${event.name}.\n\n${event.description || ''}`;
-        break;
-    }
+    const title = notificationType === 'week' ? `Најава: ${event.name}` : event.name;
+
+    // CHURCH_OPEN and PICNIC texts already include the description (hours/location)
+    const includeDescription =
+      event.description &&
+      event.serviceType !== 'CHURCH_OPEN' &&
+      event.serviceType !== 'PICNIC';
+    const message = includeDescription ? `${body}\n\n${event.description}` : body;
 
     return this.postNotificationToSocialMedia(title, message);
   };

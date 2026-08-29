@@ -3,11 +3,13 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { format, addMinutes, addDays, isBefore, addYears, isAfter } from 'date-fns';
+import { addMinutes, isBefore, addYears, isAfter } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SocialMediaService from './SocialMediaService';
+import { getReminderText, ReminderTiming } from './NotificationTextService';
+import { getEventOverrides, applyEventOverrides, hardcodedEventKey, getAllEvents, mergeEvents } from './FirestoreEventService';
 import { db } from '../firebase';
-import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
 
 const NOTIFICATION_SETTINGS_KEY = '@notification_settings';
 const LAST_SCHEDULE_CHECK = '@last_schedule_check';
@@ -38,16 +40,11 @@ class NotificationService {
 
   setupYearlyScheduling = async () => {
     try {
-      // Check if we need to schedule for the next year
-      const lastCheck = await AsyncStorage.getItem(LAST_SCHEDULE_CHECK);
-      const now = new Date();
-      const lastCheckDate = lastCheck ? new Date(lastCheck) : null;
-
-      // If we haven't checked this year or it's the first time
-      if (!lastCheckDate || isAfter(now, addYears(lastCheckDate, 1))) {
-        await this.scheduleYearEvents();
-        await AsyncStorage.setItem(LAST_SCHEDULE_CHECK, now.toISOString());
-      }
+      // Reschedule on EVERY launch: picks up admin overrides and new Firestore
+      // events, and keeps the pending list within iOS's 64-notification cap by
+      // always scheduling only the nearest upcoming reminders.
+      await this.scheduleYearEvents();
+      await AsyncStorage.setItem(LAST_SCHEDULE_CHECK, new Date().toISOString());
 
       // Set up daily check for next year's events
       this.setupDailyCheck();
@@ -96,6 +93,10 @@ class NotificationService {
     });
   };
 
+  // iOS silently keeps only the 64 soonest pending local notifications, so we
+  // schedule at most this many and refresh the window on every app launch.
+  static MAX_PENDING_REMINDERS = 60;
+
   scheduleYearEvents = async () => {
     try {
       const settings = await this.getNotificationSettings();
@@ -107,18 +108,48 @@ class NotificationService {
       const now = new Date();
       const nextYear = addYears(now, 1);
 
-      // Schedule current year's remaining events
-      const currentYearEvents = CHURCH_EVENTS.filter((event: ChurchEvent) => {
+      // Apply admin overrides (canceled/edited hardcoded events) and include
+      // events the admin created in Firestore - they deserve reminders too.
+      let effectiveEvents: ChurchEvent[] = CHURCH_EVENTS;
+      try {
+        const [overrides, firestoreEvents] = await Promise.all([
+          getEventOverrides(),
+          getAllEvents(),
+        ]);
+        effectiveEvents = mergeEvents(
+          applyEventOverrides(CHURCH_EVENTS, overrides),
+          firestoreEvents
+        );
+      } catch (e) { /* offline: fall back to hardcoded */ }
+
+      const upcomingEvents = effectiveEvents.filter((event: ChurchEvent) => {
         const eventDate = new Date(event.date);
         return isAfter(eventDate, now) && isBefore(eventDate, nextYear);
       });
 
-      await this.scheduleEventsForYear(currentYearEvents);
+      // Build every (event, reminder-offset) pair, sort by fire time, and
+      // schedule only the nearest ones so nothing falls off the iOS cap.
+      const offsets: number[] = [];
+      if (settings.weekBefore) offsets.push(7 * 24 * 60);
+      if (settings.dayBefore) offsets.push(24 * 60);
+      if (settings.hourBefore) offsets.push(60);
 
-      // Schedule next year's events if we're in the last month
-      if (now.getMonth() === 11) {
-        const nextYearEvents = this.generateNextYearEvents(now.getFullYear() + 1);
-        await this.scheduleEventsForYear(nextYearEvents);
+      const pending: { event: ChurchEvent; minutesBefore: number; fireAt: number }[] = [];
+      for (const event of upcomingEvents) {
+        const [hours, minutes] = event.time.split(':').map(Number);
+        const eventDate = new Date(event.date);
+        eventDate.setHours(hours, minutes);
+        for (const minutesBefore of offsets) {
+          const fireAt = eventDate.getTime() - minutesBefore * 60 * 1000;
+          if (fireAt > now.getTime()) {
+            pending.push({ event, minutesBefore, fireAt });
+          }
+        }
+      }
+      pending.sort((a, b) => a.fireAt - b.fireAt);
+
+      for (const item of pending.slice(0, NotificationService.MAX_PENDING_REMINDERS)) {
+        await this.scheduleEventReminder(item.event, item.minutesBefore);
       }
     } catch (error) {
       console.error('Error scheduling yearly events:', error);
@@ -152,31 +183,28 @@ class NotificationService {
     // Don't schedule if the notification time is in the past
     if (isBefore(notificationTime, new Date())) return;
 
-    let message = '';
     let notificationType: 'week' | 'day' | 'hour' | null = null;
 
     if (minutesBefore === 60) {
-      message = `${event.name} започнува за 1 час`;
       notificationType = 'hour';
     } else if (minutesBefore === 24 * 60) {
-      message = `${event.name} е утре во ${event.time}`;
       notificationType = 'day';
     } else if (minutesBefore === 7 * 24 * 60) {
-      message = `${event.name} е следната недела во ${event.time}`;
       notificationType = 'week';
     }
 
-    if (event.serviceType === 'PICNIC' && event.description) {
-      message += `\nЛокација: ${event.description}`;
-    }
+    const timing: ReminderTiming =
+      notificationType === 'hour' ? 'HOUR' : notificationType === 'week' ? 'WEEK' : 'DAY';
+    const { title, body } = getReminderText(event, timing);
 
-    // Schedule the notification
+    // Schedule the notification; tapping it opens the event card in the calendar
     await this.scheduleNotification({
-      title: event.name,
-      message,
+      title,
+      message: body,
       date: notificationTime,
       identifier,
       urgent: event.serviceType === 'PICNIC',
+      data: { type: 'event', eventKey: hardcodedEventKey(event) },
     });
 
     // Post to social media if it's a notification type we want to share
@@ -328,8 +356,9 @@ class NotificationService {
     date: Date;
     identifier?: string;
     urgent?: boolean;
+    data?: Record<string, any>;
   }) => {
-    const { title, message, date, identifier, urgent } = reminder;
+    const { title, message, date, identifier, urgent, data } = reminder;
 
     // Calculate seconds until notification
     const secondsUntilNotification = Math.floor((date.getTime() - Date.now()) / 1000);
@@ -347,6 +376,7 @@ class NotificationService {
         title,
         body: message,
         sound: true,
+        data: data || {},
         priority: urgent ? Notifications.AndroidNotificationPriority.MAX : Notifications.AndroidNotificationPriority.DEFAULT,
       },
       trigger: {
@@ -380,9 +410,10 @@ class NotificationService {
     title: string;
     message: string;
     urgent?: boolean;
+    data?: Record<string, any>;
   }): Promise<{ success: boolean; sentCount: number; error?: string }> => {
     try {
-      const { title, message, urgent = true } = notification;
+      const { title, message, urgent = true, data = {} } = notification;
 
       // Get all push tokens from Firestore
       const tokensRef = collection(db, 'pushTokens');
@@ -409,31 +440,57 @@ class NotificationService {
         sound: 'default',
         title,
         body: message,
-        data: { fullBody: message },
+        data: { fullBody: message, ...data },
         priority: urgent ? 'high' : 'normal',
         channelId: urgent ? 'urgent-updates' : 'church-events',
       }));
 
-      const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messages),
-      });
+      // Expo's push API accepts at most 100 messages per request - send in chunks
+      const CHUNK_SIZE = 100;
+      let successCount = 0;
+      let failedCount = 0;
+      let lastError: string | undefined;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error sending push notifications:', errorText);
-        return { success: false, sentCount: 0, error: `Failed to send: ${errorText}` };
+      for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
+        const chunk = messages.slice(i, i + CHUNK_SIZE);
+        try {
+          const response = await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Accept-Encoding': 'gzip, deflate',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(chunk),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error sending push chunk:', errorText);
+            failedCount += chunk.length;
+            lastError = errorText;
+            continue;
+          }
+
+          const result = await response.json();
+          const okInChunk = result.data?.filter((r: any) => r.status === 'ok').length || 0;
+          successCount += okInChunk;
+          failedCount += chunk.length - okInChunk;
+        } catch (chunkError: any) {
+          console.error('Error sending push chunk:', chunkError);
+          failedCount += chunk.length;
+          lastError = chunkError?.message;
+        }
       }
 
-      const result = await response.json();
-      const successCount = result.data?.filter((r: any) => r.status === 'ok').length || 0;
-
-      return { success: true, sentCount: successCount };
+      return {
+        success: successCount > 0,
+        sentCount: successCount,
+        error:
+          failedCount > 0
+            ? `${failedCount} пораки не беа испратени${lastError ? `: ${lastError}` : ''}`
+            : undefined,
+      };
     } catch (error: any) {
       console.error('Error sending push notifications to all users:', error);
       return { success: false, sentCount: 0, error: error.message || 'Unknown error' };

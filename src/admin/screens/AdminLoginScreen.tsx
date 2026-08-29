@@ -26,6 +26,7 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
@@ -120,12 +121,19 @@ export const AdminLoginScreen = ({ navigation }: AdminLoginScreenProps) => {
             label="Лозинка"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
             style={styles.input}
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="done"
             onSubmitEditing={onLoginPress}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? 'eye-off' : 'eye'}
+                onPress={() => setShowPassword(prev => !prev)}
+                forceTextInputFocus={false}
+              />
+            }
           />
 
           {error ? (

@@ -1,51 +1,77 @@
 # Политика на приватност - Св. Наум Охридски, Триенген
 
-**Последна ажурираност:** [Датум]
+**Последна ажурираност:** 27 август 2026
 
-## Вовед
+## Кој е одговорен
 
-Оваа апликација "Св. Наум Охридски, Триенген" е развиена за црковната општина Св. Наум Охридски, Триенген. Оваа политика на приватност објаснува како ја користиме и заштитуваме вашата информација.
+Оваа апликација е развиена за Македонската православна црковна општина
+„Св. Наум Охридски" - Тринген, Швајцарија (здружение). За прашања за вашите
+податоци контактирајте нè на: **mpc.triengen@gmail.com**
 
-## Податоци кои ги собираме
+## Кои податоци ги собираме
 
-### Податоци за известувања
-- Апликацијата може да прима push известувања за богослужби и важни настани
-- Овие известувања се засноваат на календарот на црквата и не бараат лични податоци
+**Календар и новости:** прегледувањето на календарот, новостите и постите не
+бара никакви лични податоци. Потсетниците за богослужби се закажуваат локално
+на вашиот уред.
 
-### Технички податоци
-- Апликацијата може да пристапи до календарот на уредот за да ги прикаже настаните
-- Ниту еден личен податок не се собира или складира
+**„Пишете ни" (Црковна Општина):** ако ни испратите порака, ја чуваме
+пораката и - само ако сами ги внесете - вашето име и контакт (телефон или
+email). Пораките може да се испратат и анонимно.
 
-## Како ги користиме податоците
+**Зачленување (Црковна Општина):** ако поднесете пријава за членство, ги
+чуваме податоците што ги внесувате: име и презиме, адреса, телефон, email и
+по избор членови на семејството и белешка.
 
-- За прикажување на календарот на богослужби
-- За испраќање на известувања за важни настани
-- За подобрување на функционалноста на апликацијата
+**Технички:** за примање известувања се зачувува т.н. push-токен на вашиот
+уред. Тој сам по себе не открива кој сте.
 
-## Споделување на податоци
+## Зошто ги користиме
 
-Ниту еден личен податок не се споделува со трети страни. Апликацијата работи локално на вашиот уред.
+- За да одговориме на вашите пораки и прашања
+- За обработка на пријавите за членство во црковната општина
+- За испраќање известувања за богослужби и настани
 
-## Безбедност
+Податоците не се користат за ништо друго - нема маркетинг, нема профилирање,
+нема реклами.
 
-Апликацијата не собира чувствителни лични податоци. Сите податоци се зачувани локално на вашиот уред.
+## Кој ги гледа податоците
+
+Само овластените членови на управата на црковната општина. Пораките и
+пријавите не се јавно видливи и не се споделуваат со трети лица. Членските
+податоци нема да бидат објавени или предадени надвор од црковната општина
+без ваша изречна согласност.
+
+## Каде се чуваат
+
+Податоците се чуваат кај Google (Firebase/Google Cloud) како обработувач за
+црковната општина. Дел од податоците (автентикација) Google ги обработува на
+сервери во САД. Преносот кон Google LLC во САД е покриен со
+Швајцарско-американската рамка за заштита на податоци (Swiss-U.S. Data
+Privacy Framework), според која сертифицираните американски компании
+обезбедуваат соодветна заштита.
+
+## Колку долго ги чуваме
+
+- Пораки: додека се обработат, најдоцна 12 месеци
+- Пријави за членство: при прием, податоците преминуваат во членската
+  евиденција на општината; одбиени или повлечени пријави се бришат најдоцна
+  за 3 месеци
 
 ## Вашите права
 
-Бидејќи не собираме лични податоци, нема потреба за барање на пристап или бришење на податоци.
+Во секое време можете да побарате да дознаете кои податоци ги чуваме за вас,
+да ги исправиме или да ги избришеме. Пишете ни на mpc.triengen@gmail.com -
+одговараме најдоцна за 30 дена.
 
 ## Известувања
 
-Апликацијата може да испраќа push известувања. Можете да ги оневозможите во поставките на уредот.
-
-## Контакт
-
-За прашања поврзани со оваа политика на приватност, контактирајте не на:
-- Email: svnaum.triengen@gmail.com
+Push известувањата можете да ги оневозможите во поставките на апликацијата
+или на уредот.
 
 ## Промени во политиката
 
-Оваа политика може да се ажурира. Ќе ве известиме за значајни промени преку апликацијата.
+Оваа политика може да се ажурира. Ќе ве известиме за значајни промени преку
+апликацијата.
 
 ---
 
@@ -53,49 +79,71 @@
 
 # Privacy Policy - St. Naum Ohridski, Triengen
 
-**Last updated:** [Date]
+**Last updated:** 27 August 2026
 
-## Introduction
+## Who is responsible
 
-This application "St. Naum Ohridski, Triengen" is developed for the St. Naum Ohridski Church community in Triengen. This privacy policy explains how we use and protect your information.
+This application is operated by the Macedonian Orthodox Church community
+"St. Naum Ohridski" - Triengen, Switzerland (association). For any questions
+about your data, contact us at: **mpc.triengen@gmail.com**
 
-## Data We Collect
+## Data we collect
 
-### Notification Data
-- The app may receive push notifications for church services and important events
-- These notifications are based on the church calendar and do not require personal data
+**Calendar and news:** browsing the calendar, news and fasting information
+requires no personal data. Service reminders are scheduled locally on your
+device.
 
-### Technical Data
-- The app may access the device calendar to display events
-- No personal data is collected or stored
+**"Write to us" (Church Community):** if you send us a message, we store the
+message and - only if you enter them yourself - your name and contact details
+(phone or email). Messages can also be sent anonymously.
 
-## How We Use Data
+**Membership application (Church Community):** if you apply for membership,
+we store the data you enter: full name, address, phone, email and optionally
+family members and a note.
 
-- To display the church service calendar
-- To send notifications for important events
-- To improve app functionality
+**Technical:** a push token of your device is stored to deliver
+notifications. It does not by itself reveal who you are.
 
-## Data Sharing
+## Why we use it
 
-No personal data is shared with third parties. The app operates locally on your device.
+- To answer your messages and questions
+- To process membership applications
+- To send notifications about services and events
 
-## Security
+The data is used for nothing else - no marketing, no profiling, no ads.
 
-The app does not collect sensitive personal data. All data is stored locally on your device.
+## Who can see the data
 
-## Your Rights
+Only the authorized board members of the church community. Messages and
+applications are not publicly visible and are not shared with third parties.
+Membership data will not be published or passed outside the church community
+without your express consent.
 
-Since we do not collect personal data, there is no need to request access or deletion of data.
+## Where it is stored
+
+Data is stored with Google (Firebase/Google Cloud) acting as a processor for
+the church community. Some data (authentication) is processed by Google on
+servers in the USA. Transfers to Google LLC in the USA are covered by the
+Swiss-U.S. Data Privacy Framework, under which certified US companies provide
+adequate data protection.
+
+## How long we keep it
+
+- Messages: until handled, at most 12 months
+- Membership applications: upon acceptance the data moves into the
+  community's member register; rejected or withdrawn applications are deleted
+  within 3 months
+
+## Your rights
+
+You may at any time ask what data we hold about you, and request correction
+or deletion. Write to mpc.triengen@gmail.com - we respond within 30 days.
 
 ## Notifications
 
-The app may send push notifications. You can disable them in your device settings.
+You can disable push notifications in the app or device settings.
 
-## Contact
+## Policy changes
 
-For questions regarding this privacy policy, contact us at:
-- Email: svnaum.triengen@gmail.com
-
-## Policy Changes
-
-This policy may be updated. We will notify you of significant changes through the app.
+This policy may be updated. We will notify you of significant changes through
+the app.
