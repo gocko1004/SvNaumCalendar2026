@@ -6,7 +6,7 @@ service cloud.firestore {
     // To add an admin later: add their UID to this list.
     function isAdmin() {
       return request.auth != null
-        && request.auth.uid in ['2AJnbYVj5ANtCoUHUcsKKmSS1643'];
+        && request.auth.uid in ['2AJnbYVj5ANtCoUHUcsKKmSS1643', 'tmO0tN2qnGRo5ATMSKqOzF8Y0Z93'];
     }
 
     match /churchEvents/{document=**} {
