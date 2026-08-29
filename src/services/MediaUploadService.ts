@@ -1,5 +1,5 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage, auth } from '../firebase';
+import { storage } from '../firebase';
 import * as ImagePicker from 'expo-image-picker';
 import { assertValidSession, SessionExpiredError } from './AuthGuard';
 

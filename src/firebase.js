@@ -17,11 +17,15 @@ const firebaseConfig = {
 
 let app;
 let auth;
+let db;
+let storage;
 let initError = null;
 let authPersistent = false;
 
 try {
   app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  storage = getStorage(app);
 
   const { initializeAuth, getAuth, getReactNativePersistence } = firebaseAuth;
 
@@ -67,8 +71,8 @@ try {
 }
 
 export { app };
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+export { db };
+export { storage };
 export { auth };
 export { initError };
 export { authPersistent };
