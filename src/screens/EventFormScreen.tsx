@@ -22,7 +22,8 @@ import { ServiceType } from '../services/ChurchCalendarService';
 const SERVICE_TYPES: { value: ServiceType; label: string }[] = [
   { value: 'LITURGY', label: 'Литургија' },
   { value: 'EVENING_SERVICE', label: 'Вечерна Богослужба' },
-  { value: 'CHURCH_OPEN', label: 'Црквата е отворена' },
+  { value: 'CHURCH_OPEN', label: 'Црквата е отворена / Без свештеник' },
+  { value: 'CHURCH_OPEN_PRIEST', label: 'Црквата е отворена / Свештеник присутен' },
   { value: 'PICNIC', label: 'Пикник' },
 ];
 

@@ -18,6 +18,27 @@ const formatDate = (date: Date): string => format(date, 'd MMMM', { locale: mk }
 const mentionsLiturgy = (name: string): boolean => /литурги/i.test(name);
 const mentionsEveningService = (name: string): boolean => /вечерна/i.test(name);
 
+const churchOpenPriestText = (event: ChurchEvent, timing: ReminderTiming): ReminderText => {
+  const hours = event.description ? ` (${event.description})` : '';
+  let body: string;
+
+  switch (timing) {
+    case 'WEEK':
+    case 'THREE_DAYS':
+      body = `На ${formatDate(event.date)} црквата ќе биде отворена, со присуство на свештеник.${hours}`;
+      break;
+    case 'DAY':
+      body = `Утре црквата е отворена и свештеникот е присутен.${hours}`;
+      break;
+    case 'SAME_DAY':
+    case 'HOUR':
+      body = `Денес црквата е отворена и свештеникот е присутен.${hours}`;
+      break;
+  }
+
+  return { title: event.name, body };
+};
+
 const churchOpenText = (event: ChurchEvent, timing: ReminderTiming): ReminderText => {
   const hours = event.description ? ` (${event.description})` : '';
   let body: string;
@@ -139,6 +160,8 @@ export const getReminderText = (event: ChurchEvent, timing: ReminderTiming): Rem
   switch (event.serviceType) {
     case 'CHURCH_OPEN':
       return churchOpenText(event, timing);
+    case 'CHURCH_OPEN_PRIEST':
+      return churchOpenPriestText(event, timing);
     case 'EVENING_SERVICE':
       return eveningServiceText(event, timing);
     case 'PICNIC':

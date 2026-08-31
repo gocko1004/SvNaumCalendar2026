@@ -37,6 +37,7 @@ export const DEFAULT_TIMINGS_BY_TYPE: Record<ServiceType, NotificationTiming[]> 
   LITURGY: ['1_DAY'],
   EVENING_SERVICE: ['1_DAY'],
   CHURCH_OPEN: ['1_DAY'],
+  CHURCH_OPEN_PRIEST: ['1_DAY'],
 };
 
 // Labels for display
