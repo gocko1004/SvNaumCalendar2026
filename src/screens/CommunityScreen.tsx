@@ -170,20 +170,12 @@ export const CommunityScreen = () => {
 
               <TouchableOpacity
                 onPress={() => navigation.navigate('PrivacyPolicy')}
-                activeOpacity={0.85}
+                activeOpacity={0.7}
+                style={styles.policyFooter}
               >
-                <Surface style={styles.entryCard}>
-                  <View style={styles.entryIcon}>
-                    <MaterialCommunityIcons name="shield-lock-outline" size={26} color={COLORS.PRIMARY} />
-                  </View>
-                  <View style={styles.entryText}>
-                    <Text style={styles.entryTitle}>Политика на приватност</Text>
-                    <Text style={styles.entrySubtitle}>
-                      Како ги чуваме и користиме вашите податоци
-                    </Text>
-                  </View>
-                  <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
-                </Surface>
+                <MaterialCommunityIcons name="shield-lock-outline" size={15} color="#8a7a6a" />
+                <Text style={styles.policyFooterText}>Политика на приватност</Text>
+                <MaterialCommunityIcons name="chevron-right" size={15} color="#8a7a6a" />
               </TouchableOpacity>
             </>
           )}
@@ -522,6 +514,24 @@ const styles = StyleSheet.create({
     color: '#555',
     lineHeight: 18,
     marginTop: 6,
+  },
+  policyFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    alignSelf: 'center',
+    marginTop: 28,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#E4D9C2',
+    borderRadius: 999,
+  },
+  policyFooterText: {
+    fontSize: 12.5,
+    color: '#8a7a6a',
+    fontWeight: '600',
   },
   policyLinkInline: {
     color: COLORS.PRIMARY,
