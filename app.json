@@ -27,7 +27,7 @@
     },
     "android": {
       "package": "com.svnaum.calendar",
-      "versionCode": 12,
+      "versionCode": 22,
       "adaptiveIcon": {
         "foregroundImage": "./assets/iconnew.png",
         "backgroundColor": "#831B26"
