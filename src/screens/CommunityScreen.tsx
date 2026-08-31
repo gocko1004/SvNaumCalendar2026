@@ -167,6 +167,24 @@ export const CommunityScreen = () => {
                   <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
                 </Surface>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate('PrivacyPolicy')}
+                activeOpacity={0.85}
+              >
+                <Surface style={styles.entryCard}>
+                  <View style={styles.entryIcon}>
+                    <MaterialCommunityIcons name="shield-lock-outline" size={26} color={COLORS.PRIMARY} />
+                  </View>
+                  <View style={styles.entryText}>
+                    <Text style={styles.entryTitle}>Политика на приватност</Text>
+                    <Text style={styles.entrySubtitle}>
+                      Како ги чуваме и користиме вашите податоци
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color="#999" />
+                </Surface>
+              </TouchableOpacity>
             </>
           )}
 

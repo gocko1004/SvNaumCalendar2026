@@ -4,11 +4,9 @@ import { Switch, ActivityIndicator, Snackbar } from 'react-native-paper';
 import NotificationService from '../services/NotificationService';
 import { COLORS } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export const NotificationSettingsScreen = () => {
-  const navigation = useNavigation<any>();
   const [settings, setSettings] = useState({
     enabled: true,
     weekBefore: false,
@@ -192,16 +190,6 @@ export const NotificationSettingsScreen = () => {
           </RNText>
         </View>
 
-        {/* Privacy policy link (Art. 19 nFADP - always reachable) */}
-        <TouchableOpacity
-          style={styles.privacyRow}
-          onPress={() => navigation.navigate('PrivacyPolicy')}
-          activeOpacity={0.7}
-        >
-          <MaterialCommunityIcons name="shield-lock-outline" size={20} color={COLORS.PRIMARY} />
-          <RNText style={styles.privacyRowText}>Политика на приватност</RNText>
-          <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
-        </TouchableOpacity>
       </ScrollView>
 
       <Snackbar
@@ -411,22 +399,5 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     backgroundColor: COLORS.PRIMARY,
-  },
-  privacyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFDF8',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E4D9C2',
-    padding: 14,
-    marginTop: 12,
-  },
-  privacyRowText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.PRIMARY,
   },
 }); 
