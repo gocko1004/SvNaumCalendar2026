@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Text as RNText, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Switch, ActivityIndicator, Snackbar } from 'react-native-paper';
 import NotificationService from '../services/NotificationService';
 import { COLORS } from '../constants/theme';
@@ -96,7 +95,7 @@ export const NotificationSettingsScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       {/* Header */}
       <LinearGradient
         colors={[COLORS.PRIMARY, '#A52A2A']}
@@ -201,7 +200,7 @@ export const NotificationSettingsScreen = () => {
       >
         {snackbarMessage}
       </Snackbar>
-    </SafeAreaView>
+    </View>
   );
 };
 
