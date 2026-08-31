@@ -6,6 +6,7 @@ export type ServiceType =
   | 'LITURGY'
   | 'EVENING_SERVICE'
   | 'CHURCH_OPEN'
+  | 'CHURCH_OPEN_PRIEST'
   | 'PICNIC';
 
 export interface ChurchEvent {
@@ -622,6 +623,8 @@ export const getServiceTypeLabel = (type: ServiceType): string => {
       return 'Вечерна Богослужба';
     case 'CHURCH_OPEN':
       return 'Црквата е отворена / Без свештеник';
+    case 'CHURCH_OPEN_PRIEST':
+      return 'Црквата е отворена / Свештеник присутен';
     case 'PICNIC':
       return 'Пикник';
     default:

@@ -35,14 +35,16 @@ const CALENDAR_STORAGE_KEY = '@church_calendar';
 const SERVICE_TYPE_COLORS = {
   LITURGY: '#8B1A1A',          // Deep burgundy red
   EVENING_SERVICE: '#2C4A6E',  // Softer icon blue
-  CHURCH_OPEN: '#8B5A2B',      // Warm burnt sienna
+  CHURCH_OPEN: '#8B5A2B',
+  CHURCH_OPEN_PRIEST: '#557A46',      // Warm burnt sienna
   PICNIC: '#CD853F'            // Peru/tan gold
 } as const;
 
 const SERVICE_TYPE_ICONS = {
   LITURGY: 'church' as const,
   EVENING_SERVICE: 'moon-waning-crescent' as const,
-  CHURCH_OPEN: 'door-open' as const,
+  CHURCH_OPEN: 'door-open',
+  CHURCH_OPEN_PRIEST: 'account-check' as const,
   PICNIC: 'food' as const
 } as const;
 
@@ -252,6 +254,8 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
         return 'Вечерна Богослужба';
       case 'CHURCH_OPEN':
         return 'Црквата е отворена / без свештеник';
+      case 'CHURCH_OPEN_PRIEST':
+        return 'Црквата е отворена / свештеник присутен';
       case 'PICNIC':
         return 'Пикник';
       default:
@@ -490,6 +494,13 @@ export const ManageCalendarScreen: React.FC<ManageCalendarScreenProps> = ({ navi
                   setServiceTypeMenuVisible(false);
                 }}
                 title="Црквата е отворена / без свештеник"
+              />
+              <Menu.Item
+                onPress={() => {
+                  setEditedEvent({ ...editedEvent, serviceType: 'CHURCH_OPEN_PRIEST' });
+                  setServiceTypeMenuVisible(false);
+                }}
+                title="Црквата е отворена / свештеник присутен"
               />
               <Menu.Item
                 onPress={() => {

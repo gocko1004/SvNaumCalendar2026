@@ -30,6 +30,7 @@ const SERVICE_TYPE_COLORS = {
   LITURGY: '#8B1A1A',          // Deep burgundy red
   EVENING_SERVICE: '#2C4A6E',  // Softer icon blue
   CHURCH_OPEN: '#8B5A2B',      // Warm burnt sienna - orange/brown mix
+  CHURCH_OPEN_PRIEST: '#557A46', // Sage green - open with priest present
   PICNIC: '#CD853F'            // Peru/tan gold
 } as const;
 
@@ -62,6 +63,7 @@ const SERVICE_TYPE_ICONS = {
   LITURGY: 'church' as const,
   EVENING_SERVICE: 'moon-waning-crescent' as const,
   CHURCH_OPEN: 'door-open' as const,
+  CHURCH_OPEN_PRIEST: 'account-check' as const,
   PICNIC: 'food' as const
 } as const;
 

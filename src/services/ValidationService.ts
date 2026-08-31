@@ -182,11 +182,11 @@ export const sanitizeDate = (date: any): Date => {
  * @param type The service type to validate
  * @returns Valid service type or default
  */
-export const sanitizeServiceType = (type: string): 'LITURGY' | 'EVENING_SERVICE' | 'CHURCH_OPEN' | 'PICNIC' => {
-  const validTypes = ['LITURGY', 'EVENING_SERVICE', 'CHURCH_OPEN', 'PICNIC'];
+export const sanitizeServiceType = (type: string): 'LITURGY' | 'EVENING_SERVICE' | 'CHURCH_OPEN' | 'CHURCH_OPEN_PRIEST' | 'PICNIC' => {
+  const validTypes = ['LITURGY', 'EVENING_SERVICE', 'CHURCH_OPEN', 'CHURCH_OPEN_PRIEST', 'PICNIC'];
   
   if (validTypes.includes(type)) {
-    return type as 'LITURGY' | 'EVENING_SERVICE' | 'CHURCH_OPEN' | 'PICNIC';
+    return type as 'LITURGY' | 'EVENING_SERVICE' | 'CHURCH_OPEN' | 'CHURCH_OPEN_PRIEST' | 'PICNIC';
   }
   
   return 'LITURGY'; // Default
@@ -201,7 +201,7 @@ export const sanitizeChurchEvent = (event: any): {
   name: string;
   date: Date;
   time: string;
-  serviceType: 'LITURGY' | 'EVENING_SERVICE' | 'CHURCH_OPEN' | 'PICNIC';
+  serviceType: 'LITURGY' | 'EVENING_SERVICE' | 'CHURCH_OPEN' | 'CHURCH_OPEN_PRIEST' | 'PICNIC';
   description?: string;
   imageUrl?: string;
   saintName?: string;
