@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { theme } from './src/constants/theme';
 import NotificationService from './src/services/NotificationService';
 import { LanguageProvider } from './src/contexts/LanguageContext';
@@ -23,10 +24,12 @@ export default function App() {
   }, []);
 
   return (
-    <LanguageProvider>
-      <PaperProvider theme={theme}>
-        <AppNavigator />
-      </PaperProvider>
-    </LanguageProvider>
+    <SafeAreaProvider>
+      <LanguageProvider>
+        <PaperProvider theme={theme}>
+          <AppNavigator />
+        </PaperProvider>
+      </LanguageProvider>
+    </SafeAreaProvider>
   );
 } 
