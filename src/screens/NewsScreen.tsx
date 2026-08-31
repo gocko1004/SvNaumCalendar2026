@@ -8,8 +8,8 @@ import {
   Text,
   RefreshControl,
   Dimensions,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Title, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -51,7 +51,7 @@ const NewsCard = ({ news, onPress }: NewsCardProps) => {
             <View style={styles.newsContent}>
               <View style={styles.newsTitleRow}>
                 <Text style={styles.newsTitle}>{news.title}</Text>
-                <Chip style={styles.newsChip} textStyle={{ color: NEWS_COLOR, fontSize: 10 }}>
+                <Chip compact style={[styles.newsChip, { flexShrink: 0 }]} textStyle={{ color: NEWS_COLOR, fontSize: 10 }}>
                   Новост
                 </Chip>
               </View>
