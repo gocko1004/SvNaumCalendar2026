@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "46191164294",
+    "project_id": "svnaumcalendar",
+    "storage_bucket": "svnaumcalendar.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46191164294:android:5266979e23a78d2b3d0a07",
+        "android_client_info": {
+          "package_name": "com.svnaum.calendar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCecv0GCa76lo1ysEsttqcXrWY3p9Epyps"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
