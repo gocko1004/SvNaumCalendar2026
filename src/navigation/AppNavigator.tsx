@@ -176,12 +176,17 @@ export const AppNavigator = () => {
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const { title, body, data } = response.notification.request.content;
+      // Clear so this tap is not replayed by getLastNotificationResponseAsync on the next cold start
+      Notifications.clearLastNotificationResponse();
       openFromNotification(title, body, data);
     });
 
-    // Check if app was opened from a notification
+    // Check if app was opened from a notification. The OS persists the last tapped
+    // notification across launches in standalone builds, so clear it after handling -
+    // otherwise every cold start replays the old tap and never lands on the calendar.
     Notifications.getLastNotificationResponseAsync().then(response => {
       if (response) {
+        Notifications.clearLastNotificationResponse();
         const { title, body, data } = response.notification.request.content;
         // Small delay to ensure navigation is ready
         setTimeout(() => {
