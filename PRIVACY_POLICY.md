@@ -1,149 +1,159 @@
-# Политика на приватност - Св. Наум Охридски, Триенген
+# Политика за приватност / Privacy Policy
 
-**Последна ажурираност:** 27 август 2026
+**Апликација:** „Св. Наум Охридски, Триенген“ (`com.svnaum.calendar`)
+**Издавач:** МПЦО „Свети Наум Охридски“, Триенген, Швајцарија
+**Последна ажурираност:** 3 септември 2026
 
-## Кој е одговорен
-
-Оваа апликација е развиена за Македонската православна црковна општина
-„Св. Наум Охридски" - Тринген, Швајцарија (здружение). За прашања за вашите
-податоци контактирајте нè на: **mpc.triengen@gmail.com**
-
-## Кои податоци ги собираме
-
-**Календар и новости:** прегледувањето на календарот, новостите и постите не
-бара никакви лични податоци. Потсетниците за богослужби се закажуваат локално
-на вашиот уред.
-
-**„Пишете ни" (Црковна Општина):** ако ни испратите порака, ја чуваме
-пораката и - само ако сами ги внесете - вашето име и контакт (телефон или
-email). Пораките може да се испратат и анонимно.
-
-**Зачленување (Црковна Општина):** ако поднесете пријава за членство, ги
-чуваме податоците што ги внесувате: име и презиме, адреса, телефон, email и
-по избор членови на семејството и белешка.
-
-**Технички:** за примање известувања се зачувува т.н. push-токен на вашиот
-уред. Тој сам по себе не открива кој сте.
-
-## Зошто ги користиме
-
-- За да одговориме на вашите пораки и прашања
-- За обработка на пријавите за членство во црковната општина
-- За испраќање известувања за богослужби и настани
-
-Податоците не се користат за ништо друго - нема маркетинг, нема профилирање,
-нема реклами.
-
-## Кој ги гледа податоците
-
-Само овластените членови на управата на црковната општина. Пораките и
-пријавите не се јавно видливи и не се споделуваат со трети лица. Членските
-податоци нема да бидат објавени или предадени надвор од црковната општина
-без ваша изречна согласност.
-
-## Каде се чуваат
-
-Податоците се чуваат кај Google (Firebase/Google Cloud) како обработувач за
-црковната општина. Дел од податоците (автентикација) Google ги обработува на
-сервери во САД. Преносот кон Google LLC во САД е покриен со
-Швајцарско-американската рамка за заштита на податоци (Swiss-U.S. Data
-Privacy Framework), според која сертифицираните американски компании
-обезбедуваат соодветна заштита.
-
-## Колку долго ги чуваме
-
-- Пораки: додека се обработат, најдоцна 12 месеци
-- Пријави за членство: при прием, податоците преминуваат во членската
-  евиденција на општината; одбиени или повлечени пријави се бришат најдоцна
-  за 3 месеци
-
-## Вашите права
-
-Во секое време можете да побарате да дознаете кои податоци ги чуваме за вас,
-да ги исправиме или да ги избришеме. Пишете ни на mpc.triengen@gmail.com -
-одговараме најдоцна за 30 дена.
-
-## Известувања
-
-Push известувањата можете да ги оневозможите во поставките на апликацијата
-или на уредот.
-
-## Промени во политиката
-
-Оваа политика може да се ажурира. Ќе ве известиме за значајни промени преку
-апликацијата.
+> Официјалната верзија на оваа политика е објавена на
+> **https://mpc-triengen.ch/app-privacy-policy/**
+> Во случај на несовпаѓање, важи верзијата на веб страната.
 
 ---
 
-**English Version:**
+## 1. Користење без внесување податоци
 
-# Privacy Policy - St. Naum Ohridski, Triengen
+За да го гледате календарот, богослужбите, постите, вестите и известувањата **не е потребна регистрација** и не внесувате никакви лични податоци.
 
-**Last updated:** 27 August 2026
+## 2. Известувања
 
-## Who is responsible
+Ако дозволите известувања, се обработува технички идентификатор на уредот (push токен), за да можат известувањата да стигнат до вас. Тој не е поврзан со вашето име и не се користи за друга намена. Известувањата можете да ги исклучите во поставките на уредот.
 
-This application is operated by the Macedonian Orthodox Church community
-"St. Naum Ohridski" - Triengen, Switzerland (association). For any questions
-about your data, contact us at: **mpc.triengen@gmail.com**
+## 3. Формулар за контакт (Заедница)
 
-## Data we collect
+Ако ни пишете преку формуларот во апликацијата, се испраќаат:
 
-**Calendar and news:** browsing the calendar, news and fasting information
-requires no personal data. Service reminders are scheduled locally on your
-device.
+- **Вид на порака** (Прашање, Забелешка, Поплака, Пофалба) и **текстот на пораката** — задолжително
+- **Име** — по желба
+- **Контакт** (телефон или е-пошта) — по желба
 
-**"Write to us" (Church Community):** if you send us a message, we store the
-message and - only if you enter them yourself - your name and contact details
-(phone or email). Messages can also be sent anonymously.
+Ако не сакате да се идентификувате, оставете ги полињата за име и контакт празни.
 
-**Membership application (Church Community):** if you apply for membership,
-we store the data you enter: full name, address, phone, email and optionally
-family members and a note.
+## 4. Барање за членство
 
-**Technical:** a push token of your device is stored to deliver
-notifications. It does not by itself reveal who you are.
+Ако поднесете барање за членство во црковната општина, се собираат:
 
-## Why we use it
+- **Име и презиме** — задолжително
+- **Адреса**
+- **Телефон** и **адреса за е-пошта** (потребен е барем еден начин за контакт)
+- **Членови на семејството** — по желба
+- **Забелешка** — по желба
 
-- To answer your messages and questions
-- To process membership applications
-- To send notifications about services and events
+**Важно.** Барањето за членство открива дека сте поврзани со православна црковна заедница. Тоа претставува **посебна категорија лични податоци** (верско уверување) според GDPR член 9 и швајцарскиот Закон за заштита на податоците. Ваквите податоци ги обработуваме единствено врз основа на вашата **изречна согласност**, дадена со поднесување на барањето, и со засилена заштита.
 
-The data is used for nothing else - no marketing, no profiling, no ads.
+Ако внесете податоци за членови на семејството, внесувате податоци за **други лица**. Ве молиме тоа да го правите само со нивно знаење и согласност, а за малолетни лица само како родител или старател.
 
-## Who can see the data
+## 5. Зошто ги собираме
 
-Only the authorized board members of the church community. Messages and
-applications are not publicly visible and are not shared with third parties.
-Membership data will not be published or passed outside the church community
-without your express consent.
+Единствено за да одговориме на вашето прашање и за водење евиденција за членство. Не ги користиме за рекламирање, не создаваме профили и не носиме автоматизирани одлуки.
 
-## Where it is stored
+## 6. Каде се чуваат и кој има пристап
 
-Data is stored with Google (Firebase/Google Cloud) acting as a processor for
-the church community. Some data (authentication) is processed by Google on
-servers in the USA. Transfers to Google LLC in the USA are covered by the
-Swiss-U.S. Data Privacy Framework, under which certified US companies provide
-adequate data protection.
+Податоците се чуваат во **Firebase Cloud Firestore**, услуга на Google, која дејствува како обработувач по наши упатства. Преносот е енкриптиран.
 
-## How long we keep it
+Пристап за читање имаат **единствено овластени администратори** од црковната општина. Тоа е технички наметнато на ниво на сервер: јавноста може само да поднесе формулар, но не може да чита ниту да менува поднесени податоци. Дополнително постојат проверка на внесеното и ограничување на бројот на поднесувања.
 
-- Messages: until handled, at most 12 months
-- Membership applications: upon acceptance the data moves into the
-  community's member register; rejected or withdrawn applications are deleted
-  within 3 months
+## 7. Споделување
 
-## Your rights
+Не ги продаваме и не ги споделуваме вашите податоци со трети страни за рекламирање и не ги пренесуваме на други организации. Google, како давател на облак услугата, дејствува исклучиво како обработувач.
 
-You may at any time ask what data we hold about you, and request correction
-or deletion. Write to mpc.triengen@gmail.com - we respond within 30 days.
+## 8. Колку долго ги чуваме
 
-## Notifications
+Пораките од формуларот ги чуваме онолку колку што е потребно за да одговориме и за понатамошна преписка. Податоците за членство се чуваат додека трае членството, освен ако побарате бришење.
 
-You can disable push notifications in the app or device settings.
+## 9. Вашите права и бришење на податоци
 
-## Policy changes
+Имате право на пристап, исправка и бришење на вашите податоци, ограничување на обработката, преносливост, како и право да ја **повлечете согласноста во секое време**. Исто така имате право да поднесете приговор до надлежниот орган за заштита на податоците (во Швајцарија: EDÖB/PFPDT).
 
-This policy may be updated. We will notify you of significant changes through
-the app.
+**За бришење на вашите податоци**, испратете барање на: **svnaum.triengen@gmail.com**
+
+## 10. Календар на уредот
+
+Настаните се прикажуваат внатре во апликацијата. Апликацијата **не пристапува до календарот на вашиот уред**, не чита контакти, не бара локација и не бара податоци за плаќање.
+
+## 11. Деца
+
+Апликацијата не е насочена кон деца и не собира намерно податоци од нив.
+
+## 12. Контакт
+
+svnaum.triengen@gmail.com
+
+---
+
+# Privacy Policy (English)
+
+**Application:** "St. Naum Ohridski, Triengen" (`com.svnaum.calendar`)
+**Publisher:** Macedonian Orthodox Church community "St. Naum Ohridski", Triengen, Switzerland
+**Last updated:** 3 September 2026
+
+> The authoritative version of this policy is published at
+> **https://mpc-triengen.ch/app-privacy-policy/**
+> In case of any discrepancy, the website version prevails.
+
+## 1. Using the app without entering data
+
+**No registration is required** to view the calendar, services, fasting periods, news and notifications, and you enter no personal data to do so.
+
+## 2. Notifications
+
+If you allow notifications, a technical device identifier (a push token) is processed so that notifications can reach you. It is not linked to your name and is not used for any other purpose. You can turn notifications off in your device settings.
+
+## 3. Contact form (Community)
+
+If you write to us using the in-app form, the following is submitted:
+
+- **Message type** (Question, Remark, Complaint, Praise) and the **message text** — required
+- **Name** — optional
+- **Contact** (phone or email) — optional
+
+If you prefer not to identify yourself, leave the name and contact fields empty.
+
+## 4. Membership application
+
+If you submit an application to join the parish, we collect:
+
+- **Full name** — required
+- **Address**
+- **Phone** and **email address** (at least one contact method is required)
+- **Family members** — optional
+- **Note** — optional
+
+**Important.** A membership application reveals your association with an Orthodox church community. This constitutes a **special category of personal data** (religious belief) under GDPR Article 9 and the Swiss Federal Act on Data Protection. We process such data solely on the basis of your **explicit consent**, given by submitting the application, and with heightened protection.
+
+If you enter family member details you are providing data about **other people**. Please do so only with their knowledge and agreement, and for minors only as their parent or guardian.
+
+## 5. Why we collect it
+
+Solely to answer your enquiry and to maintain parish membership records. We do not use it for advertising, we do not build profiles, and we make no automated decisions.
+
+## 6. Where it is stored and who can access it
+
+Data is stored in **Firebase Cloud Firestore**, a Google service acting as a processor on our instructions. Transmission is encrypted.
+
+Read access is restricted to **authorised parish administrators only**. This is enforced technically at server level: the public can submit a form but cannot read or modify submitted data. Input validation and submission rate limiting are also in place.
+
+## 7. Sharing
+
+We do not sell or share your data with third parties for advertising and we do not pass it to other organisations. Google, as the cloud provider, acts purely as a processor.
+
+## 8. Retention
+
+Contact form messages are kept for as long as needed to reply and for any follow-up correspondence. Membership data is kept for the duration of membership unless you request deletion.
+
+## 9. Your rights and data deletion
+
+You have the right to access, rectify and erase your data, to restrict processing, to data portability, and to **withdraw consent at any time**. You also have the right to lodge a complaint with the competent data protection authority (in Switzerland, the FDPIC/EDÖB).
+
+**To request deletion of your data**, email: **svnaum.triengen@gmail.com**
+
+## 10. Device calendar
+
+Events are displayed inside the app. The app **does not access your device calendar**, does not read your contacts, does not request location, and does not request payment details.
+
+## 11. Children
+
+The app is not directed at children and does not knowingly collect data from them.
+
+## 12. Contact
+
+svnaum.triengen@gmail.com
